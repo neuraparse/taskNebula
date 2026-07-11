@@ -117,8 +117,7 @@ jest.mock('@/hooks/use-toast', () => ({
 }));
 
 jest.mock('@livekit/components-react', () => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires -- required inside jest.mock factory
-  const React = require('react');
+  const React = jest.requireActual<typeof import('react')>('react');
   roomConnect ||= jest.fn();
   roomDisconnect ||= jest.fn();
   roomPrepareConnection ||= jest.fn();
@@ -280,8 +279,7 @@ jest.mock('@/lib/hooks/use-chat', () => ({
 }));
 
 jest.mock('@/components/chat/global-voice-provider', () => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires -- required inside jest.mock factory
-  const React = require('react');
+  const React = jest.requireActual<typeof import('react')>('react');
 
   return {
     useGlobalVoice: () => {

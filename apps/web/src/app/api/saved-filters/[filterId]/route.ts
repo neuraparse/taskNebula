@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { db, savedFilters } from '@tasknebula/db';
 import { eq, and } from 'drizzle-orm';
 import { z } from 'zod';
+import { markSavedFilterUsedForUser } from '@/lib/saved-filters/usage';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,7 +21,7 @@ const updateSavedFilterSchema = z.object({
 
 /**
  * PATCH /api/saved-filters/[filterId]
- * 
+ *
  * Update a saved filter
  */
 export async function PATCH(
@@ -41,12 +42,7 @@ export async function PATCH(
     const [existing] = await db
       .select()
       .from(savedFilters)
-      .where(
-        and(
-          eq(savedFilters.id, filterId),
-          eq(savedFilters.userId, session.user.id)
-        )
-      );
+      .where(and(eq(savedFilters.id, filterId), eq(savedFilters.userId, session.user.id)));
 
     if (!existing) {
       return NextResponse.json({ error: 'Filter not found' }, { status: 404 });
@@ -73,16 +69,13 @@ export async function PATCH(
     }
 
     console.error('Update saved filter error:', error);
-    return NextResponse.json(
-      { error: 'Failed to update saved filter' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to update saved filter' }, { status: 500 });
   }
 }
 
 /**
  * DELETE /api/saved-filters/[filterId]
- * 
+ *
  * Delete a saved filter
  */
 export async function DELETE(
@@ -101,12 +94,7 @@ export async function DELETE(
     const [existing] = await db
       .select()
       .from(savedFilters)
-      .where(
-        and(
-          eq(savedFilters.id, filterId),
-          eq(savedFilters.userId, session.user.id)
-        )
-      );
+      .where(and(eq(savedFilters.id, filterId), eq(savedFilters.userId, session.user.id)));
 
     if (!existing) {
       return NextResponse.json({ error: 'Filter not found' }, { status: 404 });
@@ -118,20 +106,18 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Delete saved filter error:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete saved filter' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to delete saved filter' }, { status: 500 });
   }
 }
 
 /**
- * POST /api/saved-filters/[filterId]/use
- * 
- * Increment usage count and update last used timestamp
+ * POST /api/saved-filters/[filterId]
+ *
+ * Legacy alias for usage bookkeeping. The canonical route is
+ * /api/saved-filters/[filterId]/use.
  */
 export async function POST(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ filterId: string }> }
 ) {
   try {
@@ -141,45 +127,15 @@ export async function POST(
     }
 
     const { filterId } = await params;
+    const updated = await markSavedFilterUsedForUser(filterId, session.user.id);
 
-    // Get current filter — scoped to the caller so they cannot touch others' filters
-    const [existing] = await db
-      .select()
-      .from(savedFilters)
-      .where(
-        and(
-          eq(savedFilters.id, filterId),
-          eq(savedFilters.userId, session.user.id)
-        )
-      );
-
-    if (!existing) {
+    if (!updated) {
       return NextResponse.json({ error: 'Filter not found' }, { status: 404 });
     }
-
-    // Increment usage count — scope the update to the caller too
-    const newCount = (parseInt(existing.usageCount) + 1).toString();
-
-    const [updated] = await db
-      .update(savedFilters)
-      .set({
-        usageCount: newCount,
-        lastUsedAt: new Date(),
-      })
-      .where(
-        and(
-          eq(savedFilters.id, filterId),
-          eq(savedFilters.userId, session.user.id)
-        )
-      )
-      .returning();
 
     return NextResponse.json({ filter: updated });
   } catch (error) {
     console.error('Update filter usage error:', error);
-    return NextResponse.json(
-      { error: 'Failed to update filter usage' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to update filter usage' }, { status: 500 });
   }
 }

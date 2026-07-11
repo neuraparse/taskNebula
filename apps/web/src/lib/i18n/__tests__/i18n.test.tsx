@@ -54,8 +54,7 @@ jest.mock('next-intl', () => {
   };
 });
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { NextIntlClientProvider, useTranslations } = require('next-intl') as {
+const { NextIntlClientProvider, useTranslations } = jest.requireMock('next-intl') as {
   NextIntlClientProvider: React.FC<{
     children: React.ReactNode;
     locale: string;

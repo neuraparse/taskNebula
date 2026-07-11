@@ -24,8 +24,9 @@ jest.mock('langfuse', () => {
 });
 
 function getMocks() {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const mod = require('langfuse') as { __mocks: { trace: jest.Mock; generation: jest.Mock; flushAsync: jest.Mock } };
+  const mod = jest.requireMock('langfuse') as {
+    __mocks: { trace: jest.Mock; generation: jest.Mock; flushAsync: jest.Mock };
+  };
   return mod.__mocks;
 }
 
@@ -78,11 +79,7 @@ describe('traceLlmCall', () => {
     expect(traceArg.metadata.provider).toBe('openai');
     expect(traceArg.metadata.organizationId).toBe('org-1');
     expect(traceArg.tags).toEqual(
-      expect.arrayContaining([
-        'feature:issue.draft',
-        'provider:openai',
-        'model:gpt-4o-mini',
-      ])
+      expect.arrayContaining(['feature:issue.draft', 'provider:openai', 'model:gpt-4o-mini'])
     );
 
     expect(m.generation).toHaveBeenCalledTimes(1);

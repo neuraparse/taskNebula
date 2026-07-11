@@ -122,8 +122,7 @@ describe('vector.withEfSearch', () => {
   });
 
   it('returns the inner block result through the transaction', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { db } = require('@tasknebula/db') as { db: Parameters<typeof withEfSearch>[0] };
+    const { db } = jest.requireMock('@tasknebula/db') as { db: Parameters<typeof withEfSearch>[0] };
     const result = await withEfSearch(db, 60, async () => 'hit');
     expect(result).toBe('hit');
   });

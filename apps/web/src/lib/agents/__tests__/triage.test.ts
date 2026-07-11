@@ -40,8 +40,7 @@ jest.mock('@/lib/agents/credentials', () => ({
   resolveProviderApiKeyFromSettings: jest.fn().mockReturnValue(null),
 }));
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const credentials = require('@/lib/agents/credentials') as {
+const credentials = jest.requireMock('@/lib/agents/credentials') as {
   resolveProviderApiKeyFromSettings: jest.Mock;
 };
 

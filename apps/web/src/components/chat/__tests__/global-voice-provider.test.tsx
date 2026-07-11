@@ -23,8 +23,7 @@ let registeredHandlers: Record<string, MockRoomHandler | undefined> = {};
 const defaultNavigatorUserAgent = global.navigator.userAgent;
 
 jest.mock('@livekit/components-react', () => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires -- required inside jest.mock factory
-  const React = require('react');
+  const React = jest.requireActual<typeof import('react')>('react');
   return {
     RoomContext: React.createContext(null),
     RoomAudioRenderer: () => null,
@@ -130,16 +129,18 @@ function TestHarness({
         canManageCalls: true,
       },
     });
-  }, [audioDeviceId, pendingMicrophoneStreamPromise, preflightMicrophoneStream, startWithMicrophone, voice]);
+  }, [
+    audioDeviceId,
+    pendingMicrophoneStreamPromise,
+    preflightMicrophoneStream,
+    startWithMicrophone,
+    voice,
+  ]);
 
   return null;
 }
 
-function ConnectionStateProbe({
-  onChange,
-}: {
-  onChange: (state: string) => void;
-}) {
+function ConnectionStateProbe({ onChange }: { onChange: (state: string) => void }) {
   const voice = useGlobalVoice();
 
   useEffect(() => {
@@ -149,11 +150,7 @@ function ConnectionStateProbe({
   return null;
 }
 
-function RuntimeErrorProbe({
-  onChange,
-}: {
-  onChange: (error: string | null) => void;
-}) {
+function RuntimeErrorProbe({ onChange }: { onChange: (error: string | null) => void }) {
   const voice = useGlobalVoice();
 
   useEffect(() => {
@@ -237,8 +234,7 @@ describe('GlobalVoiceProvider', () => {
   });
 
   it('does not disconnect the room when microphone startup falls back to default input', async () => {
-    mockCreateLocalAudioTrack
-      .mockRejectedValueOnce(new Error('Could not start audio source'))
+    mockCreateLocalAudioTrack.mockRejectedValueOnce(new Error('Could not start audio source'));
 
     renderWithQueryClient(
       <GlobalVoiceProvider>
@@ -416,7 +412,7 @@ describe('GlobalVoiceProvider', () => {
 
     await waitFor(() => {
       expect(onRuntimeErrorChange).toHaveBeenCalledWith(
-        'Browser is still waiting for microphone access. Check the browser microphone prompt or this site\'s permissions and allow microphone access. TaskNebula will unmute automatically if access succeeds.'
+        "Browser is still waiting for microphone access. Check the browser microphone prompt or this site's permissions and allow microphone access. TaskNebula will unmute automatically if access succeeds."
       );
     });
 
@@ -515,9 +511,7 @@ describe('GlobalVoiceProvider', () => {
     const originalUserAgent = global.navigator.userAgent;
     let resolveMicrophoneStream: ((stream: MediaStream) => void) | null = null;
 
-    global.navigator.permissions.query.mockRejectedValue(
-      new Error('permissions query failed')
-    );
+    global.navigator.permissions.query.mockRejectedValue(new Error('permissions query failed'));
     Object.defineProperty(global.navigator, 'userAgent', {
       configurable: true,
       value:
@@ -616,7 +610,7 @@ describe('GlobalVoiceProvider', () => {
 
     await waitFor(() => {
       expect(onRuntimeErrorChange).toHaveBeenCalledWith(
-        'Microphone access timed out while waiting for the browser prompt. Check the browser microphone prompt or this site\'s permissions and allow microphone access. If you approve it now, TaskNebula will still turn your mic on automatically. If no prompt appears, refresh this page or try the mic button again.'
+        "Microphone access timed out while waiting for the browser prompt. Check the browser microphone prompt or this site's permissions and allow microphone access. If you approve it now, TaskNebula will still turn your mic on automatically. If no prompt appears, refresh this page or try the mic button again."
       );
     });
   });
@@ -649,7 +643,7 @@ describe('GlobalVoiceProvider', () => {
 
     await waitFor(() => {
       expect(onRuntimeErrorChange).toHaveBeenCalledWith(
-        'Microphone access timed out while waiting for the browser prompt. Check the browser microphone prompt or this site\'s permissions and allow microphone access. If you approve it now, TaskNebula will still turn your mic on automatically. If no prompt appears, refresh this page or try the mic button again.'
+        "Microphone access timed out while waiting for the browser prompt. Check the browser microphone prompt or this site's permissions and allow microphone access. If you approve it now, TaskNebula will still turn your mic on automatically. If no prompt appears, refresh this page or try the mic button again."
       );
     });
 
@@ -714,12 +708,15 @@ describe('GlobalVoiceProvider', () => {
 
     await waitFor(() => {
       expect(onRuntimeErrorChange).toHaveBeenCalledWith(
-        'Microphone access timed out while waiting for the browser prompt. Check the browser microphone prompt or this site\'s permissions and allow microphone access. If you approve it now, TaskNebula will still turn your mic on automatically. If no prompt appears, refresh this page or try the mic button again.'
+        "Microphone access timed out while waiting for the browser prompt. Check the browser microphone prompt or this site's permissions and allow microphone access. If you approve it now, TaskNebula will still turn your mic on automatically. If no prompt appears, refresh this page or try the mic button again."
       );
     });
 
     await waitFor(() => {
-      expect(permissionStatus.addEventListener).toHaveBeenCalledWith('change', expect.any(Function));
+      expect(permissionStatus.addEventListener).toHaveBeenCalledWith(
+        'change',
+        expect.any(Function)
+      );
     });
 
     permissionStatus.state = 'granted';

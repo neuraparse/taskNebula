@@ -2,39 +2,33 @@
 
 # TaskNebula
 
-### AI-native project management that you can run in one Docker command
+### Self-hosted, AI-native project management in one Docker command
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/neuraparse/tasknebula?style=for-the-badge&logo=docker&color=2496ED)](https://hub.docker.com/r/neuraparse/tasknebula)
 [![Docker Image](https://img.shields.io/docker/v/neuraparse/tasknebula/latest?style=for-the-badge&logo=docker&label=image&color=2496ED)](https://hub.docker.com/r/neuraparse/tasknebula/tags)
-[![Image Size](https://img.shields.io/docker/image-size/neuraparse/tasknebula/latest?style=for-the-badge&logo=docker&label=size&color=0ea5e9)](https://hub.docker.com/r/neuraparse/tasknebula/tags)
 [![Platform](https://img.shields.io/badge/platform-linux%2Famd64-111827?style=for-the-badge&logo=linux)](#docker-image)
 [![Next.js 15](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![PostgreSQL 16](https://img.shields.io/badge/PostgreSQL-16-336791?style=for-the-badge&logo=postgresql)](https://www.postgresql.org/)
-[![30 languages](https://img.shields.io/badge/i18n-30%20languages-8b5cf6?style=for-the-badge)](#languages)
+[![30 languages](https://img.shields.io/badge/i18n-30%20languages-8b5cf6?style=for-the-badge)](#ai-privacy-and-languages)
 [![License MIT](https://img.shields.io/badge/License-MIT-16a34a?style=for-the-badge)](LICENSE)
 
-A self-hosted issue tracker that feels like Linear, scales like Jira, and
-ships with a real AI copilot. It is localized in 30 languages with
-browser/device auto-detection, native-name switching, and right-to-left
-support for Arabic and Hebrew. Bring your own OpenAI / Anthropic key, keep AI
-disabled by default, or run fully offline with the native planner.
+TaskNebula is an open-source issue tracker for teams that want Linear-style
+speed, Jira-style depth, and optional AI assistance without giving up control
+of their data. Run it with Docker, bring your own OpenAI or Anthropic key, or
+keep AI disabled and use the built-in native planner.
 
 <p>
   <a href="#quick-start"><img src="https://img.shields.io/badge/Run%20with-Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Run with Docker"/></a>
-  <a href="#2-docker-desktop-local-install"><img src="https://img.shields.io/badge/Docker%20Desktop-local%20install-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker Desktop local install"/></a>
   <a href="https://hub.docker.com/r/neuraparse/tasknebula"><img src="https://img.shields.io/badge/Open-Docker%20Hub-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Open Docker Hub"/></a>
   <a href="https://raw.githubusercontent.com/neuraparse/tasknebula/main/docker-compose.yml"><img src="https://img.shields.io/badge/View-compose.yml-111827?style=for-the-badge&logo=yaml&logoColor=white" alt="View compose file"/></a>
 </p>
 
-[Languages](#languages) ·
 [Quick start](#quick-start) ·
-[Docker image](#docker-image) ·
-[Architecture](#architecture) ·
-[AI](#ai-assistant-and-agents) ·
+[Mobile app](#mobile-app-coming-soon) ·
 [Features](#features) ·
-[Production](#production) ·
-[Report a bug](https://github.com/neuraparse/tasknebula/issues)
+[Docker image](#docker-image) ·
+[Deployment](#deployment) ·
+[Docs](#docs)
 
 <br/>
 
@@ -48,559 +42,119 @@ disabled by default, or run fully offline with the native planner.
 
 ---
 
-## Languages
-
-TaskNebula ships **30 languages** out of the box. On a visitor's first load the
-app auto-selects their language from the browser/device (`Accept-Language`,
-quality-weighted with regional → base fallback) and persists it; they can switch
-any time from the in-app language picker, which lists every locale by its native
-name. An explicit choice always wins over auto-detection.
-
-> English · Türkçe · Deutsch · Español · Français · Italiano · Português ·
-> Nederlands · Polski · Русский · Українська · Čeština · Svenska · Dansk · Suomi ·
-> Norsk Bokmål · Română · Magyar · Ελληνικά · Български · 简体中文 · 繁體中文 ·
-> 日本語 · 한국어 · हिन्दी · Bahasa Indonesia · ไทย · Tiếng Việt · العربية · עברית
-
-- **Right-to-left** layout for Arabic and Hebrew (Radix `DirectionProvider`).
-- **Zero hardcoded strings**: every user-facing string goes through `next-intl`;
-  a lint gate (`react/jsx-no-literals`) blocks new hardcoded text, and all 30
-  catalogs are key-parity verified (`node scripts/i18n-check.mjs`).
-- Add or change a locale in `apps/web/src/lib/i18n/config.ts` +
-  `apps/web/messages/<locale>.json`. The marketing landing page is intentionally
-  English-only.
-
----
-
-## Quick start
+## Quick Start
 
 Pick the path that matches where you are deploying.
 
-| Path                   | Best for                                            | Command / link                                                                                                                            |
-| ---------------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| **One-command Docker** | A fresh Linux VM or homelab box                     | `curl -fsSL https://raw.githubusercontent.com/neuraparse/tasknebula/main/scripts/quickstart.sh \| bash`                                   |
-| **Docker Desktop**     | Local Mac, Windows, or Linux PC with Docker Desktop | `curl -fsSLo compose.yml https://raw.githubusercontent.com/neuraparse/tasknebula/main/docker-compose.desktop.yml && docker compose up -d` |
-| **Pinned production**  | Repeatable self-hosted releases                     | `TASKNEBULA_IMAGE=neuraparse/tasknebula:0.7.11 docker compose up -d`                                                                      |
-| **Source build**       | Local development or patching                       | `docker compose up -d --build`                                                                                                            |
+| Path                   | Best for                         | Command                                                                                                                                   |
+| ---------------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **One-command Docker** | Fresh Linux VM or homelab server | `curl -fsSL https://raw.githubusercontent.com/neuraparse/tasknebula/main/scripts/quickstart.sh \| bash`                                   |
+| **Docker Desktop**     | Local Mac, Windows, or Linux PC  | `curl -fsSLo compose.yml https://raw.githubusercontent.com/neuraparse/tasknebula/main/docker-compose.desktop.yml && docker compose up -d` |
+| **Pinned production**  | Repeatable self-hosted releases  | `TASKNEBULA_IMAGE=neuraparse/tasknebula:<tag> docker compose up -d`                                                                       |
+| **Source build**       | Local development or patching    | `docker compose up -d --build`                                                                                                            |
 
-> 2026 note: Play with Docker is intentionally removed. Docker's
-> [community announcement](https://forums.docker.com/t/play-with-docker-is-deprecated-and-will-be-unavailable-starting-march-1-2026-learn-about-alternatives/151177)
-> says hosted Play with Docker was discontinued on March 1, 2026. Docker's
-> current [Compose install docs](https://docs.docker.com/compose/install/)
-> recommend Docker Desktop because it includes Docker Engine, Docker CLI, and
-> Docker Compose.
+After boot, open **http://localhost:3000** and finish the first-run admin
+wizard.
 
-### 1. One-command install
-
-The install script clones the repo if needed, provisions `.env`, generates
-strong `AUTH_SECRET` and `REDIS_PASSWORD` values, pulls the published image,
-and waits until the web container is healthy.
+### Update Or Pin
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/neuraparse/tasknebula/main/scripts/quickstart.sh | bash
+./scripts/tasknebula-backup.sh
+docker compose pull web && docker compose up -d
+
+TASKNEBULA_IMAGE=neuraparse/tasknebula:<tag> docker compose up -d
 ```
 
-Open **http://localhost:3000** and finish the first-run admin wizard.
-
-### 2. Docker Desktop local install
-
-Docker Desktop is the shortest path for a local PC demo in 2026. It ships
-Docker Engine, Docker CLI, and Docker Compose together, so you only need to
-download the standalone desktop Compose file and start it.
-
-macOS / Linux / WSL:
-
-```bash
-mkdir -p tasknebula && cd tasknebula
-curl -fsSLo compose.yml https://raw.githubusercontent.com/neuraparse/tasknebula/main/docker-compose.desktop.yml
-docker compose up -d
-```
-
-Windows PowerShell:
-
-```powershell
-New-Item -ItemType Directory -Force tasknebula
-Set-Location tasknebula
-Invoke-WebRequest https://raw.githubusercontent.com/neuraparse/tasknebula/main/docker-compose.desktop.yml -OutFile compose.yml
-docker compose up -d
-```
-
-Open **http://localhost:3000** and finish the first-run admin wizard. This
-desktop file uses local-only demo secrets and binds the web app to
-`127.0.0.1:3000`; use the server install below for anything internet-facing.
-
-### 3. Manual server install
-
-```bash
-git clone https://github.com/neuraparse/tasknebula.git
-cd tasknebula
-cp .env.example .env
-AUTH_SECRET="$(openssl rand -base64 32)"
-REDIS_PASSWORD="$(openssl rand -hex 32)"
-sed -i "s|^AUTH_SECRET=.*|AUTH_SECRET=${AUTH_SECRET}|" .env
-sed -i "s|^REDIS_PASSWORD=.*|REDIS_PASSWORD=${REDIS_PASSWORD}|" .env
-docker compose up -d
-```
-
-### Update, pin, or rebuild
-
-```bash
-./scripts/tasknebula-backup.sh                     # backup Postgres + uploads
-docker compose pull web && docker compose up -d    # update published image
-TASKNEBULA_IMAGE=neuraparse/tasknebula:0.7.11 \
-  docker compose up -d                             # pin a release
-docker compose up -d --build                       # build local source
-docker compose --profile cron up -d cron           # enable optional cron sidecar
-```
-
-Release notes live on the
-[GitHub releases page](https://github.com/neuraparse/tasknebula/releases).
-Super-admins also see Docker Hub update notifications in `Admin → Updates`
-and in the notification inbox. For immediate Docker Hub push detection, set
-`TASKNEBULA_DOCKER_HUB_WEBHOOK_SECRET` in `.env` and add this destination URL
-under the Docker Hub repository's **Webhooks** tab:
-
-```text
-https://your-domain.example/api/webhooks/docker-hub?secret=<TASKNEBULA_DOCKER_HUB_WEBHOOK_SECRET>
-```
-
-The optional cron sidecar also calls `/api/cron/version-check` every 6 hours
-when `CRON_SECRET` is configured, so installs still detect new images if the
-Docker Hub webhook is not exposed.
-Automatic self-update is deliberately opt-in: configure
-`TASKNEBULA_SELF_UPDATE_ENABLED=true`,
-`TASKNEBULA_SELF_UPDATE_WEBHOOK_URL`, and
-`TASKNEBULA_SELF_UPDATE_WEBHOOK_SECRET` only after you have a separate
-host-side updater that verifies the signed request, accepts it with
-`202 {"accepted":true,"jobId":"..."}`, backs up Postgres/uploads, pulls the
-digest-pinned target image, recreates `web`, calls the signed self-update
-callback with progress, and checks `/api/health`. The web container creates a
-pre-dispatch backup in `/app/backups` but is never given Docker socket access
-by the default Compose files.
-
----
-
-## Docker image
-
-| Item              | Value                                                                                                           |
-| ----------------- | --------------------------------------------------------------------------------------------------------------- |
-| Repository        | [`neuraparse/tasknebula`](https://hub.docker.com/r/neuraparse/tasknebula)                                       |
-| Recommended tag   | `0.7.11` for pinned installs, `latest` for quickstart demos                                                     |
-| Current platform  | `linux/amd64`                                                                                                   |
-| Runtime port      | `3000`                                                                                                          |
-| Health endpoint   | `GET /api/health`                                                                                               |
-| Required services | PostgreSQL 16 + `pgvector`, Redis 7                                                                             |
-| Optional services | LiveKit voice rooms, cron sidecar, SMTP, OAuth providers, OpenAI / Anthropic keys                               |
-| Immutable pulls   | Inspect the tag digest with `docker buildx imagetools inspect neuraparse/tasknebula:0.7.11` before pinning hard |
-
-The production Compose file keeps core services always-on and gates optional
-automation behind Docker Compose profiles. This keeps `docker compose up -d`
-safe for first-time users while still letting operators enable scheduled
-agents with `--profile cron`.
-
----
-
-## Architecture
-
-```mermaid
-flowchart LR
-  Browser[Browser / PWA] --> Web[Next.js 15 standalone server]
-  Web --> Postgres[(PostgreSQL 16 + pgvector)]
-  Web --> Redis[(Redis 7)]
-  Web -. optional .-> LiveKit[LiveKit voice rooms]
-  Web -. optional .-> SMTP[SMTP / email]
-  Web -. opt-in .-> LLM[OpenAI / Anthropic]
-  Cron[Cron sidecar] -. profile: cron .-> Web
-```
-
-**2026 self-hosting defaults**
-
-- Published Docker image first; local source builds stay available.
-- Non-root runtime container with Next.js standalone output.
-- Healthchecks for web, Postgres, Redis, and LiveKit.
-- Localhost-bound ports by default in production Compose.
-- Optional cron and collaboration services are explicit, not surprise-on.
-- AI credentials are DB-managed from the admin UI; env vars are fallback only.
-
----
-
-## AI assistant and agents
-
-AI is **off by default**. Enable it per workspace from Settings → AI &
-Agents in under 30 seconds. Everything is DB-managed — no env vars to
-redeploy when you rotate a key.
-
-### What you can do
-
-| Feature              | Where                                        | What it does                                                                                                                                                                 |
-| -------------------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Draft-with-AI**    | Backlog → _Draft with AI_                    | Type one prompt, the LLM decides whether it's one ticket or a whole checklist and returns structured, editable drafts. Select which to create in bulk.                       |
-| **Per-issue assist** | Issue detail sidebar → _AI assist_           | Summarise an issue with its comments, rewrite the description, suggest next steps, or propose labels. One click to Apply — no copy-paste.                                    |
-| **Native fallback**  | Built-in                                     | If no LLM credential is configured, TaskNebula still ships a deterministic heuristic planner so the buttons are never dead.                                                  |
-| **Platform keys**    | Admin → Agent control                        | Super-admins drop in an OpenAI / Anthropic key that all workspaces fall back to. AES-256-GCM encrypted, redacted previews, audit-logged rotations.                           |
-| **Workspace keys**   | Settings → AI & Agents → Quick setup         | Each workspace can override the platform default with its own key. Single Quick-Setup button writes provider + model + key + toggle in one transaction.                      |
-| **Model profiles**   | Settings → AI & Agents → Your model profiles | Save reusable provider+model+tuning combos (temperature, max tokens, reasoning effort) with full revision history. Saved profiles appear inline in the Quick Setup dropdown. |
-
-### Supported providers & models
-
-| Provider      | Models out of the box                                                                                                           |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| **OpenAI**    | `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `gpt-4`, `gpt-3.5-turbo`, `o1`, `o1-mini`, plus the speculative `gpt-5.x` family        |
-| **Anthropic** | `claude-fable-5`, `claude-opus-4-8`, `claude-opus-4-7`, `claude-sonnet-4-6`, `claude-haiku-4-5` (defaults to `claude-opus-4-8`) |
-| **Native**    | Built-in heuristic planner (no API calls)                                                                                       |
-
-### Fails gracefully
-
-Every failure — bad key, rate limit, model not available — becomes an
-**in-app notification** with a Sparkles/Bot icon, a one-line action hint
-("Open Settings → AI & Agents to add a key"), and a deep-link straight to
-the relevant project AI settings. Full audit trail in
-`Admin → Audit logs`.
-
----
-
-## What's new
-
-Latest release: **v0.7.11**. Highlights from the latest release line
-(`v0.6.5` → `v0.7.11`) — see the [CHANGELOG](CHANGELOG.md) for the complete
-history:
-
-- **Locale-safe product surfaces.** Dashboard, docs, issue/project views,
-  sprint screens, notification utilities, settings panels, and burndown charts
-  now render dates and app metadata through the active locale instead of
-  English-only fallbacks.
-- **IBM-modern app and email refresh.** Dashboard, project pages, project
-  settings, transactional mail templates, and admin email previews now share a
-  sharper IBM-style visual system with square geometry and stronger light-mode
-  contrast.
-- **Notifications, task assignments, search, and docs hardening.** Assignment
-  and project lifecycle notifications now use the unified mail-aware sender,
-  global search has broader hybrid scoring plus membership guards, and docs
-  loading avoids unnecessary payload work.
-- **Appearance persistence and agent activity.** Saved light/dark choices no
-  longer reset to system mode, the lower-left profile control uses one
-  consistent avatar shape, and issue agent activity/local runner surfaces ship
-  with 30-locale copy.
-- **AGENTOWNERS for coding-agent workflows.** MCP write tools now identify the
-  configured AI actor before creating or changing issues, assignments, status,
-  subtasks, and comments, so self-hosted teams can route Codex, Claude Code,
-  Gemini, Cursor, and unknown agents through local approval rules.
-- **Self-hosted invite URL fixes.** Admin-created-only installs no longer send
-  unusable passwordless invites for users who cannot complete signup, and invite
-  plus auth emails now use the configured app URL instead of localhost.
-- **Admin and project membership hardening.** Super-admin user views now show
-  email verification, last activity, organization/project memberships, and
-  safer user actions, while project settings expose add/remove membership flows
-  in a responsive layout.
-- **Invited signup and deploy-cache fixes.** Invited users can complete
-  signup with a valid token even in admin-created-only installs, verification
-  mail is issued after activation, and stale service-worker/session state is
-  cleared when an old deployment bundle hits a Server Action or chunk mismatch.
-- **Global-first UI.** The authenticated app is localized in 30 languages via
-  `next-intl`, auto-detects the browser/device language, persists the user's
-  explicit choice, and supports native-name switching plus RTL Arabic/Hebrew.
-- **Self-hosted update awareness and safe handoff.** Admins can see when their
-  running instance is behind the latest Docker Hub release, review image digest
-  metadata, turn update alerts on or off, use backup-first Docker commands, or
-  send an opt-in signed request to an external updater without granting Docker
-  socket access to the web container.
-- **Dashboard typography and layout controls.** The workspace dashboard now
-  keeps the classic TaskNebula font by default, adds IBM Plex as an Appearance
-  setting, and uses denser dashboard widgets for standup, catch-up, analytics,
-  recent activity, personal work, deadlines, and pinned items.
-- **Registration controls for private installs.** Super-admins can choose
-  **Allow registration**, **Invite only**, or **Admin-created accounts only** so
-  personal/self-hosted deployments do not accumulate unwanted user accounts.
-- **Agent governance and approval gates.** The recent line adds policy parsing,
-  approval permissions, agent approval routes, governance UI, audit-friendly
-  agent actions, and tighter organization/project permission checks.
-- **Realtime issue sync that survives scale-out.** Issue create/update/delete
-  now invalidates the right caches instantly, and the SSE event bus uses Redis
-  pub/sub with an in-process fallback for single-instance installs.
-- **Cleaner project and issue UI.** Project navigation labels are visible on
-  desktop, duplicate/dead view toolbar controls were removed, and issue-detail
-  picker values truncate cleanly without overlapping modal actions.
-- **Light/dark theming fix.** Modals, the Cmd+K palette, and popovers are now
-  legible in day mode with theme-aware surfaces and no dark-mode regression.
+For production hardening, reverse proxy setup, LiveKit, SMTP, OAuth, backups,
+and self-update details, use [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ---
 
 ## Features
 
-<table>
-<tr>
-<td width="33%" valign="top">
+| Area                   | Highlights                                                                                   |
+| ---------------------- | -------------------------------------------------------------------------------------------- |
+| **Project management** | Kanban, backlog, sprints, epics, subtasks, custom fields, issue links, attachments, imports  |
+| **Collaboration**      | Comments, mentions, watchers, reactions, docs, project chat, presence, email notifications   |
+| **AI assistance**      | Draft-with-AI, per-issue assist, native fallback planner, agent activity, approval gates     |
+| **Admin & governance** | Multi-org roles, granular permissions, audit logs, registration controls, webhooks, API keys |
+| **Analytics**          | Burndown, velocity, cycle time, throughput, project health, time-in-status, dashboard cards  |
+| **Self-hosting**       | Docker-first deploy, Postgres, Redis, health checks, optional LiveKit and cron sidecar       |
 
-### Project management
-
-- Kanban board with drag-and-drop
-- Stories, tasks, bugs, epics, subtasks
-- Sprints, burndown, velocity, **auto-rollover**
-- Custom fields, issue links, attachments
-- Custom workflows, transition rules
-- Backlog grooming + roadmap view
-- **Initiatives** + sub-initiatives + updates
-- **Time tracking**: estimate + actual + AI-suggest
-- **Importers**: Linear · Jira · GitHub · CSV
-
-</td>
-<td width="33%" valign="top">
-
-### Collaboration
-
-- Real-time presence & live activity feed
-- @mentions, watchers, reactions
-- **Tiptap + Yjs** collaborative editing
-- Threaded comments, email digests
-- LiveKit voice rooms for ad-hoc calls
-- Project-scoped chat + issue threads
-- In-app notification bell with deep-links
-- **Smart inbox** + catch-me-up digest
-- **Slack** integration (slash + emoji triage)
-
-</td>
-<td width="33%" valign="top">
-
-### Admin & governance
-
-- 30+ granular permission types
-- Role-based access + issue security levels
-- Registration modes: open, invite-only, admin-created
-- 63+ audit-log action types
-- API keys + signed webhooks (HMAC)
-- OAuth (GitHub / Google / custom)
-- Agent policy + approval gates
-- Self-hosted version/update banner
-- **SAML SSO + SCIM 2.0** scaffolding
-- **Trust center** + SIEM streaming
-- **EU AI Act Article 50** disclosures
-- Multi-org, per-org plan + feature flags
-
-</td>
-</tr>
-<tr>
-<td valign="top">
-
-### AI (opt-in)
-
-- Draft-with-AI (auto single/multi)
-- Per-issue summarise / rewrite / suggest
-- **Agent-as-assignee** (Linear Agent Protocol)
-- **Standup agent + janitor** (cron AI)
-- **AI workspace bootstrapper**
-- Platform + workspace credential chain
-- Saved model profiles w/ revisions
-- OpenAI + Anthropic first-class
-- Failure → notification w/ action hint
-
-</td>
-<td valign="top">
-
-### Analytics
-
-- Burndown, velocity, **cycle time**
-- Throughput + lead-time distributions
-- Project health scorecard
-- **Native charts** (Recharts)
-- **AI-generated insights** on dashboards
-- **Time-in-status** history per issue
-- CSV / JSON export
-- Sprint retrospectives view
-- Cross-project rollups
-
-</td>
-<td valign="top">
-
-### Developer experience
-
-- **Cmd+K omnibar** + facet chips + Ask AI
-- Keyboard shortcuts everywhere
-- Dark mode + mobile responsive
-- **i18n**: 30 languages, auto-detected
-- Route-level skeletons and polished loading states
-- SSE-based real-time sync
-- One-command production deploy
-- **Reverse-proxy clean** out of the box
-
-</td>
-</tr>
-</table>
+Importers currently cover **Jira**, **Linear**, **GitHub**, and **CSV**.
 
 ---
 
-## Mobile app
+## AI, Privacy, And Languages
 
-A native **iOS and Android** app for TaskNebula is on the way. It connects to
-your self-hosted server — you point it at your instance URL and sign in.
-
-> The mobile app will be **free and available to everyone**. Its source code is
-> **not part of this open-source repository** and is not published here.
-
----
-
-## Roadmap
-
-Per-item detail and status live in
-[`docs/ROADMAP_2026.md`](docs/ROADMAP_2026.md). Near-term focus:
-
-**Q3 2026 — Work-graph foundations**
-
-- Finish the Jira-parity layer UI (labels, components, versions/releases)
-  already shipped at the schema level.
-- Manual issue ranking (drag order) and enforced workflow transitions.
-- First-class **boards** (multiple boards per project, WIP limits, swimlanes)
-  and **JQL v2** saved filters.
-- Notification schemes with watcher / @mention / digest fan-out.
-- Platform hardening: tenant isolation (Postgres RLS, phase 1),
-  **API-key auth + scopes** (also un-breaks the MCP server), and pagination
-  for 10k+ issues.
-
-**Q4 2026 — Developer workflow + AI-native**
-
-- Deep **GitHub / GitLab** integration (branch / PR / commit ↔ issue,
-  auto-transitions on merge).
-- **Jira / Linear importer v2** (comments, attachments, hierarchy, custom
-  fields).
-- AI triage auto-apply + duplicate surfacing; semantic search and Ask-AI
-  last mile.
-- Agent approval queue + AI governance; **MCP server v2** (npm-published,
-  OAuth 2.1).
-- Auth hardening: OAuth DB adapter fix, 2FA / passkeys, session revocation.
-
-**Mobile** — a native iOS/Android client for self-hosted instances (see
-above) is in progress.
+- **AI is opt-in.** Configure workspace or platform keys from the admin UI.
+  OpenAI and Anthropic are supported, and the native planner works without an
+  external LLM.
+- **Self-hosted by default.** Your app, database, Redis, uploads, and optional
+  voice server run in your own environment.
+- **30 languages included.** Browser/device auto-detection, persisted language
+  choice, native-name switching, and RTL support for Arabic and Hebrew are
+  built in.
 
 ---
 
-## Tech stack
+## Mobile App Coming Soon
 
-<table>
-<tr>
-<td width="50%" valign="top">
-
-**Frontend**
-
-- Next.js 15 (App Router, RSC)
-- React 19
-- Tailwind CSS + shadcn/ui
-- TanStack Query for client state
-- SSE for realtime fan-out
-
-</td>
-<td width="50%" valign="top">
-
-**Backend**
-
-- Next.js API routes
-- Drizzle ORM
-- PostgreSQL 16 + `pgvector`
-- Redis 7 for cache + presence
-- LiveKit for voice rooms
-- Auth.js v5 (NextAuth)
-
-</td>
-</tr>
-</table>
+Native mobile apps are on the way. Availability details will be shared when
+they are ready.
 
 ---
 
-## Production
+## Docker Image
 
-TaskNebula is designed for a small, boring production surface: one web
-container, Postgres, Redis, optional LiveKit, and your reverse proxy.
+| Item              | Value                                                                             |
+| ----------------- | --------------------------------------------------------------------------------- |
+| Repository        | [`neuraparse/tasknebula`](https://hub.docker.com/r/neuraparse/tasknebula)         |
+| Recommended tag   | `latest` for demos; use a release tag for repeatable installs                     |
+| Platform          | `linux/amd64`                                                                     |
+| Runtime port      | `3000`                                                                            |
+| Health endpoint   | `GET /api/health`                                                                 |
+| Required services | PostgreSQL 16 + `pgvector`, Redis 7                                               |
+| Optional services | LiveKit voice rooms, cron sidecar, SMTP, OAuth providers, OpenAI / Anthropic keys |
+| Inspect digest    | `docker buildx imagetools inspect neuraparse/tasknebula:<tag>`                    |
 
-### Minimum production env
+---
+
+## Deployment
+
+TaskNebula is designed around a small production surface:
+
+- `web`: Next.js standalone runtime
+- `postgres`: PostgreSQL 16 with pgvector
+- `redis`: cache, realtime fan-out, and background coordination
+- optional `livekit`: voice rooms
+- optional `cron`: scheduled standup, janitor, and version-check jobs
+
+Common commands:
 
 ```bash
-cp .env.example .env
-
-AUTH_SECRET="$(openssl rand -base64 32)"
-REDIS_PASSWORD="$(openssl rand -hex 32)"
-LIVEKIT_API_SECRET="$(openssl rand -hex 32)"
-
-sed -i "s|^APP_URL=.*|APP_URL=https://tasks.yourcompany.com|" .env
-sed -i "s|^AUTH_SECRET=.*|AUTH_SECRET=${AUTH_SECRET}|" .env
-sed -i "s|^REDIS_PASSWORD=.*|REDIS_PASSWORD=${REDIS_PASSWORD}|" .env
-sed -i "s|^LIVEKIT_API_SECRET=.*|LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET}|" .env
+docker compose up -d
+docker compose ps
+curl -fsS http://localhost:3000/api/health
+docker compose logs -f web
 ```
 
-Then start the stack:
-
-```bash
-TASKNEBULA_IMAGE=neuraparse/tasknebula:0.7.11 docker compose up -d
-```
-
-### Reverse proxy
-
-Put TLS in front of the localhost-bound web port. Caddy is the smallest
-working example:
-
-```caddy
-tasks.yourcompany.com {
-    reverse_proxy localhost:3000
-}
-```
-
-See [.env.example](.env.example) for the full list — SMTP, OAuth, LiveKit
-tuning, optional platform LLM keys, etc. Everything AI-related can be
-configured through the UI **after** first boot; env vars are only a
-fallback for dev.
-
-### Production checklist
-
-| Area         | Recommendation                                                                                  |
-| ------------ | ----------------------------------------------------------------------------------------------- |
-| Image        | Pin `TASKNEBULA_IMAGE=neuraparse/tasknebula:0.7.11`; use `latest` only for demos                |
-| Secrets      | Generate `AUTH_SECRET`, `REDIS_PASSWORD`, and `LIVEKIT_API_SECRET` per install                  |
-| Network      | Keep Compose ports bound to `127.0.0.1`; expose through your reverse proxy                      |
-| Persistence  | Back up `postgres_data`, `redis_data`, and `uploads_data`                                       |
-| Updates      | Pull, restart, then verify `/api/health`; enable self-update only via a separate signed updater |
-| Automation   | Enable scheduled agents only with `docker compose --profile cron up -d cron`                    |
-| AI providers | Prefer Admin → Agent control over long-lived env keys                                           |
-
-### Voice rooms behind HTTPS
-
-LiveKit ships plain `ws://` on port 7880. A production browser loading
-TaskNebula over `https://` refuses mixed-content `wss://` without TLS in
-front. Put nginx (or Caddy) on its own subdomain:
-
-1. **DNS**: add `livekit.your-domain.example.com` → same server IP as the app.
-2. **nginx**: copy the ready template at
-   [`nginx/tasknebula-livekit.conf`](nginx/tasknebula-livekit.conf),
-   replace the hostname, then:
-   ```bash
-   sudo certbot --nginx -d livekit.your-domain.example.com
-   sudo nginx -t && sudo nginx -s reload
-   ```
-3. **.env**:
-   ```env
-   NEXT_PUBLIC_LIVEKIT_URL=wss://livekit.your-domain.example.com
-   ```
-4. **Rebuild** so the build-time env is baked into the Next bundle:
-   ```bash
-   docker compose up -d --build web
-   ```
-
-The template terminates TLS, forwards to `127.0.0.1:7880`, and keeps the
-WebSocket upgrade headers + 24h idle timeout LiveKit needs.
+Use `TASKNEBULA_IMAGE=neuraparse/tasknebula:<tag>` when you want a pinned,
+repeatable deployment. Use `latest` only for quick demos.
 
 ---
 
-## Operations
+## Docs
 
-| Task                | Command                                                         |
-| ------------------- | --------------------------------------------------------------- |
-| Start               | `docker compose up -d`                                          |
-| Stop                | `docker compose down`                                           |
-| Tail web logs       | `docker compose logs -f web`                                    |
-| Update image        | `docker compose pull web && docker compose up -d`               |
-| Rebuild from source | `docker compose up -d --build`                                  |
-| Check containers    | `docker compose ps`                                             |
-| Check app health    | `curl -fsS http://localhost:3000/api/health`                    |
-| Enable cron sidecar | `docker compose --profile cron up -d cron`                      |
-| Inspect image tag   | `docker buildx imagetools inspect neuraparse/tasknebula:0.7.11` |
-
-> `docker-compose.yml` defaults to `image: neuraparse/tasknebula:latest`.
-> Set `TASKNEBULA_IMAGE=neuraparse/tasknebula:0.7.11` in `.env` to pin.
+| Need                   | Link                                         |
+| ---------------------- | -------------------------------------------- |
+| Full release history   | [CHANGELOG.md](CHANGELOG.md)                 |
+| Deployment guide       | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)     |
+| Architecture           | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
+| Roadmap                | [docs/ROADMAP_2026.md](docs/ROADMAP_2026.md) |
+| Release process        | [docs/RELEASE.md](docs/RELEASE.md)           |
+| Contributing           | [CONTRIBUTING.md](CONTRIBUTING.md)           |
+| AI agent/project guide | [CLAUDE.md](CLAUDE.md)                       |
 
 ---
 
@@ -611,47 +165,23 @@ pnpm install
 docker compose up -d postgres redis
 cp .env.example .env
 cp apps/web/.env.example apps/web/.env.local
-cd packages/db && pnpm tsx scripts/migrate.ts && cd ../..
+pnpm db:migrate
 pnpm dev
 ```
 
-Run the full test suite:
+Before pushing code, run:
 
 ```bash
-pnpm --filter @tasknebula/web exec jest
+pnpm type-check
+pnpm lint
+pnpm test
 ```
 
-AI-related tests live under `apps/web/src/lib/ai/__tests__`,
-`apps/web/src/lib/agents/__tests__`, and
-`apps/web/src/app/api/ai/**/__tests__`.
-
 ---
-
-## Contributing
-
-Pull requests welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the
-branch model, commit conventions, and how to run the linter + tests
-locally before pushing.
-
-**AI-assisted contributors:** the repo ships a Claude Code setup —
-[`CLAUDE.md`](CLAUDE.md) (project guide, also exposed as `AGENTS.md` for
-other tools), plus subagents, slash commands, and path-scoped rules under
-[`.claude/`](.claude). Useful commands: `/verify` (type-check + lint +
-test), `/ship` (branch + commit + PR), `/db-migrate`, and `/release`.
-
-## Releasing
-
-Maintainers publish versioned images to Docker Hub
-(`neuraparse/tasknebula:<version>` + `latest`, `linux/amd64`). The
-step-by-step process — version bump, changelog, `docker build`/`push`,
-git tag, and GitHub release — is documented in
-[docs/RELEASE.md](docs/RELEASE.md).
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
-
----
+MIT. See [LICENSE](LICENSE).
 
 <div align="center">
 

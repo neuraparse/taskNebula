@@ -57,8 +57,7 @@ jest.mock('@/hooks/use-toast', () => ({
 // ---------------------------------------------------------------------------
 
 jest.mock('@livekit/components-react', () => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires -- required inside jest.mock factory
-  const React = require('react');
+  const React = jest.requireActual<typeof import('react')>('react');
   const RoomContext = React.createContext({});
   return {
     RoomContext,

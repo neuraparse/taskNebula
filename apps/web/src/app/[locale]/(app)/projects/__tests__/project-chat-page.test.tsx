@@ -77,8 +77,7 @@ jest.mock('@/hooks/use-toast', () => ({
 // Minimal LiveKit mocks — the chat page pulls in <ChatShell>, which imports
 // livekit modules at module scope. We don't exercise voice here.
 jest.mock('@livekit/components-react', () => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires -- required inside jest.mock factory
-  const React = require('react');
+  const React = jest.requireActual<typeof import('react')>('react');
   const RoomContext = React.createContext({
     connect: jest.fn(),
     disconnect: jest.fn(),
