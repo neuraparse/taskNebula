@@ -23,15 +23,35 @@
     "schemas": {
       "IssueType": {
         "type": "string",
-        "enum": ["story", "task", "bug", "epic"]
+        "enum": [
+          "story",
+          "task",
+          "bug",
+          "epic"
+        ]
       },
       "IssuePriority": {
         "type": "string",
-        "enum": ["critical", "high", "medium", "low", "none"]
+        "enum": [
+          "critical",
+          "high",
+          "medium",
+          "low",
+          "none"
+        ]
       },
       "IssueResolution": {
-        "type": ["string", "null"],
-        "enum": ["fixed", "wont_do", "duplicate", "cannot_reproduce", "done"]
+        "type": [
+          "string",
+          "null"
+        ],
+        "enum": [
+          "fixed",
+          "wont_do",
+          "duplicate",
+          "cannot_reproduce",
+          "done"
+        ]
       },
       "Issue": {
         "type": "object",
@@ -50,7 +70,10 @@
             "example": "PROJ-12"
           },
           "number": {
-            "type": ["integer", "null"]
+            "type": [
+              "integer",
+              "null"
+            ]
           },
           "type": {
             "$ref": "#/components/schemas/IssueType"
@@ -59,19 +82,31 @@
             "type": "string"
           },
           "description": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "statusId": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "priority": {
             "$ref": "#/components/schemas/IssuePriority"
           },
           "assigneeId": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "reporterId": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "labels": {
             "type": "array",
@@ -81,26 +116,44 @@
             "default": []
           },
           "sprintId": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "epicId": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "parentId": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "estimate": {
-            "type": ["number", "null"]
+            "type": [
+              "number",
+              "null"
+            ]
           },
           "dueDate": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "resolution": {
             "$ref": "#/components/schemas/IssueResolution"
           },
           "resolvedAt": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "createdAt": {
@@ -149,7 +202,10 @@
             "type": "integer"
           }
         },
-        "required": ["issues", "total"]
+        "required": [
+          "issues",
+          "total"
+        ]
       },
       "ErrorResponse": {
         "type": "object",
@@ -164,11 +220,20 @@
           },
           "details": {}
         },
-        "required": ["error"]
+        "required": [
+          "error"
+        ]
       },
       "IssueStatusCategory": {
         "type": "string",
-        "enum": ["backlog", "todo", "in_progress", "in_review", "done", "cancelled"]
+        "enum": [
+          "backlog",
+          "todo",
+          "in_progress",
+          "in_review",
+          "done",
+          "cancelled"
+        ]
       },
       "CreateIssueBody": {
         "type": "object",
@@ -185,7 +250,10 @@
             "maxLength": 500
           },
           "description": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "priority": {
             "allOf": [
@@ -232,7 +300,11 @@
             "type": "string"
           }
         },
-        "required": ["projectId", "type", "title"]
+        "required": [
+          "projectId",
+          "type",
+          "title"
+        ]
       },
       "UpdateIssueBody": {
         "type": "object",
@@ -255,7 +327,10 @@
             "$ref": "#/components/schemas/IssuePriority"
           },
           "assigneeId": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "labels": {
             "type": "array",
@@ -264,19 +339,34 @@
             }
           },
           "sprintId": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "epicId": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "parentId": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "estimate": {
-            "type": ["number", "null"]
+            "type": [
+              "number",
+              "null"
+            ]
           },
           "dueDate": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "customFields": {
@@ -305,7 +395,10 @@
             "type": "string"
           }
         },
-        "required": ["success", "id"]
+        "required": [
+          "success",
+          "id"
+        ]
       },
       "Comment": {
         "type": "object",
@@ -320,7 +413,10 @@
             "type": "string"
           },
           "parentId": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "mentions": {
             "type": "array",
@@ -345,10 +441,16 @@
             "format": "date-time"
           },
           "createdBy": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "updatedBy": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -387,7 +489,9 @@
             "default": false
           }
         },
-        "required": ["content"]
+        "required": [
+          "content"
+        ]
       },
       "Project": {
         "type": "object",
@@ -399,7 +503,10 @@
             "type": "string"
           },
           "teamId": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "key": {
             "type": "string",
@@ -409,7 +516,10 @@
             "type": "string"
           },
           "description": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "status": {
             "type": "string"
@@ -420,7 +530,10 @@
             "default": {}
           },
           "defaultWorkflowId": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "createdAt": {
             "type": "string",
@@ -434,7 +547,10 @@
             "type": "string"
           },
           "team": {
-            "type": ["object", "null"],
+            "type": [
+              "object",
+              "null"
+            ],
             "properties": {
               "id": {
                 "type": "string"
@@ -446,7 +562,11 @@
                 "type": "string"
               }
             },
-            "required": ["id", "name", "slug"]
+            "required": [
+              "id",
+              "name",
+              "slug"
+            ]
           }
         },
         "required": [
@@ -472,7 +592,10 @@
             "type": "string"
           },
           "projectId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "`null` = org-wide label"
           },
           "name": {
@@ -483,7 +606,10 @@
             "example": "#6B7280"
           },
           "description": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "createdAt": {
             "type": "string",
@@ -494,7 +620,10 @@
             "format": "date-time"
           },
           "createdBy": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -522,7 +651,9 @@
                 "description": "Number of issues currently tagged with this label."
               }
             },
-            "required": ["usageCount"]
+            "required": [
+              "usageCount"
+            ]
           }
         ]
       },
@@ -536,7 +667,9 @@
             }
           }
         },
-        "required": ["labels"]
+        "required": [
+          "labels"
+        ]
       },
       "CreateLabelBody": {
         "type": "object",
@@ -546,7 +679,10 @@
             "minLength": 1
           },
           "projectId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "minLength": 1,
             "description": "Optional project scope; `null`/absent = org-wide label."
           },
@@ -561,11 +697,17 @@
             "description": "Hex color like `#6B7280`. Defaults to `#6B7280`."
           },
           "description": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "maxLength": 2000
           }
         },
-        "required": ["organizationId", "name"]
+        "required": [
+          "organizationId",
+          "name"
+        ]
       },
       "UpdateLabelBody": {
         "type": "object",
@@ -581,7 +723,10 @@
             "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
           },
           "description": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "maxLength": 2000
           }
         }
@@ -596,11 +741,18 @@
             "type": "string"
           }
         },
-        "required": ["success", "id"]
+        "required": [
+          "success",
+          "id"
+        ]
       },
       "VersionStatus": {
         "type": "string",
-        "enum": ["unreleased", "released", "archived"]
+        "enum": [
+          "unreleased",
+          "released",
+          "archived"
+        ]
       },
       "ProjectVersion": {
         "type": "object",
@@ -619,22 +771,34 @@
             "example": "1.4.0"
           },
           "description": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "status": {
             "$ref": "#/components/schemas/VersionStatus"
           },
           "startDate": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "releaseDate": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time",
             "description": "Planned release date."
           },
           "releasedAt": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time",
             "description": "Stamped when the version is released."
           },
@@ -650,7 +814,10 @@
             "format": "date-time"
           },
           "createdBy": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -685,7 +852,10 @@
                 "description": "Issues with a non-null resolution."
               }
             },
-            "required": ["issueCount", "doneIssueCount"]
+            "required": [
+              "issueCount",
+              "doneIssueCount"
+            ]
           }
         ]
       },
@@ -702,7 +872,10 @@
             "type": "integer"
           }
         },
-        "required": ["versions", "total"]
+        "required": [
+          "versions",
+          "total"
+        ]
       },
       "VersionResponse": {
         "type": "object",
@@ -711,7 +884,9 @@
             "$ref": "#/components/schemas/ProjectVersion"
           }
         },
-        "required": ["version"]
+        "required": [
+          "version"
+        ]
       },
       "CreateVersionBody": {
         "type": "object",
@@ -722,19 +897,30 @@
             "maxLength": 120
           },
           "description": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "maxLength": 10000
           },
           "startDate": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "releaseDate": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           }
         },
-        "required": ["name"]
+        "required": [
+          "name"
+        ]
       },
       "UpdateVersionBody": {
         "type": "object",
@@ -745,15 +931,24 @@
             "maxLength": 120
           },
           "description": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "maxLength": 10000
           },
           "startDate": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "releaseDate": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "status": {
@@ -778,7 +973,9 @@
             "type": "boolean"
           }
         },
-        "required": ["success"]
+        "required": [
+          "success"
+        ]
       },
       "ReleaseVersionResponse": {
         "type": "object",
@@ -790,7 +987,10 @@
             "type": "integer"
           }
         },
-        "required": ["version", "movedIssueCount"]
+        "required": [
+          "version",
+          "movedIssueCount"
+        ]
       },
       "ReleaseVersionBody": {
         "type": "object",
@@ -817,7 +1017,10 @@
             }
           }
         },
-        "required": ["fixVersions", "affectsVersions"]
+        "required": [
+          "fixVersions",
+          "affectsVersions"
+        ]
       },
       "SetIssueVersionsBody": {
         "type": "object",
@@ -839,7 +1042,11 @@
       },
       "ComponentDefaultAssigneeType": {
         "type": "string",
-        "enum": ["project_default", "component_lead", "unassigned"]
+        "enum": [
+          "project_default",
+          "component_lead",
+          "unassigned"
+        ]
       },
       "Component": {
         "type": "object",
@@ -857,10 +1064,16 @@
             "type": "string"
           },
           "description": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "leadId": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "defaultAssigneeType": {
             "$ref": "#/components/schemas/ComponentDefaultAssigneeType"
@@ -902,7 +1115,9 @@
                 "type": "integer"
               }
             },
-            "required": ["issueCount"]
+            "required": [
+              "issueCount"
+            ]
           }
         ]
       },
@@ -919,7 +1134,10 @@
             "type": "integer"
           }
         },
-        "required": ["components", "total"]
+        "required": [
+          "components",
+          "total"
+        ]
       },
       "ComponentResponse": {
         "type": "object",
@@ -928,7 +1146,9 @@
             "$ref": "#/components/schemas/Component"
           }
         },
-        "required": ["component"]
+        "required": [
+          "component"
+        ]
       },
       "CreateComponentBody": {
         "type": "object",
@@ -939,11 +1159,17 @@
             "maxLength": 120
           },
           "description": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "maxLength": 10000
           },
           "leadId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Must be an active member of the organization."
           },
           "defaultAssigneeType": {
@@ -957,7 +1183,9 @@
             ]
           }
         },
-        "required": ["name"]
+        "required": [
+          "name"
+        ]
       },
       "UpdateComponentBody": {
         "type": "object",
@@ -968,11 +1196,17 @@
             "maxLength": 120
           },
           "description": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "maxLength": 10000
           },
           "leadId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Must be an active member of the organization."
           },
           "defaultAssigneeType": {
@@ -993,7 +1227,9 @@
             }
           }
         },
-        "required": ["components"]
+        "required": [
+          "components"
+        ]
       },
       "SetIssueComponentsBody": {
         "type": "object",
@@ -1006,7 +1242,9 @@
             "description": "Replaces the issue's component set. Every component must belong to the issue's project."
           }
         },
-        "required": ["componentIds"]
+        "required": [
+          "componentIds"
+        ]
       },
       "CurrentUser": {
         "type": "object",
@@ -1015,22 +1253,41 @@
             "type": "string"
           },
           "name": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "email": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "image": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "isSuperAdmin": {
             "type": "boolean"
           },
           "status": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
-        "required": ["id", "name", "email", "image", "isSuperAdmin", "status"]
+        "required": [
+          "id",
+          "name",
+          "email",
+          "image",
+          "isSuperAdmin",
+          "status"
+        ]
       },
       "SearchResultIssue": {
         "type": "object",
@@ -1045,34 +1302,58 @@
             "type": "string"
           },
           "description": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "status": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "priority": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "type": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "labels": {
-            "type": ["array", "null"],
+            "type": [
+              "array",
+              "null"
+            ],
             "items": {
               "type": "string"
             }
           },
           "assigneeId": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "reporterId": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "projectId": {
             "type": "string"
           },
           "sprintId": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "createdAt": {
             "type": "string",
@@ -1120,7 +1401,12 @@
             "additionalProperties": {}
           }
         },
-        "required": ["results", "count", "query", "criteria"]
+        "required": [
+          "results",
+          "count",
+          "query",
+          "criteria"
+        ]
       },
       "SearchBody": {
         "type": "object",
@@ -1153,14 +1439,21 @@
             "default": 0
           }
         },
-        "required": ["q", "organizationId"]
+        "required": [
+          "q",
+          "organizationId"
+        ]
       },
       "HealthResponse": {
         "type": "object",
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["healthy", "degraded", "unhealthy"]
+            "enum": [
+              "healthy",
+              "degraded",
+              "unhealthy"
+            ]
           },
           "timestamp": {
             "type": "string",
@@ -1188,7 +1481,13 @@
                 "type": "string"
               }
             },
-            "required": ["database", "memory", "redis", "livekit", "smtp"]
+            "required": [
+              "database",
+              "memory",
+              "redis",
+              "livekit",
+              "smtp"
+            ]
           },
           "details": {
             "type": "object",
@@ -1200,7 +1499,12 @@
             "type": "string"
           }
         },
-        "required": ["status", "timestamp", "uptime", "checks"]
+        "required": [
+          "status",
+          "timestamp",
+          "uptime",
+          "checks"
+        ]
       }
     },
     "parameters": {}
@@ -1210,7 +1514,9 @@
       "get": {
         "summary": "List issues",
         "description": "Returns issues visible to the authenticated user. Optionally filter by project, assignee, status category, sprint, parent, or type.",
-        "tags": ["Issues"],
+        "tags": [
+          "Issues"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -1302,7 +1608,9 @@
       "post": {
         "summary": "Create an issue",
         "description": "Creates a new issue in the given project. The caller must have `create` permission for the project.",
-        "tags": ["Issues"],
+        "tags": [
+          "Issues"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -1376,7 +1684,9 @@
       "get": {
         "summary": "Get an issue",
         "description": "Fetch a single issue by id.",
-        "tags": ["Issues"],
+        "tags": [
+          "Issues"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -1438,7 +1748,9 @@
       "patch": {
         "summary": "Update an issue",
         "description": "Partial update. The required permission depends on which fields are changed (edit, assign, transition, schedule).",
-        "tags": ["Issues"],
+        "tags": [
+          "Issues"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -1519,7 +1831,9 @@
       },
       "delete": {
         "summary": "Delete an issue",
-        "tags": ["Issues"],
+        "tags": [
+          "Issues"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -1582,7 +1896,9 @@
     "/api/issues/{issueId}/comments": {
       "post": {
         "summary": "Comment on an issue",
-        "tags": ["Comments"],
+        "tags": [
+          "Comments"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -1646,7 +1962,9 @@
       "get": {
         "summary": "List projects accessible to the current user",
         "description": "Returns projects from organizations the caller is a member of, optionally narrowed by `organizationId` and/or `teamId`. Super admins see all projects in the scope.",
-        "tags": ["Projects"],
+        "tags": [
+          "Projects"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -1711,7 +2029,9 @@
       "get": {
         "summary": "List labels for an organization",
         "description": "Returns the organization's labels with per-label usage counts, ordered by name. When `projectId` is given, returns that project's labels plus org-wide labels. `q` filters by case-insensitive name prefix.",
-        "tags": ["Labels"],
+        "tags": [
+          "Labels"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -1801,7 +2121,9 @@
       "post": {
         "summary": "Create a label",
         "description": "Creates an org-wide label, or a project-scoped one when `projectId` is provided. Label names are unique per (organization, project) scope.",
-        "tags": ["Labels"],
+        "tags": [
+          "Labels"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -1885,7 +2207,9 @@
       "patch": {
         "summary": "Update a label",
         "description": "Rename / recolor / re-describe a label. On rename, the legacy `issues.labels` JSONB arrays in the organization are rewritten in the same transaction.",
-        "tags": ["Labels"],
+        "tags": [
+          "Labels"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -1977,7 +2301,9 @@
       "delete": {
         "summary": "Delete a label",
         "description": "Deletes the label. Issue associations cascade, and the name is removed from the legacy `issues.labels` JSONB arrays org-wide in the same transaction.",
-        "tags": ["Labels"],
+        "tags": [
+          "Labels"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -2041,7 +2367,9 @@
       "get": {
         "summary": "List versions for a project",
         "description": "Returns the project's versions ordered by sort order then name, with per-version issue counts (`doneIssueCount` = issues with a non-null resolution).",
-        "tags": ["Versions"],
+        "tags": [
+          "Versions"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -2094,7 +2422,9 @@
       "post": {
         "summary": "Create a version",
         "description": "Creates a version in the project. Requires project-manage permission. Version names are unique per project; the new version is appended to the sort order.",
-        "tags": ["Versions"],
+        "tags": [
+          "Versions"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -2188,7 +2518,9 @@
     "/api/projects/{projectId}/versions/{versionId}": {
       "get": {
         "summary": "Get a version",
-        "tags": ["Versions"],
+        "tags": [
+          "Versions"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -2249,7 +2581,9 @@
       "patch": {
         "summary": "Update a version",
         "description": "Partial update. Transitioning `status` to `released` stamps `releasedAt` (if unset); back to `unreleased` clears it. Requires project-manage permission.",
-        "tags": ["Versions"],
+        "tags": [
+          "Versions"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -2350,7 +2684,9 @@
       "delete": {
         "summary": "Delete a version",
         "description": "Deletes the version. Issue fix/affects associations cascade. Requires project-manage permission.",
-        "tags": ["Versions"],
+        "tags": [
+          "Versions"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -2423,7 +2759,9 @@
       "post": {
         "summary": "Release a version",
         "description": "Marks the version as released (stamps `releasedAt`). Optionally re-points unresolved issues' fix-version to another version of the same project via `moveOpenIssuesToVersionId`. The body may be omitted entirely. Requires project-manage permission.",
-        "tags": ["Versions"],
+        "tags": [
+          "Versions"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -2515,7 +2853,9 @@
     "/api/issues/{issueId}/versions": {
       "get": {
         "summary": "List fix and affects versions for an issue",
-        "tags": ["Versions"],
+        "tags": [
+          "Versions"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -2577,7 +2917,9 @@
       "put": {
         "summary": "Replace an issue's fix and/or affects versions",
         "description": "Replaces the provided association set(s). At least one of `fixVersionIds` or `affectsVersionIds` must be provided; every version must belong to the issue's project.",
-        "tags": ["Versions"],
+        "tags": [
+          "Versions"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -2661,7 +3003,9 @@
       "get": {
         "summary": "List components for a project",
         "description": "Returns the project's components ordered by name, with per-component issue counts.",
-        "tags": ["Components"],
+        "tags": [
+          "Components"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -2714,7 +3058,9 @@
       "post": {
         "summary": "Create a component",
         "description": "Creates a component in the project. Requires project-manage permission. Component names are unique per project; `leadId` must be an active member of the organization.",
-        "tags": ["Components"],
+        "tags": [
+          "Components"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -2808,7 +3154,9 @@
     "/api/projects/{projectId}/components/{componentId}": {
       "get": {
         "summary": "Get a component",
-        "tags": ["Components"],
+        "tags": [
+          "Components"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -2869,7 +3217,9 @@
       "patch": {
         "summary": "Update a component",
         "description": "Partial update, including archiving via `archived`. Requires project-manage permission.",
-        "tags": ["Components"],
+        "tags": [
+          "Components"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -2970,7 +3320,9 @@
       "delete": {
         "summary": "Delete a component",
         "description": "Deletes the component. Issue associations cascade. Requires project-manage permission.",
-        "tags": ["Components"],
+        "tags": [
+          "Components"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -3042,7 +3394,9 @@
     "/api/issues/{issueId}/components": {
       "get": {
         "summary": "List components linked to an issue",
-        "tags": ["Components"],
+        "tags": [
+          "Components"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -3104,7 +3458,9 @@
       "put": {
         "summary": "Replace an issue's components",
         "description": "Replaces the issue's component set. Every component must belong to the issue's project.",
-        "tags": ["Components"],
+        "tags": [
+          "Components"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -3188,7 +3544,9 @@
       "get": {
         "summary": "Get the current authenticated user",
         "description": "Returns the authenticated user with their super-admin and account status. Equivalent to the legacy `/api/user/me` endpoint.",
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -3232,7 +3590,9 @@
       "post": {
         "summary": "Execute a JQL-style search",
         "description": "Run a structured search query against issues. Accepts JQL-style expressions like `assignee = me AND status = \"In Progress\"`.",
-        "tags": ["Search"],
+        "tags": [
+          "Search"
+        ],
         "security": [
           {
             "cookieAuth": []
@@ -3286,7 +3646,9 @@
       "get": {
         "summary": "Service health check",
         "description": "Returns the health status of the application — database, memory, redis, livekit and smtp checks. Used by container orchestrators and monitoring.",
-        "tags": ["Health"],
+        "tags": [
+          "Health"
+        ],
         "security": [],
         "responses": {
           "200": {

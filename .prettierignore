@@ -8,3 +8,5 @@ coverage
 .env*
 pnpm-lock.yaml
 apps/web/public/openapi.json
+mobile/src/api/openapi.json
+mobile/src/api/openapi.generated.ts

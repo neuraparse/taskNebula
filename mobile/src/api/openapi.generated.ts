@@ -4,2268 +4,2268 @@
  */
 
 export interface paths {
-  '/api/issues': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/issues": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List issues
+         * @description Returns issues visible to the authenticated user. Optionally filter by project, assignee, status category, sprint, parent, or type.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    projectId?: string;
+                    assigneeId?: string;
+                    status?: components["schemas"]["IssueStatusCategory"];
+                    sprintId?: string;
+                    parentId?: string;
+                    type?: components["schemas"]["IssueType"];
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description A list of issues. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["IssueListResponse"];
+                    };
+                };
+                /** @description Unauthorized. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Forbidden — caller has no access to the requested project. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Create an issue
+         * @description Creates a new issue in the given project. The caller must have `create` permission for the project.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateIssueBody"];
+                };
+            };
+            responses: {
+                /** @description The created issue. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Issue"];
+                    };
+                };
+                /** @description Validation failed. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Forbidden — insufficient permissions to create issues. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Project not found. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * List issues
-     * @description Returns issues visible to the authenticated user. Optionally filter by project, assignee, status category, sprint, parent, or type.
-     */
-    get: {
-      parameters: {
-        query?: {
-          projectId?: string;
-          assigneeId?: string;
-          status?: components['schemas']['IssueStatusCategory'];
-          sprintId?: string;
-          parentId?: string;
-          type?: components['schemas']['IssueType'];
+    "/api/issues/{issueId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description A list of issues. */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['IssueListResponse'];
-          };
+        /**
+         * Get an issue
+         * @description Fetch a single issue by id.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    issueId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The issue. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Issue"];
+                    };
+                };
+                /** @description Unauthorized. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Forbidden — caller has no view access. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Issue not found. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
         };
-        /** @description Unauthorized. */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
+        put?: never;
+        post?: never;
+        /** Delete an issue */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    issueId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Issue deleted. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DeleteIssueResponse"];
+                    };
+                };
+                /** @description Unauthorized. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Forbidden — insufficient permissions. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Issue not found. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
         };
-        /** @description Forbidden — caller has no access to the requested project. */
-        403: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
+        options?: never;
+        head?: never;
+        /**
+         * Update an issue
+         * @description Partial update. The required permission depends on which fields are changed (edit, assign, transition, schedule).
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    issueId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateIssueBody"];
+                };
+            };
+            responses: {
+                /** @description The updated issue. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Issue"];
+                    };
+                };
+                /** @description Validation failed. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Forbidden — missing permission for one of the requested changes. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Issue or referenced status not found. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
         };
-      };
+        trace?: never;
     };
-    put?: never;
-    /**
-     * Create an issue
-     * @description Creates a new issue in the given project. The caller must have `create` permission for the project.
-     */
-    post: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody: {
-        content: {
-          'application/json': components['schemas']['CreateIssueBody'];
+    "/api/issues/{issueId}/comments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-      };
-      responses: {
-        /** @description The created issue. */
-        201: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['Issue'];
-          };
+        get?: never;
+        put?: never;
+        /** Comment on an issue */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    issueId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateCommentBody"];
+                };
+            };
+            responses: {
+                /** @description The created comment. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Comment"];
+                    };
+                };
+                /** @description Validation failed. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
         };
-        /** @description Validation failed. */
-        400: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Unauthorized. */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Forbidden — insufficient permissions to create issues. */
-        403: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Project not found. */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/issues/{issueId}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/projects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List projects accessible to the current user
+         * @description Returns projects from organizations the caller is a member of, optionally narrowed by `organizationId` and/or `teamId`. Super admins see all projects in the scope.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    organizationId?: string;
+                    teamId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description A list of projects. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Project"][];
+                    };
+                };
+                /** @description Unauthorized. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Forbidden — caller is not in the requested organization. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * Get an issue
-     * @description Fetch a single issue by id.
-     */
-    get: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          issueId: string;
+    "/api/labels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description The issue. */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['Issue'];
-          };
+        /**
+         * List labels for an organization
+         * @description Returns the organization's labels with per-label usage counts, ordered by name. When `projectId` is given, returns that project's labels plus org-wide labels. `q` filters by case-insensitive name prefix.
+         */
+        get: {
+            parameters: {
+                query: {
+                    organizationId: string;
+                    projectId?: string;
+                    q?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description A list of labels with usage counts. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["LabelListResponse"];
+                    };
+                };
+                /** @description `organizationId` is required. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Forbidden — caller is not an active member of the organization. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Project not found in the organization. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
         };
-        /** @description Unauthorized. */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
+        put?: never;
+        /**
+         * Create a label
+         * @description Creates an org-wide label, or a project-scoped one when `projectId` is provided. Label names are unique per (organization, project) scope.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateLabelBody"];
+                };
+            };
+            responses: {
+                /** @description The created label. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Label"];
+                    };
+                };
+                /** @description Validation failed. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Forbidden — caller is not an active member of the organization. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Project not found in the organization. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description A label with this name already exists in this scope. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
         };
-        /** @description Forbidden — caller has no view access. */
-        403: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Issue not found. */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    put?: never;
-    post?: never;
-    /** Delete an issue */
-    delete: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          issueId: string;
+    "/api/labels/{labelId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description Issue deleted. */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['DeleteIssueResponse'];
-          };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete a label
+         * @description Deletes the label. Issue associations cascade, and the name is removed from the legacy `issues.labels` JSONB arrays org-wide in the same transaction.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    labelId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Label deleted. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DeleteLabelResponse"];
+                    };
+                };
+                /** @description Unauthorized. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Forbidden — caller is not a member of the label's organization. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Label not found. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
         };
-        /** @description Unauthorized. */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
+        options?: never;
+        head?: never;
+        /**
+         * Update a label
+         * @description Rename / recolor / re-describe a label. On rename, the legacy `issues.labels` JSONB arrays in the organization are rewritten in the same transaction.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    labelId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateLabelBody"];
+                };
+            };
+            responses: {
+                /** @description The updated label. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Label"];
+                    };
+                };
+                /** @description Validation failed. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Forbidden — caller is not a member of the label's organization. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Label not found. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description A label with this name already exists in this scope. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
         };
-        /** @description Forbidden — insufficient permissions. */
-        403: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Issue not found. */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
+        trace?: never;
     };
-    options?: never;
-    head?: never;
-    /**
-     * Update an issue
-     * @description Partial update. The required permission depends on which fields are changed (edit, assign, transition, schedule).
-     */
-    patch: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          issueId: string;
+    "/api/projects/{projectId}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        cookie?: never;
-      };
-      requestBody: {
-        content: {
-          'application/json': components['schemas']['UpdateIssueBody'];
+        /**
+         * List versions for a project
+         * @description Returns the project's versions ordered by sort order then name, with per-version issue counts (`doneIssueCount` = issues with a non-null resolution).
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description A list of versions with issue counts. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["VersionListResponse"];
+                    };
+                };
+                /** @description Unauthorized. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Project not found (or not visible to the caller). */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
         };
-      };
-      responses: {
-        /** @description The updated issue. */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['Issue'];
-          };
+        put?: never;
+        /**
+         * Create a version
+         * @description Creates a version in the project. Requires project-manage permission. Version names are unique per project; the new version is appended to the sort order.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateVersionBody"];
+                };
+            };
+            responses: {
+                /** @description The created version. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["VersionResponse"];
+                    };
+                };
+                /** @description Validation failed. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Forbidden — caller cannot manage the project. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Project not found (or not visible to the caller). */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description A version with this name already exists in this project. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
         };
-        /** @description Validation failed. */
-        400: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Unauthorized. */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Forbidden — missing permission for one of the requested changes. */
-        403: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Issue or referenced status not found. */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    trace?: never;
-  };
-  '/api/issues/{issueId}/comments': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/projects/{projectId}/versions/{versionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a version */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                    versionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The version. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["VersionResponse"];
+                    };
+                };
+                /** @description Unauthorized. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Project or version not found. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        /**
+         * Delete a version
+         * @description Deletes the version. Issue fix/affects associations cascade. Requires project-manage permission.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                    versionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Version deleted. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SuccessResponse"];
+                    };
+                };
+                /** @description Unauthorized. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Forbidden — caller cannot manage the project. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Project or version not found. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /**
+         * Update a version
+         * @description Partial update. Transitioning `status` to `released` stamps `releasedAt` (if unset); back to `unreleased` clears it. Requires project-manage permission.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                    versionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateVersionBody"];
+                };
+            };
+            responses: {
+                /** @description The updated version. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["VersionResponse"];
+                    };
+                };
+                /** @description Validation failed. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Forbidden — caller cannot manage the project. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Project or version not found. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description A version with this name already exists in this project. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Comment on an issue */
-    post: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          issueId: string;
+    "/api/projects/{projectId}/versions/{versionId}/release": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        cookie?: never;
-      };
-      requestBody: {
-        content: {
-          'application/json': components['schemas']['CreateCommentBody'];
+        get?: never;
+        put?: never;
+        /**
+         * Release a version
+         * @description Marks the version as released (stamps `releasedAt`). Optionally re-points unresolved issues' fix-version to another version of the same project via `moveOpenIssuesToVersionId`. The body may be omitted entirely. Requires project-manage permission.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                    versionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ReleaseVersionBody"];
+                };
+            };
+            responses: {
+                /** @description The released version and the number of issues moved. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ReleaseVersionResponse"];
+                    };
+                };
+                /** @description Invalid JSON body, validation failed, or the move target is invalid (same version or not in this project). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Forbidden — caller cannot manage the project. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Project or version not found. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
         };
-      };
-      responses: {
-        /** @description The created comment. */
-        201: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['Comment'];
-          };
-        };
-        /** @description Validation failed. */
-        400: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Unauthorized. */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/projects': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/issues/{issueId}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List fix and affects versions for an issue */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    issueId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The issue's fix and affects versions. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["IssueVersionsResponse"];
+                    };
+                };
+                /** @description Unauthorized. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Forbidden — caller has no view access. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Issue not found. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        /**
+         * Replace an issue's fix and/or affects versions
+         * @description Replaces the provided association set(s). At least one of `fixVersionIds` or `affectsVersionIds` must be provided; every version must belong to the issue's project.
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    issueId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SetIssueVersionsBody"];
+                };
+            };
+            responses: {
+                /** @description The issue's updated fix and affects versions. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["IssueVersionsResponse"];
+                    };
+                };
+                /** @description Validation failed, or some versions do not belong to the issue's project (response includes `invalidIds`). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Forbidden — caller cannot edit the issue. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Issue not found. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * List projects accessible to the current user
-     * @description Returns projects from organizations the caller is a member of, optionally narrowed by `organizationId` and/or `teamId`. Super admins see all projects in the scope.
-     */
-    get: {
-      parameters: {
-        query?: {
-          organizationId?: string;
-          teamId?: string;
+    "/api/projects/{projectId}/components": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description A list of projects. */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['Project'][];
-          };
+        /**
+         * List components for a project
+         * @description Returns the project's components ordered by name, with per-component issue counts.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description A list of components with issue counts. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ComponentListResponse"];
+                    };
+                };
+                /** @description Unauthorized. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Project not found (or not visible to the caller). */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
         };
-        /** @description Unauthorized. */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
+        put?: never;
+        /**
+         * Create a component
+         * @description Creates a component in the project. Requires project-manage permission. Component names are unique per project; `leadId` must be an active member of the organization.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateComponentBody"];
+                };
+            };
+            responses: {
+                /** @description The created component. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ComponentResponse"];
+                    };
+                };
+                /** @description Validation failed, or the lead is not an active organization member. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Forbidden — caller cannot manage the project. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Project not found (or not visible to the caller). */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description A component with this name already exists in this project. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
         };
-        /** @description Forbidden — caller is not in the requested organization. */
-        403: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/labels': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/projects/{projectId}/components/{componentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a component */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                    componentId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The component. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ComponentResponse"];
+                    };
+                };
+                /** @description Unauthorized. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Project or component not found. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        /**
+         * Delete a component
+         * @description Deletes the component. Issue associations cascade. Requires project-manage permission.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                    componentId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Component deleted. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SuccessResponse"];
+                    };
+                };
+                /** @description Unauthorized. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Forbidden — caller cannot manage the project. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Project or component not found. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /**
+         * Update a component
+         * @description Partial update, including archiving via `archived`. Requires project-manage permission.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                    componentId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateComponentBody"];
+                };
+            };
+            responses: {
+                /** @description The updated component. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ComponentResponse"];
+                    };
+                };
+                /** @description Validation failed, or the lead is not an active organization member. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Forbidden — caller cannot manage the project. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Project or component not found. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description A component with this name already exists in this project. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        trace?: never;
     };
-    /**
-     * List labels for an organization
-     * @description Returns the organization's labels with per-label usage counts, ordered by name. When `projectId` is given, returns that project's labels plus org-wide labels. `q` filters by case-insensitive name prefix.
-     */
-    get: {
-      parameters: {
-        query: {
-          organizationId: string;
-          projectId?: string;
-          q?: string;
+    "/api/issues/{issueId}/components": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description A list of labels with usage counts. */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['LabelListResponse'];
-          };
+        /** List components linked to an issue */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    issueId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The issue's components. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["IssueComponentsResponse"];
+                    };
+                };
+                /** @description Unauthorized. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Forbidden — caller has no view access. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Issue not found. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
         };
-        /** @description `organizationId` is required. */
-        400: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
+        /**
+         * Replace an issue's components
+         * @description Replaces the issue's component set. Every component must belong to the issue's project.
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    issueId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SetIssueComponentsBody"];
+                };
+            };
+            responses: {
+                /** @description The issue's updated components. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["IssueComponentsResponse"];
+                    };
+                };
+                /** @description Validation failed, or some components do not belong to the issue's project (response includes `invalidIds`). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Forbidden — caller cannot edit the issue. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Issue not found. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
         };
-        /** @description Unauthorized. */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Forbidden — caller is not an active member of the organization. */
-        403: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Project not found in the organization. */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    put?: never;
-    /**
-     * Create a label
-     * @description Creates an org-wide label, or a project-scoped one when `projectId` is provided. Label names are unique per (organization, project) scope.
-     */
-    post: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody: {
-        content: {
-          'application/json': components['schemas']['CreateLabelBody'];
+    "/api/users/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-      };
-      responses: {
-        /** @description The created label. */
-        201: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['Label'];
-          };
+        /**
+         * Get the current authenticated user
+         * @description Returns the authenticated user with their super-admin and account status. Equivalent to the legacy `/api/user/me` endpoint.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The current user. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CurrentUser"];
+                    };
+                };
+                /** @description Unauthorized. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description User not found. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
         };
-        /** @description Validation failed. */
-        400: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Unauthorized. */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Forbidden — caller is not an active member of the organization. */
-        403: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Project not found in the organization. */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description A label with this name already exists in this scope. */
-        409: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/labels/{labelId}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Execute a JQL-style search
+         * @description Run a structured search query against issues. Accepts JQL-style expressions like `assignee = me AND status = "In Progress"`.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SearchBody"];
+                };
+            };
+            responses: {
+                /** @description Search results. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SearchResponse"];
+                    };
+                };
+                /** @description Invalid query syntax or missing required fields. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    post?: never;
-    /**
-     * Delete a label
-     * @description Deletes the label. Issue associations cascade, and the name is removed from the legacy `issues.labels` JSONB arrays org-wide in the same transaction.
-     */
-    delete: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          labelId: string;
+    "/api/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description Label deleted. */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['DeleteLabelResponse'];
-          };
+        /**
+         * Service health check
+         * @description Returns the health status of the application — database, memory, redis, livekit and smtp checks. Used by container orchestrators and monitoring.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Service is healthy or degraded. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["HealthResponse"];
+                    };
+                };
+                /** @description Unexpected error. */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Service is unhealthy (database or memory failure). */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["HealthResponse"];
+                    };
+                };
+            };
         };
-        /** @description Unauthorized. */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Forbidden — caller is not a member of the label's organization. */
-        403: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Label not found. */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    options?: never;
-    head?: never;
-    /**
-     * Update a label
-     * @description Rename / recolor / re-describe a label. On rename, the legacy `issues.labels` JSONB arrays in the organization are rewritten in the same transaction.
-     */
-    patch: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          labelId: string;
-        };
-        cookie?: never;
-      };
-      requestBody: {
-        content: {
-          'application/json': components['schemas']['UpdateLabelBody'];
-        };
-      };
-      responses: {
-        /** @description The updated label. */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['Label'];
-          };
-        };
-        /** @description Validation failed. */
-        400: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Unauthorized. */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Forbidden — caller is not a member of the label's organization. */
-        403: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Label not found. */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description A label with this name already exists in this scope. */
-        409: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    trace?: never;
-  };
-  '/api/projects/{projectId}/versions': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * List versions for a project
-     * @description Returns the project's versions ordered by sort order then name, with per-version issue counts (`doneIssueCount` = issues with a non-null resolution).
-     */
-    get: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          projectId: string;
-        };
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description A list of versions with issue counts. */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['VersionListResponse'];
-          };
-        };
-        /** @description Unauthorized. */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Project not found (or not visible to the caller). */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    put?: never;
-    /**
-     * Create a version
-     * @description Creates a version in the project. Requires project-manage permission. Version names are unique per project; the new version is appended to the sort order.
-     */
-    post: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          projectId: string;
-        };
-        cookie?: never;
-      };
-      requestBody: {
-        content: {
-          'application/json': components['schemas']['CreateVersionBody'];
-        };
-      };
-      responses: {
-        /** @description The created version. */
-        201: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['VersionResponse'];
-          };
-        };
-        /** @description Validation failed. */
-        400: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Unauthorized. */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Forbidden — caller cannot manage the project. */
-        403: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Project not found (or not visible to the caller). */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description A version with this name already exists in this project. */
-        409: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/projects/{projectId}/versions/{versionId}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Get a version */
-    get: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          projectId: string;
-          versionId: string;
-        };
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description The version. */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['VersionResponse'];
-          };
-        };
-        /** @description Unauthorized. */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Project or version not found. */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    put?: never;
-    post?: never;
-    /**
-     * Delete a version
-     * @description Deletes the version. Issue fix/affects associations cascade. Requires project-manage permission.
-     */
-    delete: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          projectId: string;
-          versionId: string;
-        };
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description Version deleted. */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['SuccessResponse'];
-          };
-        };
-        /** @description Unauthorized. */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Forbidden — caller cannot manage the project. */
-        403: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Project or version not found. */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    options?: never;
-    head?: never;
-    /**
-     * Update a version
-     * @description Partial update. Transitioning `status` to `released` stamps `releasedAt` (if unset); back to `unreleased` clears it. Requires project-manage permission.
-     */
-    patch: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          projectId: string;
-          versionId: string;
-        };
-        cookie?: never;
-      };
-      requestBody: {
-        content: {
-          'application/json': components['schemas']['UpdateVersionBody'];
-        };
-      };
-      responses: {
-        /** @description The updated version. */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['VersionResponse'];
-          };
-        };
-        /** @description Validation failed. */
-        400: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Unauthorized. */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Forbidden — caller cannot manage the project. */
-        403: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Project or version not found. */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description A version with this name already exists in this project. */
-        409: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    trace?: never;
-  };
-  '/api/projects/{projectId}/versions/{versionId}/release': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Release a version
-     * @description Marks the version as released (stamps `releasedAt`). Optionally re-points unresolved issues' fix-version to another version of the same project via `moveOpenIssuesToVersionId`. The body may be omitted entirely. Requires project-manage permission.
-     */
-    post: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          projectId: string;
-          versionId: string;
-        };
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          'application/json': components['schemas']['ReleaseVersionBody'];
-        };
-      };
-      responses: {
-        /** @description The released version and the number of issues moved. */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ReleaseVersionResponse'];
-          };
-        };
-        /** @description Invalid JSON body, validation failed, or the move target is invalid (same version or not in this project). */
-        400: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Unauthorized. */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Forbidden — caller cannot manage the project. */
-        403: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Project or version not found. */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/issues/{issueId}/versions': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** List fix and affects versions for an issue */
-    get: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          issueId: string;
-        };
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description The issue's fix and affects versions. */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['IssueVersionsResponse'];
-          };
-        };
-        /** @description Unauthorized. */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Forbidden — caller has no view access. */
-        403: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Issue not found. */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    /**
-     * Replace an issue's fix and/or affects versions
-     * @description Replaces the provided association set(s). At least one of `fixVersionIds` or `affectsVersionIds` must be provided; every version must belong to the issue's project.
-     */
-    put: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          issueId: string;
-        };
-        cookie?: never;
-      };
-      requestBody: {
-        content: {
-          'application/json': components['schemas']['SetIssueVersionsBody'];
-        };
-      };
-      responses: {
-        /** @description The issue's updated fix and affects versions. */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['IssueVersionsResponse'];
-          };
-        };
-        /** @description Validation failed, or some versions do not belong to the issue's project (response includes `invalidIds`). */
-        400: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Unauthorized. */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Forbidden — caller cannot edit the issue. */
-        403: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Issue not found. */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/projects/{projectId}/components': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * List components for a project
-     * @description Returns the project's components ordered by name, with per-component issue counts.
-     */
-    get: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          projectId: string;
-        };
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description A list of components with issue counts. */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ComponentListResponse'];
-          };
-        };
-        /** @description Unauthorized. */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Project not found (or not visible to the caller). */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    put?: never;
-    /**
-     * Create a component
-     * @description Creates a component in the project. Requires project-manage permission. Component names are unique per project; `leadId` must be an active member of the organization.
-     */
-    post: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          projectId: string;
-        };
-        cookie?: never;
-      };
-      requestBody: {
-        content: {
-          'application/json': components['schemas']['CreateComponentBody'];
-        };
-      };
-      responses: {
-        /** @description The created component. */
-        201: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ComponentResponse'];
-          };
-        };
-        /** @description Validation failed, or the lead is not an active organization member. */
-        400: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Unauthorized. */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Forbidden — caller cannot manage the project. */
-        403: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Project not found (or not visible to the caller). */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description A component with this name already exists in this project. */
-        409: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/projects/{projectId}/components/{componentId}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Get a component */
-    get: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          projectId: string;
-          componentId: string;
-        };
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description The component. */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ComponentResponse'];
-          };
-        };
-        /** @description Unauthorized. */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Project or component not found. */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    put?: never;
-    post?: never;
-    /**
-     * Delete a component
-     * @description Deletes the component. Issue associations cascade. Requires project-manage permission.
-     */
-    delete: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          projectId: string;
-          componentId: string;
-        };
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description Component deleted. */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['SuccessResponse'];
-          };
-        };
-        /** @description Unauthorized. */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Forbidden — caller cannot manage the project. */
-        403: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Project or component not found. */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    options?: never;
-    head?: never;
-    /**
-     * Update a component
-     * @description Partial update, including archiving via `archived`. Requires project-manage permission.
-     */
-    patch: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          projectId: string;
-          componentId: string;
-        };
-        cookie?: never;
-      };
-      requestBody: {
-        content: {
-          'application/json': components['schemas']['UpdateComponentBody'];
-        };
-      };
-      responses: {
-        /** @description The updated component. */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ComponentResponse'];
-          };
-        };
-        /** @description Validation failed, or the lead is not an active organization member. */
-        400: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Unauthorized. */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Forbidden — caller cannot manage the project. */
-        403: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Project or component not found. */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description A component with this name already exists in this project. */
-        409: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    trace?: never;
-  };
-  '/api/issues/{issueId}/components': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** List components linked to an issue */
-    get: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          issueId: string;
-        };
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description The issue's components. */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['IssueComponentsResponse'];
-          };
-        };
-        /** @description Unauthorized. */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Forbidden — caller has no view access. */
-        403: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Issue not found. */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    /**
-     * Replace an issue's components
-     * @description Replaces the issue's component set. Every component must belong to the issue's project.
-     */
-    put: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          issueId: string;
-        };
-        cookie?: never;
-      };
-      requestBody: {
-        content: {
-          'application/json': components['schemas']['SetIssueComponentsBody'];
-        };
-      };
-      responses: {
-        /** @description The issue's updated components. */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['IssueComponentsResponse'];
-          };
-        };
-        /** @description Validation failed, or some components do not belong to the issue's project (response includes `invalidIds`). */
-        400: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Unauthorized. */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Forbidden — caller cannot edit the issue. */
-        403: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Issue not found. */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/users/me': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Get the current authenticated user
-     * @description Returns the authenticated user with their super-admin and account status. Equivalent to the legacy `/api/user/me` endpoint.
-     */
-    get: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description The current user. */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['CurrentUser'];
-          };
-        };
-        /** @description Unauthorized. */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description User not found. */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/search': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Execute a JQL-style search
-     * @description Run a structured search query against issues. Accepts JQL-style expressions like `assignee = me AND status = "In Progress"`.
-     */
-    post: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody: {
-        content: {
-          'application/json': components['schemas']['SearchBody'];
-        };
-      };
-      responses: {
-        /** @description Search results. */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['SearchResponse'];
-          };
-        };
-        /** @description Invalid query syntax or missing required fields. */
-        400: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Unauthorized. */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/health': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Service health check
-     * @description Returns the health status of the application — database, memory, redis, livekit and smtp checks. Used by container orchestrators and monitoring.
-     */
-    get: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description Service is healthy or degraded. */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['HealthResponse'];
-          };
-        };
-        /** @description Unexpected error. */
-        500: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Service is unhealthy (database or memory failure). */
-        503: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['HealthResponse'];
-          };
-        };
-      };
-    };
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-  schemas: {
-    /** @enum {string} */
-    IssueType: 'story' | 'task' | 'bug' | 'epic';
-    /** @enum {string} */
-    IssuePriority: 'critical' | 'high' | 'medium' | 'low' | 'none';
-    /** @enum {string|null} */
-    IssueResolution: 'fixed' | 'wont_do' | 'duplicate' | 'cannot_reproduce' | 'done' | null;
-    Issue: {
-      id: string;
-      organizationId: string;
-      projectId: string;
-      /** @example PROJ-12 */
-      key: string;
-      number: number | null;
-      type: components['schemas']['IssueType'];
-      title: string;
-      description: string | null;
-      statusId: string | null;
-      priority: components['schemas']['IssuePriority'];
-      assigneeId: string | null;
-      reporterId: string | null;
-      /** @default [] */
-      labels: string[];
-      sprintId: string | null;
-      epicId: string | null;
-      parentId: string | null;
-      estimate: number | null;
-      /** Format: date-time */
-      dueDate: string | null;
-      resolution: components['schemas']['IssueResolution'];
-      /** Format: date-time */
-      resolvedAt: string | null;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
+    schemas: {
+        /** @enum {string} */
+        IssueType: "story" | "task" | "bug" | "epic";
+        /** @enum {string} */
+        IssuePriority: "critical" | "high" | "medium" | "low" | "none";
+        /** @enum {string|null} */
+        IssueResolution: "fixed" | "wont_do" | "duplicate" | "cannot_reproduce" | "done" | null;
+        Issue: {
+            id: string;
+            organizationId: string;
+            projectId: string;
+            /** @example PROJ-12 */
+            key: string;
+            number: number | null;
+            type: components["schemas"]["IssueType"];
+            title: string;
+            description: string | null;
+            statusId: string | null;
+            priority: components["schemas"]["IssuePriority"];
+            assigneeId: string | null;
+            reporterId: string | null;
+            /** @default [] */
+            labels: string[];
+            sprintId: string | null;
+            epicId: string | null;
+            parentId: string | null;
+            estimate: number | null;
+            /** Format: date-time */
+            dueDate: string | null;
+            resolution: components["schemas"]["IssueResolution"];
+            /** Format: date-time */
+            resolvedAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        IssueListResponse: {
+            issues: components["schemas"]["Issue"][];
+            total: number;
+        };
+        ErrorResponse: {
+            /** @example Unauthorized */
+            error: string;
+            /** @example UNAUTHORIZED */
+            code?: string;
+            details?: unknown;
+        };
+        /** @enum {string} */
+        IssueStatusCategory: "backlog" | "todo" | "in_progress" | "in_review" | "done" | "cancelled";
+        CreateIssueBody: {
+            projectId: string;
+            type: components["schemas"]["IssueType"];
+            title: string;
+            description?: string | null;
+            priority?: components["schemas"]["IssuePriority"] & unknown;
+            assigneeId?: string;
+            /** @default [] */
+            labels: string[];
+            sprintId?: string;
+            epicId?: string;
+            parentId?: string;
+            estimate?: number;
+            /** Format: date-time */
+            dueDate?: string;
+            /** @default {} */
+            customFields: {
+                [key: string]: unknown;
+            };
+            statusId?: string;
+        };
+        UpdateIssueBody: {
+            title?: string;
+            description?: string;
+            status?: components["schemas"]["IssueStatusCategory"];
+            statusId?: string;
+            priority?: components["schemas"]["IssuePriority"];
+            assigneeId?: string | null;
+            labels?: string[];
+            sprintId?: string | null;
+            epicId?: string | null;
+            parentId?: string | null;
+            estimate?: number | null;
+            /** Format: date-time */
+            dueDate?: string | null;
+            customFields?: {
+                [key: string]: unknown;
+            };
+            resolution?: components["schemas"]["IssueResolution"] & unknown;
+        };
+        DeleteIssueResponse: {
+            success: boolean;
+            id: string;
+        };
+        Comment: {
+            id: string;
+            issueId: string;
+            content: string;
+            parentId: string | null;
+            mentions: string[];
+            reactions: unknown[];
+            /** @description "true" | "false" (stored as string) */
+            isInternal: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            createdBy: string | null;
+            updatedBy: string | null;
+        };
+        CreateCommentBody: {
+            content: string;
+            parentId?: string;
+            /** @default [] */
+            mentions: string[];
+            /** @default false */
+            isInternal: boolean;
+        };
+        Project: {
+            id: string;
+            organizationId: string;
+            teamId: string | null;
+            /** @example PROJ */
+            key: string;
+            name: string;
+            description: string | null;
+            status: string;
+            /** @default {} */
+            settings: {
+                [key: string]: unknown;
+            };
+            defaultWorkflowId: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            organizationName?: string;
+            team?: {
+                id: string;
+                name: string;
+                slug: string;
+            } | null;
+        };
+        Label: {
+            id: string;
+            organizationId: string;
+            /** @description `null` = org-wide label */
+            projectId: string | null;
+            name: string;
+            /** @example #6B7280 */
+            color: string;
+            description: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            createdBy: string | null;
+        };
+        LabelWithUsage: components["schemas"]["Label"] & {
+            /** @description Number of issues currently tagged with this label. */
+            usageCount: number;
+        };
+        LabelListResponse: {
+            labels: components["schemas"]["LabelWithUsage"][];
+        };
+        CreateLabelBody: {
+            organizationId: string;
+            /** @description Optional project scope; `null`/absent = org-wide label. */
+            projectId?: string | null;
+            name: string;
+            /** @description Hex color like `#6B7280`. Defaults to `#6B7280`. */
+            color?: string;
+            description?: string | null;
+        };
+        UpdateLabelBody: {
+            /** @description Renaming also rewrites the legacy `issues.labels` JSONB arrays org-wide in the same transaction. */
+            name?: string;
+            color?: string;
+            description?: string | null;
+        };
+        DeleteLabelResponse: {
+            success: boolean;
+            id: string;
+        };
+        /** @enum {string} */
+        VersionStatus: "unreleased" | "released" | "archived";
+        ProjectVersion: {
+            id: string;
+            organizationId: string;
+            projectId: string;
+            /** @example 1.4.0 */
+            name: string;
+            description: string | null;
+            status: components["schemas"]["VersionStatus"];
+            /** Format: date-time */
+            startDate: string | null;
+            /**
+             * Format: date-time
+             * @description Planned release date.
+             */
+            releaseDate: string | null;
+            /**
+             * Format: date-time
+             * @description Stamped when the version is released.
+             */
+            releasedAt: string | null;
+            sortOrder: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            createdBy: string | null;
+        };
+        ProjectVersionWithCounts: components["schemas"]["ProjectVersion"] & {
+            issueCount: number;
+            /** @description Issues with a non-null resolution. */
+            doneIssueCount: number;
+        };
+        VersionListResponse: {
+            versions: components["schemas"]["ProjectVersionWithCounts"][];
+            total: number;
+        };
+        VersionResponse: {
+            version: components["schemas"]["ProjectVersion"];
+        };
+        CreateVersionBody: {
+            name: string;
+            description?: string | null;
+            /** Format: date-time */
+            startDate?: string | null;
+            /** Format: date-time */
+            releaseDate?: string | null;
+        };
+        UpdateVersionBody: {
+            name?: string;
+            description?: string | null;
+            /** Format: date-time */
+            startDate?: string | null;
+            /** Format: date-time */
+            releaseDate?: string | null;
+            status?: components["schemas"]["VersionStatus"] & unknown;
+            sortOrder?: number;
+        };
+        SuccessResponse: {
+            success: boolean;
+        };
+        ReleaseVersionResponse: {
+            version: components["schemas"]["ProjectVersion"];
+            movedIssueCount: number;
+        };
+        ReleaseVersionBody: {
+            /** @description Optional: re-point unresolved issues' fix-version to another version of the same project. */
+            moveOpenIssuesToVersionId?: string;
+        };
+        IssueVersionsResponse: {
+            fixVersions: components["schemas"]["ProjectVersion"][];
+            affectsVersions: components["schemas"]["ProjectVersion"][];
+        };
+        /** @description Replaces the respective association set(s). At least one of `fixVersionIds` or `affectsVersionIds` must be provided. Every referenced version must belong to the issue's project. */
+        SetIssueVersionsBody: {
+            fixVersionIds?: string[];
+            affectsVersionIds?: string[];
+        };
+        /** @enum {string} */
+        ComponentDefaultAssigneeType: "project_default" | "component_lead" | "unassigned";
+        Component: {
+            id: string;
+            organizationId: string;
+            projectId: string;
+            name: string;
+            description: string | null;
+            leadId: string | null;
+            defaultAssigneeType: components["schemas"]["ComponentDefaultAssigneeType"];
+            archived: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        ComponentWithCount: components["schemas"]["Component"] & {
+            issueCount: number;
+        };
+        ComponentListResponse: {
+            components: components["schemas"]["ComponentWithCount"][];
+            total: number;
+        };
+        ComponentResponse: {
+            component: components["schemas"]["Component"];
+        };
+        CreateComponentBody: {
+            name: string;
+            description?: string | null;
+            /** @description Must be an active member of the organization. */
+            leadId?: string | null;
+            defaultAssigneeType?: components["schemas"]["ComponentDefaultAssigneeType"] & unknown;
+        };
+        UpdateComponentBody: {
+            name?: string;
+            description?: string | null;
+            /** @description Must be an active member of the organization. */
+            leadId?: string | null;
+            defaultAssigneeType?: components["schemas"]["ComponentDefaultAssigneeType"];
+            archived?: boolean;
+        };
+        IssueComponentsResponse: {
+            components: components["schemas"]["Component"][];
+        };
+        SetIssueComponentsBody: {
+            /** @description Replaces the issue's component set. Every component must belong to the issue's project. */
+            componentIds: string[];
+        };
+        CurrentUser: {
+            id: string;
+            name: string | null;
+            email: string | null;
+            image: string | null;
+            isSuperAdmin: boolean;
+            status: string | null;
+        };
+        SearchResultIssue: {
+            id: string;
+            key: string;
+            title: string;
+            description: string | null;
+            status: string | null;
+            priority: string | null;
+            type: string | null;
+            labels: string[] | null;
+            assigneeId: string | null;
+            reporterId: string | null;
+            projectId: string;
+            sprintId: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        SearchResponse: {
+            results: components["schemas"]["SearchResultIssue"][];
+            count: number;
+            query: string;
+            criteria: {
+                [key: string]: unknown;
+            };
+        };
+        SearchBody: {
+            /**
+             * @description JQL-style query string
+             * @example assignee = me AND status = "In Progress"
+             */
+            q: string;
+            organizationId: string;
+            projectId?: string;
+            /** @default true */
+            saveHistory: boolean;
+            /** @default 100 */
+            limit: number;
+            /** @default 0 */
+            offset: number;
+        };
+        HealthResponse: {
+            /** @enum {string} */
+            status: "healthy" | "degraded" | "unhealthy";
+            /** Format: date-time */
+            timestamp: string;
+            uptime: number;
+            checks: {
+                database: string;
+                memory: string;
+                redis: string;
+                livekit: string;
+                smtp: string;
+            };
+            details?: {
+                [key: string]: string;
+            };
+            version?: string;
+        };
     };
-    IssueListResponse: {
-      issues: components['schemas']['Issue'][];
-      total: number;
-    };
-    ErrorResponse: {
-      /** @example Unauthorized */
-      error: string;
-      /** @example UNAUTHORIZED */
-      code?: string;
-      details?: unknown;
-    };
-    /** @enum {string} */
-    IssueStatusCategory: 'backlog' | 'todo' | 'in_progress' | 'in_review' | 'done' | 'cancelled';
-    CreateIssueBody: {
-      projectId: string;
-      type: components['schemas']['IssueType'];
-      title: string;
-      description?: string | null;
-      priority?: components['schemas']['IssuePriority'] & unknown;
-      assigneeId?: string;
-      /** @default [] */
-      labels: string[];
-      sprintId?: string;
-      epicId?: string;
-      parentId?: string;
-      estimate?: number;
-      /** Format: date-time */
-      dueDate?: string;
-      /** @default {} */
-      customFields: {
-        [key: string]: unknown;
-      };
-      statusId?: string;
-    };
-    UpdateIssueBody: {
-      title?: string;
-      description?: string;
-      status?: components['schemas']['IssueStatusCategory'];
-      statusId?: string;
-      priority?: components['schemas']['IssuePriority'];
-      assigneeId?: string | null;
-      labels?: string[];
-      sprintId?: string | null;
-      epicId?: string | null;
-      parentId?: string | null;
-      estimate?: number | null;
-      /** Format: date-time */
-      dueDate?: string | null;
-      customFields?: {
-        [key: string]: unknown;
-      };
-      resolution?: components['schemas']['IssueResolution'] & unknown;
-    };
-    DeleteIssueResponse: {
-      success: boolean;
-      id: string;
-    };
-    Comment: {
-      id: string;
-      issueId: string;
-      content: string;
-      parentId: string | null;
-      mentions: string[];
-      reactions: unknown[];
-      /** @description "true" | "false" (stored as string) */
-      isInternal: string;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-      createdBy: string | null;
-      updatedBy: string | null;
-    };
-    CreateCommentBody: {
-      content: string;
-      parentId?: string;
-      /** @default [] */
-      mentions: string[];
-      /** @default false */
-      isInternal: boolean;
-    };
-    Project: {
-      id: string;
-      organizationId: string;
-      teamId: string | null;
-      /** @example PROJ */
-      key: string;
-      name: string;
-      description: string | null;
-      status: string;
-      /** @default {} */
-      settings: {
-        [key: string]: unknown;
-      };
-      defaultWorkflowId: string | null;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-      organizationName?: string;
-      team?: {
-        id: string;
-        name: string;
-        slug: string;
-      } | null;
-    };
-    Label: {
-      id: string;
-      organizationId: string;
-      /** @description `null` = org-wide label */
-      projectId: string | null;
-      name: string;
-      /** @example #6B7280 */
-      color: string;
-      description: string | null;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-      createdBy: string | null;
-    };
-    LabelWithUsage: components['schemas']['Label'] & {
-      /** @description Number of issues currently tagged with this label. */
-      usageCount: number;
-    };
-    LabelListResponse: {
-      labels: components['schemas']['LabelWithUsage'][];
-    };
-    CreateLabelBody: {
-      organizationId: string;
-      /** @description Optional project scope; `null`/absent = org-wide label. */
-      projectId?: string | null;
-      name: string;
-      /** @description Hex color like `#6B7280`. Defaults to `#6B7280`. */
-      color?: string;
-      description?: string | null;
-    };
-    UpdateLabelBody: {
-      /** @description Renaming also rewrites the legacy `issues.labels` JSONB arrays org-wide in the same transaction. */
-      name?: string;
-      color?: string;
-      description?: string | null;
-    };
-    DeleteLabelResponse: {
-      success: boolean;
-      id: string;
-    };
-    /** @enum {string} */
-    VersionStatus: 'unreleased' | 'released' | 'archived';
-    ProjectVersion: {
-      id: string;
-      organizationId: string;
-      projectId: string;
-      /** @example 1.4.0 */
-      name: string;
-      description: string | null;
-      status: components['schemas']['VersionStatus'];
-      /** Format: date-time */
-      startDate: string | null;
-      /**
-       * Format: date-time
-       * @description Planned release date.
-       */
-      releaseDate: string | null;
-      /**
-       * Format: date-time
-       * @description Stamped when the version is released.
-       */
-      releasedAt: string | null;
-      sortOrder: number;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-      createdBy: string | null;
-    };
-    ProjectVersionWithCounts: components['schemas']['ProjectVersion'] & {
-      issueCount: number;
-      /** @description Issues with a non-null resolution. */
-      doneIssueCount: number;
-    };
-    VersionListResponse: {
-      versions: components['schemas']['ProjectVersionWithCounts'][];
-      total: number;
-    };
-    VersionResponse: {
-      version: components['schemas']['ProjectVersion'];
-    };
-    CreateVersionBody: {
-      name: string;
-      description?: string | null;
-      /** Format: date-time */
-      startDate?: string | null;
-      /** Format: date-time */
-      releaseDate?: string | null;
-    };
-    UpdateVersionBody: {
-      name?: string;
-      description?: string | null;
-      /** Format: date-time */
-      startDate?: string | null;
-      /** Format: date-time */
-      releaseDate?: string | null;
-      status?: components['schemas']['VersionStatus'] & unknown;
-      sortOrder?: number;
-    };
-    SuccessResponse: {
-      success: boolean;
-    };
-    ReleaseVersionResponse: {
-      version: components['schemas']['ProjectVersion'];
-      movedIssueCount: number;
-    };
-    ReleaseVersionBody: {
-      /** @description Optional: re-point unresolved issues' fix-version to another version of the same project. */
-      moveOpenIssuesToVersionId?: string;
-    };
-    IssueVersionsResponse: {
-      fixVersions: components['schemas']['ProjectVersion'][];
-      affectsVersions: components['schemas']['ProjectVersion'][];
-    };
-    /** @description Replaces the respective association set(s). At least one of `fixVersionIds` or `affectsVersionIds` must be provided. Every referenced version must belong to the issue's project. */
-    SetIssueVersionsBody: {
-      fixVersionIds?: string[];
-      affectsVersionIds?: string[];
-    };
-    /** @enum {string} */
-    ComponentDefaultAssigneeType: 'project_default' | 'component_lead' | 'unassigned';
-    Component: {
-      id: string;
-      organizationId: string;
-      projectId: string;
-      name: string;
-      description: string | null;
-      leadId: string | null;
-      defaultAssigneeType: components['schemas']['ComponentDefaultAssigneeType'];
-      archived: boolean;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    ComponentWithCount: components['schemas']['Component'] & {
-      issueCount: number;
-    };
-    ComponentListResponse: {
-      components: components['schemas']['ComponentWithCount'][];
-      total: number;
-    };
-    ComponentResponse: {
-      component: components['schemas']['Component'];
-    };
-    CreateComponentBody: {
-      name: string;
-      description?: string | null;
-      /** @description Must be an active member of the organization. */
-      leadId?: string | null;
-      defaultAssigneeType?: components['schemas']['ComponentDefaultAssigneeType'] & unknown;
-    };
-    UpdateComponentBody: {
-      name?: string;
-      description?: string | null;
-      /** @description Must be an active member of the organization. */
-      leadId?: string | null;
-      defaultAssigneeType?: components['schemas']['ComponentDefaultAssigneeType'];
-      archived?: boolean;
-    };
-    IssueComponentsResponse: {
-      components: components['schemas']['Component'][];
-    };
-    SetIssueComponentsBody: {
-      /** @description Replaces the issue's component set. Every component must belong to the issue's project. */
-      componentIds: string[];
-    };
-    CurrentUser: {
-      id: string;
-      name: string | null;
-      email: string | null;
-      image: string | null;
-      isSuperAdmin: boolean;
-      status: string | null;
-    };
-    SearchResultIssue: {
-      id: string;
-      key: string;
-      title: string;
-      description: string | null;
-      status: string | null;
-      priority: string | null;
-      type: string | null;
-      labels: string[] | null;
-      assigneeId: string | null;
-      reporterId: string | null;
-      projectId: string;
-      sprintId: string | null;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    SearchResponse: {
-      results: components['schemas']['SearchResultIssue'][];
-      count: number;
-      query: string;
-      criteria: {
-        [key: string]: unknown;
-      };
-    };
-    SearchBody: {
-      /**
-       * @description JQL-style query string
-       * @example assignee = me AND status = "In Progress"
-       */
-      q: string;
-      organizationId: string;
-      projectId?: string;
-      /** @default true */
-      saveHistory: boolean;
-      /** @default 100 */
-      limit: number;
-      /** @default 0 */
-      offset: number;
-    };
-    HealthResponse: {
-      /** @enum {string} */
-      status: 'healthy' | 'degraded' | 'unhealthy';
-      /** Format: date-time */
-      timestamp: string;
-      uptime: number;
-      checks: {
-        database: string;
-        memory: string;
-        redis: string;
-        livekit: string;
-        smtp: string;
-      };
-      details?: {
-        [key: string]: string;
-      };
-      version?: string;
-    };
-  };
-  responses: never;
-  parameters: never;
-  requestBodies: never;
-  headers: never;
-  pathItems: never;
+    responses: never;
+    parameters: never;
+    requestBodies: never;
+    headers: never;
+    pathItems: never;
 }
 export type $defs = Record<string, never>;
 export type operations = Record<string, never>;
