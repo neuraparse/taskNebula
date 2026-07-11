@@ -27,7 +27,9 @@
   ],
   "workspaces": [
     "apps/*",
-    "packages/*"
+    "mobile",
+    "packages/*",
+    "services/*"
   ],
   "scripts": {
     "dev": "turbo run dev",

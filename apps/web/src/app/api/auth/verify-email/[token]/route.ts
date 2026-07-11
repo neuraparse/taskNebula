@@ -14,16 +14,24 @@ import { buildAppUrl } from '@/lib/url/app-url';
  * On failure redirects to /auth/verify-email?error=<reason>.
  */
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ token: string }> }
 ) {
   const { token } = await params;
-  const origin = _request.nextUrl?.origin ?? new URL(_request.url).origin;
+  const origin = request.nextUrl?.origin ?? new URL(request.url).origin;
+  const wantsJson = request.headers.get('accept')?.includes('application/json') === true;
 
   try {
     const [result, session] = await Promise.all([consumeEmailVerificationToken(token), auth()]);
 
     if (result.ok) {
+      if (wantsJson) {
+        return NextResponse.json({
+          verified: true,
+          authenticated: Boolean(session?.user?.id),
+        });
+      }
+
       const target = session?.user?.id
         ? buildAppUrl('/dashboard?verified=1', origin)
         : buildAppUrl('/auth/signin?verified=1', origin);
@@ -31,9 +39,17 @@ export async function GET(
     }
 
     const reason = result.reason || 'invalid';
+    if (wantsJson) {
+      return NextResponse.json({ verified: false, reason }, { status: 400 });
+    }
+
     return NextResponse.redirect(buildAppUrl(`/auth/verify-email?error=${reason}`, origin));
   } catch (error) {
     console.error('[verify-email] unexpected error:', error);
+    if (wantsJson) {
+      return NextResponse.json({ verified: false, reason: 'server_error' }, { status: 500 });
+    }
+
     return NextResponse.redirect(buildAppUrl('/auth/verify-email?error=server_error', origin));
   }
 }

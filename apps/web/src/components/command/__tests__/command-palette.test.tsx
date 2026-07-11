@@ -224,9 +224,12 @@ describe('CommandPalette (FEAT-25 omnibar)', () => {
     expect(screen.getByRole('tab', { name: /Docs/ })).toHaveAttribute('aria-selected', 'true');
   });
 
-  it('shows the Ask AI CTA for a multi-word query and POSTs to /api/ask on enter', async () => {
+  it('shows the Ask AI CTA and hands the prompt to the sidecar', async () => {
     const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
     await renderOpen();
+
+    const askEvent = jest.fn();
+    window.addEventListener('tasknebula:ask-ai', askEvent);
 
     const input = screen.getByLabelText('Command palette query');
     await user.type(input, 'why is sprint velocity dropping?');
@@ -237,8 +240,12 @@ describe('CommandPalette (FEAT-25 omnibar)', () => {
     await user.click(cta);
 
     await waitFor(() => {
-      const calls = fetchMock.mock.calls.map((c) => String(c[0]));
-      expect(calls.some((u) => u.includes('/api/ask'))).toBe(true);
+      expect(askEvent).toHaveBeenCalledTimes(1);
     });
+
+    expect(askEvent.mock.calls[0][0]).toEqual(
+      expect.objectContaining({ detail: { prompt: 'why is sprint velocity dropping?' } })
+    );
+    window.removeEventListener('tasknebula:ask-ai', askEvent);
   });
 });

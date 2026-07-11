@@ -104,6 +104,8 @@ services:
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_APP_URL: ${APP_URL:-http://localhost:3000}
+        NEXT_PUBLIC_COLLAB_ENABLED: ${NEXT_PUBLIC_COLLAB_ENABLED:-false}
+        NEXT_PUBLIC_HOCUSPOCUS_URL: ${NEXT_PUBLIC_HOCUSPOCUS_URL:-}
     container_name: tasknebula-web
     restart: unless-stopped
     depends_on:
@@ -119,6 +121,8 @@ services:
       AUTH_URL: ${APP_URL:-http://localhost:3000}
       NEXT_PUBLIC_APP_URL: ${APP_URL:-http://localhost:3000}
       NEXT_PUBLIC_APP_NAME: ${APP_NAME:-TaskNebula}
+      NEXT_PUBLIC_COLLAB_ENABLED: ${NEXT_PUBLIC_COLLAB_ENABLED:-false}
+      NEXT_PUBLIC_HOCUSPOCUS_URL: ${NEXT_PUBLIC_HOCUSPOCUS_URL:-}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       LIVEKIT_URL: ${LIVEKIT_URL:-http://host.docker.internal:7880}
       NEXT_PUBLIC_LIVEKIT_URL: ${NEXT_PUBLIC_LIVEKIT_URL:-ws://${LIVEKIT_PUBLIC_HOST:-127.0.0.1}:7880}
@@ -234,7 +238,7 @@ services:
           exit 1
         fi
         apk add --no-cache curl > /dev/null && \
-        printf '0 8 * * * curl -fsS -X POST -H "x-cron-secret: $$CRON_SECRET" "$$WEB_BASE_URL/api/cron/standup" -o /dev/null\n0 * * * * curl -fsS -X POST -H "x-cron-secret: $$CRON_SECRET" "$$WEB_BASE_URL/api/cron/janitor" -o /dev/null\n17 */6 * * * curl -fsS -X POST -H "x-cron-secret: $$CRON_SECRET" "$$WEB_BASE_URL/api/cron/version-check" -o /dev/null\n0 2 * * * curl -fsS -X POST -H "x-cron-secret: $$CRON_SECRET" "$$WEB_BASE_URL/api/cron/cycle-rollover" -o /dev/null\n' > /etc/crontabs/root && \
+        printf '0 8 * * * curl -fsS -X POST -H "x-cron-secret: $$CRON_SECRET" "$$WEB_BASE_URL/api/cron/standup" -o /dev/null\n0 * * * * curl -fsS -X POST -H "x-cron-secret: $$CRON_SECRET" "$$WEB_BASE_URL/api/cron/janitor" -o /dev/null\n30 * * * * curl -fsS -X POST -H "x-cron-secret: $$CRON_SECRET" "$$WEB_BASE_URL/api/cron/embeddings" -o /dev/null\n17 */6 * * * curl -fsS -X POST -H "x-cron-secret: $$CRON_SECRET" "$$WEB_BASE_URL/api/cron/version-check" -o /dev/null\n0 2 * * * curl -fsS -X POST -H "x-cron-secret: $$CRON_SECRET" "$$WEB_BASE_URL/api/cron/cycle-rollover" -o /dev/null\n' > /etc/crontabs/root && \
         crond -f -l 8
 
 volumes:

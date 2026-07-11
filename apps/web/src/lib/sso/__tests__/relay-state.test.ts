@@ -19,11 +19,14 @@ type RelayStateModule = typeof import('../relay-state');
 
 let mintRelayState: RelayStateModule['mintRelayState'];
 let verifyRelayState: RelayStateModule['verifyRelayState'];
+let isMobileRelayState: RelayStateModule['isMobileRelayState'];
+let getMobileRelayStateCallbackUrl: RelayStateModule['getMobileRelayStateCallbackUrl'];
 
 describe('SAML RelayState helper', () => {
   beforeAll(async () => {
     const relayStateModule = await import('../relay-state');
-    ({ mintRelayState, verifyRelayState } = relayStateModule);
+    ({ mintRelayState, verifyRelayState, isMobileRelayState, getMobileRelayStateCallbackUrl } =
+      relayStateModule);
   });
 
   beforeEach(() => {
@@ -51,6 +54,26 @@ describe('SAML RelayState helper', () => {
     if (result.ok) {
       expect(result.slug).toBe('globex');
     }
+  });
+
+  it('keeps mobile SAML relay state signed while preserving slug verification', () => {
+    const token = mintRelayState('acme', { mobile: true });
+
+    expect(verifyRelayState(token)).toEqual({ ok: true, slug: 'acme' });
+    expect(isMobileRelayState(token)).toBe(true);
+    expect(getMobileRelayStateCallbackUrl(token)).toBeNull();
+    expect(isMobileRelayState(mintRelayState('acme'))).toBe(false);
+  });
+
+  it('keeps mobile callback URLs inside the signed relay state payload', () => {
+    const token = mintRelayState('acme', {
+      mobile: true,
+      callbackUrl: '/projects/TN/chat?view=compact',
+    });
+
+    expect(verifyRelayState(token)).toEqual({ ok: true, slug: 'acme' });
+    expect(isMobileRelayState(token)).toBe(true);
+    expect(getMobileRelayStateCallbackUrl(token)).toBe('/projects/TN/chat?view=compact');
   });
 
   it('rejects a tampered payload with reason "bad_signature"', () => {

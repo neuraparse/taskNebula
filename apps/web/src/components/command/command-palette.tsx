@@ -438,23 +438,9 @@ export function CommandPalette({
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('tasknebula:ask-ai', { detail: { prompt } }));
       }
-      // Optimistic fire-and-forget POST so /api/ask starts capturing
-      // palette-initiated prompts. The route's zod schema expects `query`
-      // (see api/ask/route.ts bodySchema), not `prompt`.
-      const body: { query: string; organizationId?: string } = { query: prompt };
-      if (currentOrganizationId) {
-        body.organizationId = currentOrganizationId;
-      }
-      fetch('/api/ask', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(body),
-      }).catch(() => {
-        /* non-blocking — the event above already drives the UI */
-      });
       close();
     },
-    [close, currentOrganizationId, hasWorkspaceAccess]
+    [close, hasWorkspaceAccess]
   );
 
   const removeChip = React.useCallback((facet: Facet) => {

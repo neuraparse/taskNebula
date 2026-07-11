@@ -12,6 +12,13 @@ import { db, integrationConnections } from '@tasknebula/db';
 import { auth } from '@/auth';
 import { encryptToken } from '@/lib/integrations/token-crypto';
 import { hasPermission } from '@/lib/auth/permissions';
+import { getClientCredentials } from '@/lib/integrations/client-credentials';
+import {
+  decodeMobileIntegrationState,
+  hasPermissionForUser,
+  isMobileIntegrationState,
+  mobileIntegrationRedirect,
+} from '@/lib/integrations/mobile-oauth';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,42 +58,71 @@ function settingsRedirect(request: NextRequest, params: Record<string, string>):
 }
 
 export async function GET(request: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
   const state = searchParams.get('state');
   const errorParam = searchParams.get('error');
+  const stateIsMobile = isMobileIntegrationState(state);
+  const mobileState = state ? decodeMobileIntegrationState(state, 'gitlab') : null;
+
+  const session = mobileState ? null : await auth();
+  if (!mobileState && !session?.user?.id) {
+    return stateIsMobile
+      ? mobileIntegrationRedirect(request, {
+          provider: 'gitlab',
+          status: 'error',
+          reason: 'invalid_state',
+        })
+      : NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const redirectResult = (params: Record<string, string>): NextResponse => {
+    if (mobileState || stateIsMobile) {
+      return mobileIntegrationRedirect(request, {
+        provider: 'gitlab',
+        status: params.connected === '1' ? 'connected' : 'error',
+        reason: params.error,
+      });
+    }
+    return settingsRedirect(request, params);
+  };
 
   if (errorParam) {
-    return settingsRedirect(request, { integration: 'gitlab', error: errorParam });
+    return redirectResult({ integration: 'gitlab', error: errorParam });
   }
   if (!code || !state) {
-    return settingsRedirect(request, { integration: 'gitlab', error: 'missing_code_or_state' });
+    return redirectResult({ integration: 'gitlab', error: 'missing_code_or_state' });
   }
 
-  const cookieState = request.cookies.get(STATE_COOKIE)?.value;
-  if (!cookieState || cookieState !== state) {
-    return settingsRedirect(request, { integration: 'gitlab', error: 'invalid_state' });
+  let organizationId: string;
+  let userId: string;
+  if (mobileState) {
+    organizationId = mobileState.organizationId;
+    userId = mobileState.userId;
+    if (!(await hasPermissionForUser(userId, organizationId, 'org:settings'))) {
+      return redirectResult({ integration: 'gitlab', error: 'forbidden' });
+    }
+  } else {
+    const cookieState = request.cookies.get(STATE_COOKIE)?.value;
+    if (!cookieState || cookieState !== state) {
+      return redirectResult({ integration: 'gitlab', error: 'invalid_state' });
+    }
+
+    const decoded = decodeState(state);
+    if (!decoded || decoded.u !== session?.user?.id) {
+      return redirectResult({ integration: 'gitlab', error: 'invalid_state' });
+    }
+
+    if (!(await hasPermission(decoded.o, 'org:settings'))) {
+      return redirectResult({ integration: 'gitlab', error: 'forbidden' });
+    }
+    organizationId = decoded.o;
+    userId = session.user.id;
   }
 
-  const decoded = decodeState(state);
-  if (!decoded || decoded.u !== session.user.id) {
-    return settingsRedirect(request, { integration: 'gitlab', error: 'invalid_state' });
-  }
-
-  if (!(await hasPermission(decoded.o, 'org:settings'))) {
-    return settingsRedirect(request, { integration: 'gitlab', error: 'forbidden' });
-  }
-
-  const clientId = process.env.GITLAB_CLIENT_ID;
-  const clientSecret = process.env.GITLAB_CLIENT_SECRET;
-  const redirectUri = process.env.GITLAB_REDIRECT_URI;
-  if (!clientId || !clientSecret || !redirectUri) {
-    return settingsRedirect(request, { integration: 'gitlab', error: 'oauth_not_configured' });
+  const credentials = await getClientCredentials('gitlab');
+  if (!credentials || !credentials.redirectUri) {
+    return redirectResult({ integration: 'gitlab', error: 'oauth_not_configured' });
   }
 
   // Exchange the code for tokens.
@@ -103,27 +139,27 @@ export async function GET(request: NextRequest) {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
       body: new URLSearchParams({
-        client_id: clientId,
-        client_secret: clientSecret,
+        client_id: credentials.clientId,
+        client_secret: credentials.clientSecret,
         code,
         grant_type: 'authorization_code',
-        redirect_uri: redirectUri,
+        redirect_uri: credentials.redirectUri,
       }).toString(),
       cache: 'no-store',
     });
     if (!tokenRes.ok) {
       const detail = await tokenRes.text().catch(() => '');
       console.error('GitLab token exchange failed', tokenRes.status, detail);
-      return settingsRedirect(request, { integration: 'gitlab', error: 'token_exchange_failed' });
+      return redirectResult({ integration: 'gitlab', error: 'token_exchange_failed' });
     }
     tokenJson = await tokenRes.json();
   } catch (err) {
     console.error('GitLab token exchange threw', err);
-    return settingsRedirect(request, { integration: 'gitlab', error: 'token_exchange_failed' });
+    return redirectResult({ integration: 'gitlab', error: 'token_exchange_failed' });
   }
 
   if (!tokenJson.access_token) {
-    return settingsRedirect(request, { integration: 'gitlab', error: 'no_access_token' });
+    return redirectResult({ integration: 'gitlab', error: 'no_access_token' });
   }
 
   // Fetch user info for externalAccountId / label.
@@ -157,7 +193,6 @@ export async function GET(request: NextRequest) {
   };
 
   const now = new Date();
-  const organizationId = decoded.o;
 
   try {
     // Upsert: one connection per (organizationId, provider). If another
@@ -185,7 +220,7 @@ export async function GET(request: NextRequest) {
           refreshTokenEnc,
           scope: tokenJson.scope ?? null,
           metadata,
-          connectedById: session.user.id,
+          connectedById: userId,
           updatedAt: now,
         })
         .where(eq(integrationConnections.id, existingRow.id));
@@ -199,15 +234,15 @@ export async function GET(request: NextRequest) {
         refreshTokenEnc,
         scope: tokenJson.scope ?? null,
         metadata,
-        connectedById: session.user.id,
+        connectedById: userId,
         createdAt: now,
         updatedAt: now,
       });
     }
   } catch (err) {
     console.error('Failed to persist GitLab integration_connection', err);
-    return settingsRedirect(request, { integration: 'gitlab', error: 'persist_failed' });
+    return redirectResult({ integration: 'gitlab', error: 'persist_failed' });
   }
 
-  return settingsRedirect(request, { integration: 'gitlab', connected: '1' });
+  return redirectResult({ integration: 'gitlab', connected: '1' });
 }

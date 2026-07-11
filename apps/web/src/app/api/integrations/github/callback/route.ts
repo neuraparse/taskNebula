@@ -18,6 +18,12 @@ import {
   exchangeGithubCode,
   fetchGithubUser,
 } from '@/lib/integrations/github';
+import {
+  decodeMobileIntegrationState,
+  hasPermissionForUser,
+  isMobileIntegrationState,
+  mobileIntegrationRedirect,
+} from '@/lib/integrations/mobile-oauth';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,47 +59,78 @@ function settingsRedirect(request: NextRequest, params: Record<string, string>):
 }
 
 export async function GET(request: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
   const state = searchParams.get('state');
   const errorParam = searchParams.get('error');
+  const stateIsMobile = isMobileIntegrationState(state);
+  const mobileState = state ? decodeMobileIntegrationState(state, 'github') : null;
+
+  const session = mobileState ? null : await auth();
+  if (!mobileState && !session?.user?.id) {
+    return stateIsMobile
+      ? mobileIntegrationRedirect(request, {
+          provider: 'github',
+          status: 'error',
+          reason: 'invalid_state',
+        })
+      : NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const redirectResult = (params: Record<string, string>): NextResponse => {
+    if (mobileState || stateIsMobile) {
+      return mobileIntegrationRedirect(request, {
+        provider: 'github',
+        status: params.connected === '1' ? 'connected' : 'error',
+        reason: params.error,
+      });
+    }
+    return settingsRedirect(request, params);
+  };
 
   if (errorParam) {
-    return settingsRedirect(request, { integration: 'github', error: errorParam });
+    return redirectResult({ integration: 'github', error: errorParam });
   }
   if (!code || !state) {
-    return settingsRedirect(request, {
+    return redirectResult({
       integration: 'github',
       error: 'missing_code_or_state',
     });
   }
 
-  const cookieState = request.cookies.get(GITHUB_STATE_COOKIE)?.value;
-  if (!cookieState || cookieState !== state) {
-    return settingsRedirect(request, {
-      integration: 'github',
-      error: 'invalid_state',
-    });
-  }
+  let organizationId: string;
+  let userId: string;
+  if (mobileState) {
+    organizationId = mobileState.organizationId;
+    userId = mobileState.userId;
+    if (!(await hasPermissionForUser(userId, organizationId, 'org:settings'))) {
+      return redirectResult({ integration: 'github', error: 'forbidden' });
+    }
+  } else {
+    const cookieState = request.cookies.get(GITHUB_STATE_COOKIE)?.value;
+    if (!cookieState || cookieState !== state) {
+      return redirectResult({
+        integration: 'github',
+        error: 'invalid_state',
+      });
+    }
 
-  const decoded = decodeState(state);
-  if (!decoded || decoded.u !== session.user.id) {
-    return settingsRedirect(request, {
-      integration: 'github',
-      error: 'invalid_state',
-    });
-  }
+    const decoded = decodeState(state);
+    if (!decoded || decoded.u !== session?.user?.id) {
+      return redirectResult({
+        integration: 'github',
+        error: 'invalid_state',
+      });
+    }
 
-  if (!(await hasPermission(decoded.o, 'org:settings'))) {
-    return settingsRedirect(request, {
-      integration: 'github',
-      error: 'forbidden',
-    });
+    if (!(await hasPermission(decoded.o, 'org:settings'))) {
+      return redirectResult({
+        integration: 'github',
+        error: 'forbidden',
+      });
+    }
+    organizationId = decoded.o;
+    userId = session.user.id;
   }
 
   let tokenJson;
@@ -101,7 +138,7 @@ export async function GET(request: NextRequest) {
     tokenJson = await exchangeGithubCode(code);
   } catch (err) {
     console.error('GitHub token exchange threw', err);
-    return settingsRedirect(request, {
+    return redirectResult({
       integration: 'github',
       error: 'token_exchange_failed',
     });
@@ -109,7 +146,7 @@ export async function GET(request: NextRequest) {
 
   if (tokenJson.error || !tokenJson.access_token) {
     console.error('GitHub OAuth rejected', tokenJson.error, tokenJson.error_description);
-    return settingsRedirect(request, {
+    return redirectResult({
       integration: 'github',
       error: tokenJson.error || 'no_access_token',
     });
@@ -133,7 +170,6 @@ export async function GET(request: NextRequest) {
   };
 
   const now = new Date();
-  const organizationId = decoded.o;
 
   try {
     const [existing] = await db
@@ -157,7 +193,7 @@ export async function GET(request: NextRequest) {
           refreshTokenEnc,
           scope: tokenJson.scope ?? null,
           metadata,
-          connectedById: session.user.id,
+          connectedById: userId,
           updatedAt: now,
         })
         .where(eq(integrationConnections.id, existing.id));
@@ -171,18 +207,18 @@ export async function GET(request: NextRequest) {
         refreshTokenEnc,
         scope: tokenJson.scope ?? null,
         metadata,
-        connectedById: session.user.id,
+        connectedById: userId,
         createdAt: now,
         updatedAt: now,
       });
     }
   } catch (err) {
     console.error('Failed to persist GitHub integration_connection', err);
-    return settingsRedirect(request, {
+    return redirectResult({
       integration: 'github',
       error: 'persist_failed',
     });
   }
 
-  return settingsRedirect(request, { integration: 'github', connected: '1' });
+  return redirectResult({ integration: 'github', connected: '1' });
 }

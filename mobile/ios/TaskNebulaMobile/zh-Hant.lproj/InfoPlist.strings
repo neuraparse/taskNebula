@@ -1,0 +1,2 @@
+"NSMicrophoneUsageDescription" = "TaskNebula 會使用麥克風進行專案語音通話。";
+"NSLocalNetworkUsageDescription" = "TaskNebula 會使用本機網路連接到你的自架伺服器。";

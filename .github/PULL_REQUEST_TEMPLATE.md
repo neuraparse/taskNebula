@@ -14,6 +14,7 @@
 - [ ] Manual test of the affected flow
 - [ ] `pnpm type-check` passes
 - [ ] `pnpm --filter @tasknebula/web exec jest` passes
+- [ ] Mobile native checks run when touching `mobile/`: `pnpm --filter @tasknebula/mobile native:verify`, `pnpm --filter @tasknebula/mobile ios:verify-bundle`, and `pnpm --filter @tasknebula/mobile android:verify-build`
 - [ ] Migrations (if any) run cleanly against a fresh DB
 
 ## Screenshots / recordings

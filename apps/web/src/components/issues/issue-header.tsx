@@ -204,7 +204,7 @@ export function IssueHeader({ issue }: IssueHeaderProps) {
       <div className="min-w-0 flex-1 space-y-1">
         <nav className="text-muted-foreground mb-2 flex min-w-0 flex-wrap items-center gap-1.5 text-[12px]">
           <Inbox className="h-3.5 w-3.5 shrink-0" />
-          <Link href="/issues" className="hover:text-foreground min-w-0 truncate">
+          <Link href="/my-issues" className="hover:text-foreground min-w-0 truncate">
             {t('breadcrumb')}
           </Link>
           <ChevronRight className="h-3 w-3 shrink-0 opacity-60" />

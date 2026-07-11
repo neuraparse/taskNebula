@@ -39,5 +39,9 @@ export default getRequestConfig(async ({ requestLocale }) => {
   return {
     locale,
     messages,
+    // next-intl requires a stable reference point for relativeTime formatting.
+    // Supplying it here keeps server and client renders in sync and avoids
+    // ENVIRONMENT_FALLBACK errors on dashboards, inboxes and activity feeds.
+    now: new Date(),
   };
 });

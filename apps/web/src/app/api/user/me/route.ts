@@ -3,12 +3,18 @@
  * GET /api/user/me - Get current user with super admin status
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { db, users } from '@tasknebula/db';
-import { eq } from 'drizzle-orm';
+import {
+  and,
+  db,
+  eq,
+  hasPermission as roleHasPermission,
+  organizationMembers,
+  users,
+} from '@tasknebula/db';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -23,6 +29,7 @@ export async function GET(request: NextRequest) {
         image: users.image,
         isSuperAdmin: users.isSuperAdmin,
         status: users.status,
+        emailVerified: users.emailVerified,
       })
       .from(users)
       .where(eq(users.id, session.user.id))
@@ -32,13 +39,25 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    return NextResponse.json(user);
+    let trustedForVerification = user.isSuperAdmin === true;
+    if (!trustedForVerification) {
+      const memberships = await db
+        .select({ role: organizationMembers.role })
+        .from(organizationMembers)
+        .where(
+          and(eq(organizationMembers.userId, user.id), eq(organizationMembers.status, 'active'))
+        );
+      trustedForVerification = memberships.some((membership) =>
+        roleHasPermission(membership.role || '', 'org:settings')
+      );
+    }
+
+    return NextResponse.json({
+      ...user,
+      emailVerificationRequired: !user.emailVerified && !trustedForVerification,
+    });
   } catch (error) {
     console.error('Failed to fetch user:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch user' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch user' }, { status: 500 });
   }
 }
-

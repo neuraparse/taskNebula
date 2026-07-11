@@ -1,0 +1,2 @@
+"NSMicrophoneUsageDescription" = "TaskNebula використовує мікрофон для голосових дзвінків у проєктах.";
+"NSLocalNetworkUsageDescription" = "TaskNebula використовує локальну мережу для підключення до ваших самостійно розміщених серверів.";

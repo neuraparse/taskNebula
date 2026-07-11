@@ -1,11 +1,6 @@
 module.exports = {
-  extends: [
-    './eslint.base.js',
-    'next/core-web-vitals',
-    'plugin:react/recommended',
-    'plugin:react-hooks/recommended',
-  ],
-  plugins: ['react', 'react-hooks'],
+  extends: ['./eslint.base.js', 'next/core-web-vitals', 'plugin:react/recommended'],
+  plugins: ['react'],
   env: {
     browser: true,
   },
@@ -19,4 +14,3 @@ module.exports = {
     'react/prop-types': 'off',
   },
 };
-

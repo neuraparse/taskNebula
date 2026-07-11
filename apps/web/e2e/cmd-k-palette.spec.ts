@@ -8,6 +8,20 @@ import { ensureSeed } from './fixtures/seed';
 test.describe('cmd+k command palette', () => {
   test('opens from the global trigger and surfaces an Ask AI action', async ({ page }) => {
     const seed = await ensureSeed();
+    let askRequestCount = 0;
+    await page.route('**/api/ask', async (route) => {
+      askRequestCount += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: [
+          'data: {"type":"token","text":"Project risks are being reviewed."}',
+          '',
+          'data: {"type":"done","usage":{"model":"playwright-stub","inputTokens":0,"outputTokens":0,"costUsd":0,"latencyMs":0,"reranked":false,"promptHash":""}}',
+          '',
+        ].join('\n'),
+      });
+    });
     await page.goto(`/projects/${seed.projectId}/views`);
 
     const trigger = page.getByRole('button', { name: /open command palette/i });
@@ -30,5 +44,9 @@ test.describe('cmd+k command palette', () => {
     await askOption.click();
 
     await expect(palette).toBeHidden({ timeout: 5_000 });
+    const sidecar = page.locator('aside[aria-label="AI Sidecar"]');
+    await expect(sidecar).toHaveAttribute('aria-hidden', 'false');
+    await expect(sidecar).toContainText('Project risks are being reviewed.');
+    expect(askRequestCount).toBe(1);
   });
 });

@@ -1,0 +1,2 @@
+"NSMicrophoneUsageDescription" = "TaskNebula utilise le microphone pour les appels vocaux des projets.";
+"NSLocalNetworkUsageDescription" = "TaskNebula utilise le réseau local pour se connecter à vos serveurs auto-hébergés.";

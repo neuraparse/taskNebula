@@ -25,6 +25,7 @@ import { notifyIssueEvent } from '@/lib/notifications/send-notification';
 import { runAutomations } from '@/lib/automation/evaluator';
 import { withValidation } from '@/lib/api-validation';
 import { syncIssueLabelsBestEffort } from '@/lib/labels/sync';
+import { enqueueTriageOnCreate } from '@/lib/agents/triage-enqueue';
 import {
   guardAgentAction,
   readAgentPolicyMarker,
@@ -524,14 +525,16 @@ export const POST = withValidation({ body: createIssueSchema })(async (
       });
     }
 
-    // Defer all post-response side-effects: activity log, audit log,
-    // assignee notification email, and automation rules. The response
+    // Defer all post-response side-effects: triage suggestion, activity log,
+    // audit log, assignee notification email, and automation rules. The response
     // payload is finalised below — `after()` runs once it has been flushed
     // to the client, so request latency reflects only the DB insert.
     const actorUserId = session.user.id!;
     const createdIssue = newIssue;
     const projectKey = project.key;
     after(async () => {
+      enqueueTriageOnCreate(createdIssue.id);
+
       try {
         await createActivity({
           issueId: createdIssue.id,

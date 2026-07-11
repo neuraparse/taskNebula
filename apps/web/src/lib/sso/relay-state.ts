@@ -37,10 +37,26 @@ function sign(payload: string): string {
   return b64url(createHmac('sha256', secret()).update(payload).digest());
 }
 
-export function mintRelayState(slug: string): string {
+function decodePayload(token: string): string | null {
+  const [payloadPart] = token.split('.', 2);
+  if (!payloadPart) return null;
+
+  try {
+    return fromB64url(payloadPart).toString('utf8');
+  } catch {
+    return null;
+  }
+}
+
+export function mintRelayState(
+  slug: string,
+  options: { mobile?: boolean; callbackUrl?: string | null } = {}
+): string {
   const nonce = b64url(randomBytes(12));
   const ts = Date.now().toString(36);
-  const payload = `${slug}|${nonce}|${ts}`;
+  const callbackUrl = options.mobile && options.callbackUrl ? options.callbackUrl : null;
+  const callbackPart = callbackUrl ? `|${b64url(Buffer.from(callbackUrl, 'utf8'))}` : '';
+  const payload = `${slug}|${nonce}|${ts}${options.mobile ? `|mobile${callbackPart}` : ''}`;
   const sig = sign(payload);
   return `${b64url(Buffer.from(payload, 'utf8'))}.${sig}`;
 }
@@ -82,4 +98,37 @@ export function verifyRelayState(token: string): RelayStateVerifyResult {
     return { ok: false, reason: 'expired' };
   }
   return { ok: true, slug };
+}
+
+export function isMobileRelayState(token: string): boolean {
+  const result = verifyRelayState(token);
+  if (!result.ok) return false;
+
+  const [payloadPart] = token.split('.', 2);
+  if (!payloadPart) return false;
+
+  try {
+    const payloadString = decodePayload(token);
+    if (!payloadString) return false;
+    const [, , , mode] = payloadString.split('|');
+    return mode === 'mobile';
+  } catch {
+    return false;
+  }
+}
+
+export function getMobileRelayStateCallbackUrl(token: string): string | null {
+  const result = verifyRelayState(token);
+  if (!result.ok) return null;
+
+  const payloadString = decodePayload(token);
+  if (!payloadString) return null;
+  const [, , , mode, encodedCallbackUrl] = payloadString.split('|');
+  if (mode !== 'mobile' || !encodedCallbackUrl) return null;
+
+  try {
+    return fromB64url(encodedCallbackUrl).toString('utf8') || null;
+  } catch {
+    return null;
+  }
 }

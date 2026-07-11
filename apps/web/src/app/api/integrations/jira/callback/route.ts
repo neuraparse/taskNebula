@@ -10,6 +10,12 @@ import {
 } from '@/lib/integrations/jira';
 import { encryptToken } from '@/lib/integrations/token-crypto';
 import { hasPermission } from '@/lib/auth/permissions';
+import {
+  decodeMobileIntegrationState,
+  hasPermissionForUser,
+  isMobileIntegrationState,
+  mobileIntegrationRedirect,
+} from '@/lib/integrations/mobile-oauth';
 
 type StatePayload = {
   nonce: string;
@@ -57,39 +63,69 @@ function redirectToSettings(message?: { status: 'connected' | 'error'; reason?: 
  * `integration_connections` row with `provider='jira'`.
  */
 export async function GET(request: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return redirectToSettings({ status: 'error', reason: 'unauthorized' });
-  }
-
   const params = request.nextUrl.searchParams;
   const error = params.get('error');
+  const rawState = params.get('state');
+  const stateIsMobile = isMobileIntegrationState(rawState);
+  const mobileState = rawState ? decodeMobileIntegrationState(rawState, JIRA_PROVIDER) : null;
+
+  const session = mobileState ? null : await auth();
+  if (!mobileState && !session?.user?.id) {
+    return stateIsMobile
+      ? mobileIntegrationRedirect(request, {
+          provider: JIRA_PROVIDER,
+          status: 'error',
+          reason: 'invalid_state',
+        })
+      : redirectToSettings({ status: 'error', reason: 'unauthorized' });
+  }
+
+  const redirectResult = (message: { status: 'connected' | 'error'; reason?: string }) =>
+    mobileState || stateIsMobile
+      ? mobileIntegrationRedirect(request, {
+          provider: JIRA_PROVIDER,
+          status: message.status,
+          reason: message.reason,
+        })
+      : redirectToSettings(message);
+
   if (error) {
-    return redirectToSettings({ status: 'error', reason: error });
+    return redirectResult({ status: 'error', reason: error });
   }
 
   const code = params.get('code');
-  const rawState = params.get('state');
   if (!code || !rawState) {
-    return redirectToSettings({ status: 'error', reason: 'missing_code_or_state' });
+    return redirectResult({ status: 'error', reason: 'missing_code_or_state' });
   }
 
-  const state = decodeState(rawState);
-  if (!state) {
-    return redirectToSettings({ status: 'error', reason: 'bad_state' });
-  }
+  let organizationId: string;
+  let userId: string;
+  if (mobileState) {
+    organizationId = mobileState.organizationId;
+    userId = mobileState.userId;
+    if (!(await hasPermissionForUser(userId, organizationId, 'org:settings'))) {
+      return redirectResult({ status: 'error', reason: 'forbidden' });
+    }
+  } else {
+    const state = decodeState(rawState);
+    if (!state) {
+      return redirectResult({ status: 'error', reason: 'bad_state' });
+    }
 
-  const cookieNonce = request.cookies.get(JIRA_STATE_COOKIE)?.value;
-  if (!cookieNonce || cookieNonce !== state.nonce) {
-    return redirectToSettings({ status: 'error', reason: 'state_mismatch' });
-  }
+    const cookieNonce = request.cookies.get(JIRA_STATE_COOKIE)?.value;
+    if (!cookieNonce || cookieNonce !== state.nonce) {
+      return redirectResult({ status: 'error', reason: 'state_mismatch' });
+    }
 
-  if (state.userId !== session.user.id) {
-    return redirectToSettings({ status: 'error', reason: 'user_mismatch' });
-  }
+    if (state.userId !== session?.user?.id) {
+      return redirectResult({ status: 'error', reason: 'user_mismatch' });
+    }
 
-  if (!(await hasPermission(state.organizationId, 'org:settings'))) {
-    return redirectToSettings({ status: 'error', reason: 'forbidden' });
+    if (!(await hasPermission(state.organizationId, 'org:settings'))) {
+      return redirectResult({ status: 'error', reason: 'forbidden' });
+    }
+    organizationId = state.organizationId;
+    userId = session.user.id;
   }
 
   let tokenResponse;
@@ -97,7 +133,7 @@ export async function GET(request: NextRequest) {
     tokenResponse = await exchangeJiraCode(code);
   } catch (err) {
     console.error('[jira] token exchange failed', err);
-    return redirectToSettings({ status: 'error', reason: 'token_exchange_failed' });
+    return redirectResult({ status: 'error', reason: 'token_exchange_failed' });
   }
 
   let resources;
@@ -105,12 +141,12 @@ export async function GET(request: NextRequest) {
     resources = await fetchJiraAccessibleResources(tokenResponse.access_token);
   } catch (err) {
     console.error('[jira] accessible-resources failed', err);
-    return redirectToSettings({ status: 'error', reason: 'accessible_resources_failed' });
+    return redirectResult({ status: 'error', reason: 'accessible_resources_failed' });
   }
 
   const primaryResource = resources[0];
   if (!primaryResource) {
-    return redirectToSettings({ status: 'error', reason: 'no_accessible_sites' });
+    return redirectResult({ status: 'error', reason: 'no_accessible_sites' });
   }
 
   const accessTokenEnc = encryptToken(tokenResponse.access_token);
@@ -143,7 +179,7 @@ export async function GET(request: NextRequest) {
   await db
     .insert(integrationConnections)
     .values({
-      organizationId: state.organizationId,
+      organizationId,
       provider: JIRA_PROVIDER,
       externalAccountId: primaryResource.id,
       externalAccountLabel: primaryResource.name,
@@ -151,7 +187,7 @@ export async function GET(request: NextRequest) {
       refreshTokenEnc,
       scope,
       metadata,
-      connectedById: session.user.id,
+      connectedById: userId,
       updatedAt: now,
     })
     .onConflictDoUpdate({
@@ -163,12 +199,12 @@ export async function GET(request: NextRequest) {
         refreshTokenEnc,
         scope,
         metadata,
-        connectedById: session.user.id,
+        connectedById: userId,
         updatedAt: now,
       },
     });
 
-  const response = redirectToSettings({ status: 'connected' });
+  const response = redirectResult({ status: 'connected' });
   // Invalidate the single-use state cookie.
   response.cookies.set(JIRA_STATE_COOKIE, '', {
     httpOnly: true,

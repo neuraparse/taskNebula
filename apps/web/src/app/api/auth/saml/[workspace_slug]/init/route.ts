@@ -8,6 +8,7 @@
  *        can re-resolve the config without trusting the URL.
  */
 import { NextRequest, NextResponse } from 'next/server';
+import { normalizeMobileAuthCallbackUrl } from '@/lib/auth/mobile-oauth';
 import { loadSsoForSlug } from '@/lib/sso/workspace';
 import { buildAuthnRequestUrl, getBaseUrl, type SamlContext } from '@/lib/sso/saml';
 import { mintRelayState } from '@/lib/sso/relay-state';
@@ -51,7 +52,12 @@ async function handle(
   // a 5-minute replay window without depending on the workspace-slug
   // cookie alone (which a hostile site could try to plant via SameSite=lax
   // navigation).
-  const relayState = mintRelayState(workspace.workspaceSlug);
+  const mobile = request.nextUrl.searchParams.get('mobile') === '1';
+  const callbackUrl = normalizeMobileAuthCallbackUrl(
+    request.nextUrl.searchParams.get('callbackUrl'),
+    new URL(request.url).origin
+  );
+  const relayState = mintRelayState(workspace.workspaceSlug, { mobile, callbackUrl });
   const finalUrl = redirectUrl.includes('?')
     ? `${redirectUrl}&RelayState=${encodeURIComponent(relayState)}`
     : `${redirectUrl}?RelayState=${encodeURIComponent(relayState)}`;

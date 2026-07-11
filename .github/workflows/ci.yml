@@ -54,3 +54,56 @@ jobs:
         # not hang the job until the 30-minute timeout. Invoke turbo directly
         # so the flag deterministically reaches each package's jest.
         run: pnpm exec turbo run test -- --forceExit
+
+  mobile-native:
+    name: Mobile native self-host verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Version comes from the root package.json "packageManager" field —
+      # specifying it here too makes pnpm/action-setup fail with
+      # "Multiple versions of pnpm specified".
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android build tools
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;27.1.12297006"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify mobile i18n catalogs
+        run: pnpm --filter @tasknebula/mobile i18n:check
+
+      - name: Verify mobile OpenAPI sync
+        run: pnpm --filter @tasknebula/mobile openapi:check
+
+      - name: Verify mobile design parity
+        run: pnpm --filter @tasknebula/mobile design:verify
+
+      - name: Verify bare native project
+        run: pnpm --filter @tasknebula/mobile native:verify
+
+      - name: Verify iOS release JS bundle
+        run: pnpm --filter @tasknebula/mobile ios:verify-bundle
+
+      - name: Verify Android build and release signing
+        run: pnpm --filter @tasknebula/mobile android:verify-build

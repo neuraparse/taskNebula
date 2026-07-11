@@ -15,6 +15,12 @@ import { auth } from '@/auth';
 import { encryptToken } from '@/lib/integrations/token-crypto';
 import { hasPermission } from '@/lib/auth/permissions';
 import { SENTRY_STATE_COOKIE, exchangeSentryCode } from '@/lib/integrations/sentry';
+import {
+  decodeMobileIntegrationState,
+  hasPermissionForUser,
+  isMobileIntegrationState,
+  mobileIntegrationRedirect,
+} from '@/lib/integrations/mobile-oauth';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,47 +56,78 @@ function settingsRedirect(request: NextRequest, params: Record<string, string>):
 }
 
 export async function GET(request: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
   const state = searchParams.get('state');
   const errorParam = searchParams.get('error');
+  const stateIsMobile = isMobileIntegrationState(state);
+  const mobileState = state ? decodeMobileIntegrationState(state, 'sentry') : null;
+
+  const session = mobileState ? null : await auth();
+  if (!mobileState && !session?.user?.id) {
+    return stateIsMobile
+      ? mobileIntegrationRedirect(request, {
+          provider: 'sentry',
+          status: 'error',
+          reason: 'invalid_state',
+        })
+      : NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const redirectResult = (params: Record<string, string>): NextResponse => {
+    if (mobileState || stateIsMobile) {
+      return mobileIntegrationRedirect(request, {
+        provider: 'sentry',
+        status: params.connected === '1' ? 'connected' : 'error',
+        reason: params.error,
+      });
+    }
+    return settingsRedirect(request, params);
+  };
 
   if (errorParam) {
-    return settingsRedirect(request, { integration: 'sentry', error: errorParam });
+    return redirectResult({ integration: 'sentry', error: errorParam });
   }
   if (!code || !state) {
-    return settingsRedirect(request, {
+    return redirectResult({
       integration: 'sentry',
       error: 'missing_code_or_state',
     });
   }
 
-  const cookieState = request.cookies.get(SENTRY_STATE_COOKIE)?.value;
-  if (!cookieState || cookieState !== state) {
-    return settingsRedirect(request, {
-      integration: 'sentry',
-      error: 'invalid_state',
-    });
-  }
+  let organizationId: string;
+  let userId: string;
+  if (mobileState) {
+    organizationId = mobileState.organizationId;
+    userId = mobileState.userId;
+    if (!(await hasPermissionForUser(userId, organizationId, 'org:settings'))) {
+      return redirectResult({ integration: 'sentry', error: 'forbidden' });
+    }
+  } else {
+    const cookieState = request.cookies.get(SENTRY_STATE_COOKIE)?.value;
+    if (!cookieState || cookieState !== state) {
+      return redirectResult({
+        integration: 'sentry',
+        error: 'invalid_state',
+      });
+    }
 
-  const decoded = decodeState(state);
-  if (!decoded || decoded.u !== session.user.id) {
-    return settingsRedirect(request, {
-      integration: 'sentry',
-      error: 'invalid_state',
-    });
-  }
+    const decoded = decodeState(state);
+    if (!decoded || decoded.u !== session?.user?.id) {
+      return redirectResult({
+        integration: 'sentry',
+        error: 'invalid_state',
+      });
+    }
 
-  if (!(await hasPermission(decoded.o, 'org:settings'))) {
-    return settingsRedirect(request, {
-      integration: 'sentry',
-      error: 'forbidden',
-    });
+    if (!(await hasPermission(decoded.o, 'org:settings'))) {
+      return redirectResult({
+        integration: 'sentry',
+        error: 'forbidden',
+      });
+    }
+    organizationId = decoded.o;
+    userId = session.user.id;
   }
 
   let tokenJson;
@@ -98,7 +135,7 @@ export async function GET(request: NextRequest) {
     tokenJson = await exchangeSentryCode(code);
   } catch (err) {
     console.error('Sentry token exchange threw', err);
-    return settingsRedirect(request, {
+    return redirectResult({
       integration: 'sentry',
       error: 'token_exchange_failed',
     });
@@ -106,7 +143,7 @@ export async function GET(request: NextRequest) {
 
   if (tokenJson.error || !tokenJson.access_token) {
     console.error('Sentry OAuth rejected', tokenJson.error, tokenJson.error_description);
-    return settingsRedirect(request, {
+    return redirectResult({
       integration: 'sentry',
       error: tokenJson.error || 'no_access_token',
     });
@@ -129,7 +166,6 @@ export async function GET(request: NextRequest) {
   };
 
   const now = new Date();
-  const organizationId = decoded.o;
 
   try {
     const [existing] = await db
@@ -153,7 +189,7 @@ export async function GET(request: NextRequest) {
           refreshTokenEnc,
           scope: tokenJson.scope ?? null,
           metadata,
-          connectedById: session.user.id,
+          connectedById: userId,
           updatedAt: now,
         })
         .where(eq(integrationConnections.id, existing.id));
@@ -167,18 +203,18 @@ export async function GET(request: NextRequest) {
         refreshTokenEnc,
         scope: tokenJson.scope ?? null,
         metadata,
-        connectedById: session.user.id,
+        connectedById: userId,
         createdAt: now,
         updatedAt: now,
       });
     }
   } catch (err) {
     console.error('Failed to persist Sentry integration_connection', err);
-    return settingsRedirect(request, {
+    return redirectResult({
       integration: 'sentry',
       error: 'persist_failed',
     });
   }
 
-  return settingsRedirect(request, { integration: 'sentry', connected: '1' });
+  return redirectResult({ integration: 'sentry', connected: '1' });
 }

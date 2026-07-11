@@ -108,7 +108,7 @@ export function IssueDetailView({
         if (onClose) {
           onClose();
         } else {
-          router.push('/issues');
+          router.push('/my-issues');
         }
       },
       onError: () => {

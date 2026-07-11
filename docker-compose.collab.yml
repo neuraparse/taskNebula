@@ -1,4 +1,16 @@
+volumes:
+  hocuspocus_node_modules:
+
 services:
+  web:
+    build:
+      args:
+        NEXT_PUBLIC_COLLAB_ENABLED: ${NEXT_PUBLIC_COLLAB_ENABLED:-true}
+        NEXT_PUBLIC_HOCUSPOCUS_URL: ${NEXT_PUBLIC_HOCUSPOCUS_URL:-ws://127.0.0.1:${HOCUSPOCUS_PORT:-1234}}
+    environment:
+      NEXT_PUBLIC_COLLAB_ENABLED: ${NEXT_PUBLIC_COLLAB_ENABLED:-true}
+      NEXT_PUBLIC_HOCUSPOCUS_URL: ${NEXT_PUBLIC_HOCUSPOCUS_URL:-ws://127.0.0.1:${HOCUSPOCUS_PORT:-1234}}
+
   hocuspocus:
     image: node:22-alpine
     container_name: tasknebula-hocuspocus
@@ -19,15 +31,16 @@ services:
       - '127.0.0.1:${HOCUSPOCUS_PORT:-1234}:1234'
     volumes:
       - ./services/hocuspocus:/app
+      - hocuspocus_node_modules:/app/node_modules
     # Install only on first boot; subsequent restarts skip when node_modules
     # is already present.
     command: >-
-      sh -c "if [ ! -d node_modules ]; then npm install --no-audit --no-fund --omit=dev; fi &&
+      sh -c "if [ ! -d node_modules/@hocuspocus/server ]; then npm install --no-audit --no-fund --omit=dev; fi &&
              node src/server.mjs"
     healthcheck:
       test:
         - CMD-SHELL
-        - "node -e \"require('net').createConnection(1234,'127.0.0.1').on('connect',()=>process.exit(0)).on('error',()=>process.exit(1))\""
+        - 'node -e "require(''net'').createConnection(1234,''127.0.0.1'').on(''connect'',()=>process.exit(0)).on(''error'',()=>process.exit(1))"'
       interval: 30s
       timeout: 5s
       start_period: 20s

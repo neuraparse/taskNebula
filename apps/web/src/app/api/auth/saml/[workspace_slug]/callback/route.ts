@@ -21,7 +21,11 @@ import { parseLoginResponse, getBaseUrl, type SamlContext } from '@/lib/sso/saml
 import { resolveUserAttributes } from '@/lib/sso/attribute-map';
 import { jitProvisionUser } from '@/lib/sso/jit';
 import { mintSamlExchangeToken } from '@/lib/sso/session';
-import { verifyRelayState } from '@/lib/sso/relay-state';
+import {
+  getMobileRelayStateCallbackUrl,
+  isMobileRelayState,
+  verifyRelayState,
+} from '@/lib/sso/relay-state';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -70,6 +74,8 @@ export async function POST(
     );
     return NextResponse.json({ error: 'RelayState workspace mismatch' }, { status: 400 });
   }
+  const mobileRelay = isMobileRelayState(relayValue);
+  const mobileCallbackUrl = mobileRelay ? getMobileRelayStateCallbackUrl(relayValue) : null;
 
   const ctx: SamlContext = {
     config: workspace.config,
@@ -115,6 +121,18 @@ export async function POST(
     email: internalUser.email,
     workspaceId: workspace.workspaceId,
   });
+
+  if (mobileRelay) {
+    const redirectTo = new URL('tasknebula://auth/saml');
+    redirectTo.searchParams.set('status', 'authenticated');
+    redirectTo.searchParams.set('server', new URL(request.url).origin);
+    redirectTo.searchParams.set('workspace', workspace.workspaceSlug);
+    redirectTo.searchParams.set('token', exchangeToken);
+    if (mobileCallbackUrl) redirectTo.searchParams.set('callbackUrl', mobileCallbackUrl);
+    const res = NextResponse.redirect(redirectTo.toString(), 303);
+    res.cookies.delete('tn_saml_workspace');
+    return res;
+  }
 
   const redirectTo = new URL('/api/auth/saml/exchange', getBaseUrl());
   redirectTo.searchParams.set('token', exchangeToken);

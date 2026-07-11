@@ -1,0 +1,25 @@
+{
+  "extends": "@react-native/typescript-config",
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@/api/*": ["src/api/*"],
+      "@/components/*": ["src/components/*"],
+      "@/config/*": ["src/config/*"],
+      "@/design/*": ["src/design/*"],
+      "@/features/*": ["src/features/*"],
+      "@/i18n/*": ["src/i18n/*"],
+      "@/providers/*": ["src/providers/*"],
+      "zod": ["node_modules/zod"],
+      "zod/*": ["node_modules/zod/*"]
+    },
+    "types": ["jest"]
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules", "dist", "build", "ios/Pods"]
+}

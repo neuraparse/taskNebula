@@ -17,7 +17,7 @@
  *
  * Scale-out: Redis pub-sub keeps multiple Hocuspocus instances in sync.
  */
-import { Server } from '@hocuspocus/server';
+import { Hocuspocus } from '@hocuspocus/server';
 import { Database } from '@hocuspocus/extension-database';
 import { Logger } from '@hocuspocus/extension-logger';
 import { Redis } from '@hocuspocus/extension-redis';
@@ -167,7 +167,7 @@ if (REDIS_URL) {
 }
 
 // --- Server ---------------------------------------------------------------
-const server = new Server({
+const server = new Hocuspocus({
   port: PORT,
   address: '0.0.0.0',
   extensions,

@@ -48,6 +48,10 @@ export default defineConfig({
     {
       name: 'chromium-public',
       testMatch: /(signup|workspace-setup)\.spec\.ts/,
+      // These tests share the setup endpoint and intentionally run serially;
+      // parallel cold compilation in Next dev can otherwise make the public
+      // first-run check time out before the application is warm.
+      workers: 1,
       use: { ...devices['Desktop Chrome'] },
     },
 

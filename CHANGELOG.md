@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed the issue-detail breadcrumb pointing at the non-existent `/issues` route.
+- Configured a request-scoped `now` value for next-intl relative-time formatting to prevent runtime fallback errors across activity surfaces.
+- Wired the optional Hocuspocus public build variables through Docker build args and the collaboration compose overlay.
+
 ## [0.7.11] - 2026-06-24
 
 ### Added

@@ -54,12 +54,16 @@ COPY . .
 
 # Build arguments for public environment variables baked into the client bundle
 ARG NEXT_PUBLIC_APP_URL
+ARG NEXT_PUBLIC_COLLAB_ENABLED=false
+ARG NEXT_PUBLIC_HOCUSPOCUS_URL
 
 # Set environment variables for build
 # Dummy DATABASE_URL for build-time module evaluation only (no actual DB queries during build)
 # Real value is injected at runtime via docker-compose environment
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+ENV NEXT_PUBLIC_COLLAB_ENABLED=$NEXT_PUBLIC_COLLAB_ENABLED
+ENV NEXT_PUBLIC_HOCUSPOCUS_URL=$NEXT_PUBLIC_HOCUSPOCUS_URL
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 

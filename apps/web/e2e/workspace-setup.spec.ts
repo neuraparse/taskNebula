@@ -12,7 +12,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('first-run workspace setup', () => {
   test('shows wizard or redirects depending on setup state', async ({ page }) => {
-    const setupCheck = await page.request.get('/api/setup');
+    const setupCheck = await page.request.get('/api/setup', { timeout: 30_000 });
     const { setupRequired } = (await setupCheck.json()) as { setupRequired: boolean };
 
     await page.goto('/setup');

@@ -10,6 +10,7 @@ import { authConfig } from './auth.config';
 import { consumeSamlExchangeToken } from '@/lib/sso/session';
 import { getLoginOAuthCredentials, isLoginOAuthProvider } from '@/lib/auth/login-oauth-providers';
 import { applyOAuthDatabaseUser, resolveOAuthDatabaseUser } from '@/lib/auth/oauth-users';
+import { consumeMobileOAuthExchangeToken } from '@/lib/auth/mobile-oauth';
 
 /**
  * Full auth configuration with database operations
@@ -63,6 +64,29 @@ function buildCredentialProviders(): NextAuthConfig['providers'] {
         const token = credentials?.token;
         if (typeof token !== 'string' || !token) return null;
         const payload = await consumeSamlExchangeToken(token);
+        if (!payload) return null;
+        const user = await db.query.users.findFirst({
+          where: eq(users.id, payload.userId),
+        });
+        if (!user || user.status !== 'active') return null;
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          image: user.image,
+        };
+      },
+    }),
+    Credentials({
+      id: 'mobile-oauth',
+      name: 'mobile-oauth',
+      credentials: {
+        token: { label: 'Mobile OAuth exchange token', type: 'text' },
+      },
+      async authorize(credentials) {
+        const token = credentials?.token;
+        if (typeof token !== 'string' || !token) return null;
+        const payload = await consumeMobileOAuthExchangeToken(token);
         if (!payload) return null;
         const user = await db.query.users.findFirst({
           where: eq(users.id, payload.userId),
