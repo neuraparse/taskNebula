@@ -9,7 +9,7 @@ import type {
 } from '@/api/types';
 import { colors as tokenColors } from '@/design/tokens';
 
-export type ThemeColors = { [Key in keyof typeof tokenColors]: string };
+export type ThemeColors = Record<keyof typeof tokenColors, string>;
 export type ResolvedColorMode = 'light' | 'dark';
 export type SystemColorScheme = ResolvedColorMode | null | undefined;
 
