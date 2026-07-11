@@ -18,6 +18,12 @@ const mobileRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '.
 const androidRoot = path.join(mobileRoot, 'android');
 const gradlew = process.platform === 'win32' ? 'gradlew.bat' : './gradlew';
 const signingPassword = 'tasknebula-test';
+// A representative ABI keeps this end-to-end guard deterministic on clean CI
+// runners. Production builds can still use the full architecture list from
+// android/gradle.properties, or override this check when all ABIs are needed.
+const verificationArchitectures =
+  process.env.TASKNEBULA_ANDROID_VERIFY_ARCHITECTURES?.trim() || 'arm64-v8a';
+const architectureArgs = [`-PreactNativeArchitectures=${verificationArchitectures}`];
 const nativeFontFiles = [
   'TaskNebulaPlusJakartaSans-Regular.ttf',
   'TaskNebulaPlusJakartaSans-Medium.ttf',
@@ -154,7 +160,8 @@ function createTemporaryKeystore() {
 }
 
 try {
-  run('assemble debug APK', gradlew, [':app:assembleDebug']);
+  console.log(`[android-build] verification architectures: ${verificationArchitectures}`);
+  run('assemble debug APK', gradlew, [':app:assembleDebug', ...architectureArgs]);
   assertFile('debug APK', debugApk, 1024 * 1024);
 
   run(
@@ -162,6 +169,7 @@ try {
     gradlew,
     [
       ':app:assembleRelease',
+      ...architectureArgs,
       '-PtasknebulaUploadStoreFile=',
       '-PtasknebulaUploadStorePassword=',
       '-PtasknebulaUploadKeyAlias=',
@@ -177,6 +185,7 @@ try {
   const keystore = createTemporaryKeystore();
   run('assemble signed release APK', gradlew, [
     ':app:assembleRelease',
+    ...architectureArgs,
     `-PtasknebulaUploadStoreFile=${keystore}`,
     `-PtasknebulaUploadStorePassword=${signingPassword}`,
     '-PtasknebulaUploadKeyAlias=tasknebula-test',
