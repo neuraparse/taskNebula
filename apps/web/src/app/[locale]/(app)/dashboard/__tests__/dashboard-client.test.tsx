@@ -12,16 +12,24 @@ jest.mock('@/components/activity/activity-feed', () => ({
   ActivityFeed: () => <div data-testid="activity-feed" />,
 }));
 
-jest.mock('@/components/dashboard/your-work-widget', () => ({
-  YourWorkWidget: () => <div data-testid="your-work-widget" />,
-}));
-
 jest.mock('@/components/dashboard/upcoming-deadlines-widget', () => ({
   UpcomingDeadlinesWidget: () => <div data-testid="upcoming-deadlines-widget" />,
 }));
 
 jest.mock('@/components/dashboard/pinned-items-widget', () => ({
   PinnedItemsWidget: () => <div data-testid="pinned-items-widget" />,
+}));
+
+jest.mock('@/components/dashboard/catch-me-up-banner', () => ({
+  CatchMeUpBanner: () => <div data-testid="catch-me-up-banner" />,
+}));
+
+jest.mock('@/components/dashboard/standup-widget', () => ({
+  StandupWidget: () => <div data-testid="standup-widget" />,
+}));
+
+jest.mock('@/components/dashboard/delivery-analysis', () => ({
+  DeliveryAnalysis: () => <div data-testid="delivery-analysis" />,
 }));
 
 jest.mock('@/components/issues/issue-detail-modal', () => ({
@@ -108,6 +116,19 @@ describe('DashboardClient', () => {
             status: { name: 'In Progress', category: 'in_progress', color: '#000' },
             project: { key: 'ACM', name: 'Acme' },
           },
+          {
+            id: 'issue-2',
+            key: 'ACM-2',
+            title: 'Completed work stays out of the action queue',
+            priority: 'medium',
+            statusId: 'status-2',
+            projectId: 'project-1',
+            estimate: 2,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            status: { name: 'Done', category: 'done', color: '#000' },
+            project: { key: 'ACM', name: 'Acme' },
+          },
         ],
       },
     });
@@ -120,6 +141,9 @@ describe('DashboardClient', () => {
 
     expect(await screen.findByText(/Welcome back, Ada/i)).toBeInTheDocument();
     expect(await screen.findByText('Ship dashboard refresh')).toBeInTheDocument();
+    expect(
+      screen.queryByText('Completed work stays out of the action queue')
+    ).not.toBeInTheDocument();
     expect(document.querySelector('.dashboard-carbon')).toHaveClass('min-w-0', 'overflow-hidden');
     expect(screen.getByText('Ship dashboard refresh').closest('button')).toHaveClass('min-w-0');
     expect(screen.getByRole('link', { name: /my issues/i })).toHaveAttribute('href', '/my-issues');

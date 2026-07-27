@@ -22,6 +22,8 @@ import { useOrganizationPermissions } from '@/lib/hooks/use-permissions';
 import { useTeamspaces } from '@/lib/hooks/use-teamspaces';
 import { FolderKanban, Layers3, Plus, X } from 'lucide-react';
 import { ViewTransition } from '@/components/ui/view-transition';
+import { PageFrame } from '@/components/ui/page-frame';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface Organization {
   id: string;
@@ -70,33 +72,31 @@ export function ProjectsClient() {
   );
 
   return (
-    <div className="bg-background animate-fade-in flex h-full flex-col">
-      <div className="border-border bg-card border-b px-6 py-5">
-        <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-4">
-          <div className="space-y-1">
-            <span className="kicker">{t('kicker')}</span>
-            <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-            <p className="text-muted-foreground text-sm">
-              {isProjectListLoading
-                ? t('loading')
-                : activeTeamspace
-                  ? t('activeCountInTeamspace', {
-                      count: projects.length,
-                      teamspace: activeTeamspace.name,
-                    })
-                  : t('activeCount', { count: projects.length })}
-            </p>
-          </div>
-          {canCreateProject ? (
-            <Button onClick={() => setShowDialog(true)}>
-              <Plus className="mr-1.5 h-4 w-4" />
-              {t('createProject')}
-            </Button>
-          ) : null}
-        </div>
-      </div>
+    <>
+      <PageFrame className="animate-fade-in">
+        <PageHeader
+          kicker={t('kicker')}
+          title={t('title')}
+          description={
+            isProjectListLoading
+              ? t('loading')
+              : activeTeamspace
+                ? t('activeCountInTeamspace', {
+                    count: projects.length,
+                    teamspace: activeTeamspace.name,
+                  })
+                : t('activeCount', { count: projects.length })
+          }
+          actions={
+            canCreateProject ? (
+              <Button className="w-full sm:w-auto" onClick={() => setShowDialog(true)}>
+                <Plus className="mr-1.5 h-4 w-4" />
+                {t('createProject')}
+              </Button>
+            ) : null
+          }
+        />
 
-      <div className="flex-1 overflow-auto p-6">
         {projects.length === 0 && !isProjectListLoading ? (
           /* FEAT-31 dashboard empty state. Keep one honest primary action until
              AI project scaffolding has a complete, reviewable workflow. */
@@ -124,7 +124,7 @@ export function ProjectsClient() {
             ) : null}
           </div>
         ) : (
-          <div className="surface-card divide-border mx-auto w-full max-w-[1600px] divide-y overflow-hidden shadow-none">
+          <div className="surface-card divide-border w-full divide-y overflow-hidden shadow-none">
             {projects.map((project) => {
               const initials = project.name
                 .split(/\s+/)
@@ -202,12 +202,12 @@ export function ProjectsClient() {
             })}
           </div>
         )}
-      </div>
+      </PageFrame>
 
       {canCreateProject ? (
         <CreateProjectDialog open={showDialog} onOpenChange={(open) => setShowDialog(open)} />
       ) : null}
-    </div>
+    </>
   );
 }
 

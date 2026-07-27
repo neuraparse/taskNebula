@@ -1,0 +1,305 @@
+{
+  "version": 1,
+  "archetypes": [
+    "analysis",
+    "auth-setup",
+    "command",
+    "configuration",
+    "detail",
+    "overview",
+    "public-evidence",
+    "recovery-status"
+  ],
+  "requiredEvidence": [
+    "desktop-light",
+    "desktop-dark",
+    "mobile-light",
+    "mobile-dark",
+    "keyboard",
+    "loading-or-pending",
+    "empty-or-unavailable",
+    "error-or-recovery"
+  ],
+  "routes": [
+    {
+      "source": "src/app/page.tsx",
+      "archetype": "public-evidence",
+      "decision": "Understand the product through a real work flow and choose whether to try or self-host it."
+    },
+    {
+      "source": "src/app/(public)/trust/page.tsx",
+      "archetype": "public-evidence",
+      "decision": "Assess TaskNebula's operating and security posture from attributable evidence."
+    },
+    {
+      "source": "src/app/(public)/ai-model-cards/page.tsx",
+      "archetype": "public-evidence",
+      "decision": "Understand which AI systems are used, for what purpose, and under which controls."
+    },
+    {
+      "source": "src/app/(public)/intake/[slug]/page.tsx",
+      "archetype": "public-evidence",
+      "decision": "Submit a complete request to the intended workspace with clear validation and recovery."
+    },
+    {
+      "source": "src/app/auth/signin/page.tsx",
+      "archetype": "auth-setup",
+      "decision": "Sign in with the available authentication method or recover access."
+    },
+    {
+      "source": "src/app/auth/signup/page.tsx",
+      "archetype": "auth-setup",
+      "decision": "Create an account with clear requirements and a trustworthy next step."
+    },
+    {
+      "source": "src/app/auth/forgot-password/page.tsx",
+      "archetype": "auth-setup",
+      "decision": "Request an account recovery message without leaking account state."
+    },
+    {
+      "source": "src/app/auth/reset-password/page.tsx",
+      "archetype": "auth-setup",
+      "decision": "Set a valid replacement password or recover from an invalid link."
+    },
+    {
+      "source": "src/app/auth/verify-email/page.tsx",
+      "archetype": "auth-setup",
+      "decision": "Complete email verification or request a valid replacement path."
+    },
+    {
+      "source": "src/app/auth/verify-request/page.tsx",
+      "archetype": "auth-setup",
+      "decision": "Understand the pending verification step and safely return to sign in."
+    },
+    {
+      "source": "src/app/auth/error/page.tsx",
+      "archetype": "recovery-status",
+      "decision": "Understand the authentication failure and take a working recovery action."
+    },
+    {
+      "source": "src/app/setup/page.tsx",
+      "archetype": "auth-setup",
+      "decision": "Create the first workspace configuration and continue into a usable product."
+    },
+    {
+      "source": "src/app/join/project/[token]/page.tsx",
+      "archetype": "auth-setup",
+      "decision": "Review the invitation context and join the correct project."
+    },
+    {
+      "source": "src/app/share/[token]/page.tsx",
+      "archetype": "public-evidence",
+      "decision": "Read the shared document and understand its owner, scope, and availability."
+    },
+    {
+      "source": "src/app/offline/page.tsx",
+      "archetype": "recovery-status",
+      "decision": "Understand the offline state and retry or return without losing orientation."
+    },
+    {
+      "source": "src/app/[locale]/(app)/dashboard/page.tsx",
+      "archetype": "overview",
+      "decision": "See what needs attention now and move directly to the highest-value work."
+    },
+    {
+      "source": "src/app/[locale]/(app)/inbox/page.tsx",
+      "archetype": "command",
+      "decision": "Triage incoming activity and clear or open each actionable item."
+    },
+    {
+      "source": "src/app/[locale]/(app)/my-issues/page.tsx",
+      "archetype": "command",
+      "decision": "Choose and act on the most important issue assigned to the current user."
+    },
+    {
+      "source": "src/app/[locale]/(app)/issues/page.tsx",
+      "archetype": "command",
+      "decision": "Find, filter, and open work across the organization."
+    },
+    {
+      "source": "src/app/[locale]/(app)/issues/[issueId]/page.tsx",
+      "archetype": "detail",
+      "decision": "Understand the issue's state, update it, and follow its accountable history."
+    },
+    {
+      "source": "src/app/[locale]/(app)/drafts/page.tsx",
+      "archetype": "command",
+      "decision": "Resume, review, or discard incomplete work with its context intact."
+    },
+    {
+      "source": "src/app/[locale]/(app)/initiatives/page.tsx",
+      "archetype": "overview",
+      "decision": "Compare active initiatives and identify which one needs intervention."
+    },
+    {
+      "source": "src/app/[locale]/(app)/initiatives/[id]/page.tsx",
+      "archetype": "detail",
+      "decision": "Understand initiative progress, dependencies, and the next corrective action."
+    },
+    {
+      "source": "src/app/[locale]/(app)/projects/page.tsx",
+      "archetype": "overview",
+      "decision": "Find a project and understand its current operating state at a glance."
+    },
+    {
+      "source": "src/app/[locale]/(app)/projects/[projectId]/page.tsx",
+      "archetype": "overview",
+      "decision": "See the project's immediate priorities, progress, and next action."
+    },
+    {
+      "source": "src/app/[locale]/(app)/projects/[projectId]/board/page.tsx",
+      "archetype": "command",
+      "decision": "Move and inspect issues through the project's current workflow."
+    },
+    {
+      "source": "src/app/[locale]/(app)/projects/[projectId]/backlog/page.tsx",
+      "archetype": "command",
+      "decision": "Order, scope, and move backlog work into an executable plan."
+    },
+    {
+      "source": "src/app/[locale]/(app)/projects/[projectId]/roadmap/page.tsx",
+      "archetype": "analysis",
+      "decision": "Understand delivery timing and dependency risk across the project."
+    },
+    {
+      "source": "src/app/[locale]/(app)/projects/[projectId]/analytics/page.tsx",
+      "archetype": "analysis",
+      "decision": "Explain project performance over an explicit period and comparison scope."
+    },
+    {
+      "source": "src/app/[locale]/(app)/projects/[projectId]/chat/page.tsx",
+      "archetype": "detail",
+      "decision": "Discuss project work while retaining the source context and accountable outcome."
+    },
+    {
+      "source": "src/app/[locale]/(app)/projects/[projectId]/docs/page.tsx",
+      "archetype": "detail",
+      "decision": "Find, read, and edit project knowledge without losing document context."
+    },
+    {
+      "source": "src/app/[locale]/(app)/docs/page.tsx",
+      "archetype": "detail",
+      "decision": "Find and work in organization knowledge across projects."
+    },
+    {
+      "source": "src/app/[locale]/(app)/projects/[projectId]/modules/page.tsx",
+      "archetype": "overview",
+      "decision": "Compare project modules and open the area that needs attention."
+    },
+    {
+      "source": "src/app/[locale]/(app)/projects/[projectId]/views/page.tsx",
+      "archetype": "command",
+      "decision": "Select, create, or maintain a durable project work view."
+    },
+    {
+      "source": "src/app/[locale]/(app)/projects/[projectId]/sprints/page.tsx",
+      "archetype": "overview",
+      "decision": "Compare sprint state and enter the sprint that needs action."
+    },
+    {
+      "source": "src/app/[locale]/(app)/projects/[projectId]/sprints/[sprintId]/page.tsx",
+      "archetype": "detail",
+      "decision": "Understand sprint scope, progress, risk, and the next operating action."
+    },
+    {
+      "source": "src/app/[locale]/(app)/projects/[projectId]/settings/page.tsx",
+      "archetype": "configuration",
+      "decision": "Change project identity and operating defaults with explicit save state."
+    },
+    {
+      "source": "src/app/[locale]/(app)/projects/[projectId]/settings/components/page.tsx",
+      "archetype": "configuration",
+      "decision": "Maintain the project's component taxonomy and understand change impact."
+    },
+    {
+      "source": "src/app/[locale]/(app)/projects/[projectId]/settings/versions/page.tsx",
+      "archetype": "configuration",
+      "decision": "Maintain release versions and their lifecycle without losing project context."
+    },
+    {
+      "source": "src/app/[locale]/(app)/projects/[projectId]/settings/workflows/page.tsx",
+      "archetype": "configuration",
+      "decision": "Configure workflow states and transitions with clear downstream impact."
+    },
+    {
+      "source": "src/app/[locale]/(app)/settings/page.tsx",
+      "archetype": "configuration",
+      "decision": "Choose the organization setting that needs review or change."
+    },
+    {
+      "source": "src/app/[locale]/(app)/settings/organization/page.tsx",
+      "archetype": "configuration",
+      "decision": "Change organization identity and defaults with explicit save state."
+    },
+    {
+      "source": "src/app/[locale]/(app)/settings/members/page.tsx",
+      "archetype": "configuration",
+      "decision": "Find a member and manage access with clear permission impact."
+    },
+    {
+      "source": "src/app/[locale]/(app)/settings/labels/page.tsx",
+      "archetype": "configuration",
+      "decision": "Maintain a legible label taxonomy without creating ambiguous duplicates."
+    },
+    {
+      "source": "src/app/[locale]/(app)/settings/integrations/page.tsx",
+      "archetype": "configuration",
+      "decision": "Understand integration state and safely connect, configure, or disconnect it."
+    },
+    {
+      "source": "src/app/[locale]/(app)/settings/import/page.tsx",
+      "archetype": "configuration",
+      "decision": "Choose an import source and understand validation, progress, and rollback."
+    },
+    {
+      "source": "src/app/[locale]/(app)/settings/billing/page.tsx",
+      "archetype": "configuration",
+      "decision": "Understand plan and usage state before changing a billing decision."
+    },
+    {
+      "source": "src/app/[locale]/(app)/settings/ai-transparency/page.tsx",
+      "archetype": "public-evidence",
+      "decision": "Audit AI usage, provenance, scope, and review status inside the workspace."
+    },
+    {
+      "source": "src/app/[locale]/(app)/settings/intake-forms/page.tsx",
+      "archetype": "configuration",
+      "decision": "Find and manage a public intake form with its publication state visible."
+    },
+    {
+      "source": "src/app/[locale]/(app)/settings/intake-forms/[id]/edit/page.tsx",
+      "archetype": "configuration",
+      "decision": "Edit an intake form and understand its published behavior before saving."
+    },
+    {
+      "source": "src/app/[locale]/(app)/settings/security/audit-log-streaming/page.tsx",
+      "archetype": "configuration",
+      "decision": "Configure audit delivery with test, failure, and recovery states explicit."
+    },
+    {
+      "source": "src/app/[locale]/(app)/settings/sso/page.tsx",
+      "archetype": "configuration",
+      "decision": "Configure identity access without locking valid administrators out."
+    },
+    {
+      "source": "src/app/[locale]/(app)/team/page.tsx",
+      "archetype": "overview",
+      "decision": "Understand team capacity and open the person or work that needs attention."
+    },
+    {
+      "source": "src/app/[locale]/(app)/templates/page.tsx",
+      "archetype": "overview",
+      "decision": "Choose a template based on its real structure and intended outcome."
+    },
+    {
+      "source": "src/app/[locale]/(app)/api-docs/page.tsx",
+      "archetype": "detail",
+      "decision": "Find an API operation and understand how to use it correctly."
+    },
+    {
+      "source": "src/app/[locale]/(app)/admin/page.tsx",
+      "archetype": "configuration",
+      "decision": "Inspect system state and perform privileged actions with impact made explicit."
+    }
+  ]
+}

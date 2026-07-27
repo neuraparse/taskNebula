@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { ChevronRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { SectionHeader, Shell } from './primitives';
@@ -172,7 +173,7 @@ function CompareCell({
   const label = t(`marks.${cell.mark}`);
 
   return (
-    <div className="flex items-start gap-2">
+    <span className="flex items-start gap-2">
       <span className="mt-0.5">
         <MarkGlyph mark={cell.mark} />
       </span>
@@ -186,7 +187,7 @@ function CompareCell({
           {t(`rows.${rowKey}.notes.${productKey}`)}
         </span>
       </span>
-    </div>
+    </span>
   );
 }
 
@@ -226,8 +227,7 @@ function ColHeader({
 
 function MobileComparisonCards() {
   const t = useTranslations('publicPages.landing.comparison');
-  const products = [
-    { key: 'tasknebula', name: 'TaskNebula', highlight: true },
+  const competitors = [
     { key: 'jira', name: 'Jira', highlight: false },
     { key: 'linear', name: 'Linear', highlight: false },
     { key: 'plane', name: 'Plane', highlight: false },
@@ -238,36 +238,44 @@ function MobileComparisonCards() {
   }[];
 
   return (
-    <div className="mt-10 border-t border-[var(--landing-border)] md:hidden">
+    <div className="mt-10 overflow-hidden rounded-lg border border-[var(--landing-border)] bg-[var(--landing-bg-card)] md:hidden">
       {rows.map((row) => (
-        <article key={row.key} className="border-b border-[var(--landing-border)] py-5">
-          <h3 className="text-[13px] font-[520] text-[var(--landing-text-dark)]">
-            {t(`rows.${row.key}.feature`)}
-          </h3>
-          <dl className="mt-4 grid gap-x-4 gap-y-3 sm:grid-cols-2">
-            {products.map((product) => (
-              <div key={product.key} className="grid gap-1">
-                <dt
-                  className={`text-[11px] font-[500] uppercase tracking-[0.14em] ${
-                    product.highlight
-                      ? 'text-[var(--landing-accent-blue)]'
-                      : 'text-[var(--landing-text-muted)]'
-                  }`}
-                >
+        <details
+          key={row.key}
+          className="group border-b border-[var(--landing-border)] last:border-b-0"
+        >
+          <summary className="flex cursor-pointer list-none items-start gap-3 px-4 py-4 transition-colors duration-150 hover:bg-[var(--landing-bg-surface)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--landing-accent-blue)] [&::-webkit-details-marker]:hidden">
+            <span className="min-w-0 flex-1">
+              <span className="block text-[12px] font-[520] leading-5 text-[var(--landing-text-dark)]">
+                {t(`rows.${row.key}.feature`)}
+              </span>
+              <span className="mt-2 block">
+                <CompareCell
+                  cell={row.tasknebula}
+                  rowKey={row.key}
+                  productKey="tasknebula"
+                  highlight
+                />
+              </span>
+            </span>
+            <ChevronRight
+              className="ease-snap mt-1 h-4 w-4 shrink-0 text-[var(--landing-text-muted)] transition-transform duration-150 group-open:rotate-90"
+              aria-hidden="true"
+            />
+          </summary>
+          <dl className="grid gap-4 border-t border-[var(--landing-border)] bg-[var(--landing-bg-surface)] px-4 py-4 sm:grid-cols-3">
+            {competitors.map((product) => (
+              <div key={product.key} className="min-w-0">
+                <dt className="text-[10px] font-[500] uppercase tracking-[0.14em] text-[var(--landing-text-subtle)]">
                   {product.name}
                 </dt>
-                <dd>
-                  <CompareCell
-                    cell={row[product.key]}
-                    rowKey={row.key}
-                    productKey={product.key}
-                    highlight={product.highlight}
-                  />
+                <dd className="mt-1.5">
+                  <CompareCell cell={row[product.key]} rowKey={row.key} productKey={product.key} />
                 </dd>
               </div>
             ))}
           </dl>
-        </article>
+        </details>
       ))}
     </div>
   );
@@ -292,7 +300,7 @@ export function Comparison() {
           tabIndex={0}
           role="region"
           aria-label={t('tableAria')}
-          className="mt-10 hidden overflow-x-auto rounded-lg border border-[var(--landing-border)] bg-[var(--landing-bg-card)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)] md:block"
+          className="mt-10 hidden overflow-x-auto rounded-lg border border-[var(--landing-border)] bg-[var(--landing-bg-card)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)] md:block"
         >
           <table className="w-full min-w-[820px] border-collapse text-left">
             <caption className="sr-only">{t('tableCaption')}</caption>

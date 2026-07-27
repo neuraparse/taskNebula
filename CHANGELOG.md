@@ -6,6 +6,47 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-07-27
+
+### Added
+
+- **Executable route design contract.** A versioned manifest now maps all 56
+  web routes to eight product archetypes, their primary decisions, and the
+  evidence each surface must expose; the UI quality gate rejects missing,
+  duplicated, or stale route coverage.
+- **Public-surface browser matrix.** Landing, trust, AI model cards,
+  authentication, password recovery, and offline recovery now have a
+  deterministic Chromium contract across desktop, 390 px, and 320 px
+  viewports in light and dark modes, including structure, focus, overflow,
+  reduced-motion, and browser-error checks.
+
+### Changed
+
+- **The web experience is organized around verifiable work flow.** Marketing
+  now presents the request-to-release topology through real product evidence
+  instead of a simulated drag-and-drop demo, while the dashboard prioritizes
+  actionable work and a compact delivery analysis.
+- **Core product pages share a consistent hierarchy.** Dashboard, inbox,
+  projects, team, sprints, analytics, modules, templates, and their loading
+  states now use common page frames, headers, metric strips, responsive lists,
+  and restrained metadata density.
+- **Authentication and recovery surfaces are clearer and theme-aware.** Sign
+  in, sign up, password recovery/reset, verification, auth errors, and offline
+  recovery use semantic tokens, accessible field errors, keyboard-sized
+  controls, and responsive light/dark layouts.
+- **Design guidance is implementation-oriented.** The canonical design guide
+  now captures the product signature, premium interaction bar, route coverage
+  contract, URL/focus/async/persistence behavior, and maker-checker validation
+  loop used by contributors and coding agents.
+
+### Fixed
+
+- Reduced duplicate dashboard analytics, oversized inbox filter chips, nested
+  analytics cards, noisy Kanban metadata, and loading-state geometry that did
+  not match the resulting page.
+- Derived public software metadata from the package version and synchronized
+  self-host image examples across all 30 locale catalogs.
+
 ## [0.13.0] - 2026-07-27
 
 ### Added
@@ -723,7 +764,8 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 - Internal alpha release. [See git log] for details.
 
-[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.13.0...HEAD
+[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.14.0...HEAD
+[0.14.0]: https://github.com/neuraparse/tasknebula/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/neuraparse/tasknebula/compare/v0.7.11...v0.13.0
 [0.7.11]: https://github.com/neuraparse/tasknebula/compare/v0.7.10...v0.7.11
 [0.7.10]: https://github.com/neuraparse/tasknebula/compare/v0.7.9...v0.7.10

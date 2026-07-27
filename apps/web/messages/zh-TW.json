@@ -4585,7 +4585,9 @@
       "sprints": "衝刺",
       "sprintBreakdown": "{active} 個使用中，{completed} 個已完成",
       "sprintVelocity": "衝刺速度",
-      "velocityAverage": "平均：每個衝刺 {issues} 個議題、{points} 點"
+      "velocityAverage": "平均：每個衝刺 {issues} 個議題、{points} 點",
+      "exportCsv": "CSV",
+      "exportJson": "JSON"
     }
   },
   "pagesWork": {
@@ -5164,7 +5166,7 @@
           },
           "pin": {
             "title": "Pin the version you trust",
-            "body": "Set TASKNEBULA_IMAGE=neuraparse/tasknebula:0.4.0 to lock a release, or follow :latest for the bleeding edge."
+            "body": "Set TASKNEBULA_IMAGE=neuraparse/tasknebula:0.14.0 to lock a release, or follow :latest for the bleeding edge."
           }
         },
         "terminalTitle": "quickstart — Docker Desktop or any Docker host (~2 min)",

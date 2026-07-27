@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { AuthShell } from '@/components/auth/auth-shell';
+import { AuthIntro } from '@/components/auth/auth-ui';
+import { Button } from '@/components/ui/button';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,19 +50,19 @@ export default async function VerifyEmailPage({
 
   return (
     <AuthShell>
-      <div className="stagger space-y-6">
-        <div className="space-y-2">
-          <h1 className="auth-carbon-heading">{copy?.title || t('verifyEmail.defaultTitle')}</h1>
-          <p className="auth-carbon-subtitle">{copy?.body || t('verifyEmail.defaultBody')}</p>
-        </div>
+      <div className="animate-fade-up space-y-7">
+        <AuthIntro
+          title={copy?.title || t('verifyEmail.defaultTitle')}
+          description={copy?.body || t('verifyEmail.defaultBody')}
+        />
 
         <div className="flex flex-col gap-3">
-          <Link href="/auth/verify-request" className="auth-carbon-link text-sm">
-            {t('verifyEmail.backToPrompt')}
-          </Link>
-          <Link href="/auth/signin" className="auth-carbon-link text-sm">
-            {t('verifyEmail.goToSignIn')}
-          </Link>
+          <Button asChild className="w-full text-sm" size="xl">
+            <Link href="/auth/verify-request">{t('verifyEmail.backToPrompt')}</Link>
+          </Button>
+          <Button asChild className="w-full text-sm" size="xl" variant="outline">
+            <Link href="/auth/signin">{t('verifyEmail.goToSignIn')}</Link>
+          </Button>
         </div>
       </div>
     </AuthShell>

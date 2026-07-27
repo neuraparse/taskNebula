@@ -1,6 +1,6 @@
 # TaskNebula — Project Status
 
-**Last updated:** 2026-07-27 · **Version:** 0.13.0 · **Status:** Beta, self-hostable (Docker Hub `neuraparse/tasknebula`)
+**Last updated:** 2026-07-27 · **Version:** 0.14.0 · **Status:** Beta, self-hostable (Docker Hub `neuraparse/tasknebula`)
 
 > This is a short, honest snapshot. For the full picture use:
 >
@@ -8,15 +8,15 @@
 > - **`docs/ROADMAP_2026.md`** — per-item status of the 2026 plan (#1–27) and the H2-2026 extension (#28–50).
 > - **`CHANGELOG.md`** — what shipped, release by release.
 
-## By the numbers (at v0.13.0, current tree)
+## By the numbers (at v0.14.0, current tree)
 
 | Metric                                         | Value                                                                                                             |
 | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | API routes (`apps/web/src/app/api`)            | 280 route handlers                                                                                                |
 | Database tables (Drizzle, Postgres + pgvector) | 115 across 55 schema files                                                                                        |
 | Migrations                                     | 54 (`packages/db/drizzle/`)                                                                                       |
-| Jest                                           | Web: 273 suites / 1,672 passed + 1 skipped; mobile: 75 suites / 371 passed; MCP: 45 passed                        |
-| Playwright e2e                                 | 7 specs; authenticated Chromium flow and public auth/setup flows are covered                                      |
+| Jest                                           | Web: 273 suites / 1,673 passed + 1 skipped; mobile: 75 suites / 372 passed; MCP: 45 passed                        |
+| Playwright e2e                                 | 8 specs; authenticated Chromium flow plus a 42-case public desktop/mobile light/dark matrix are covered           |
 | CI                                             | Minimal workflow in `.github/workflows/ci.yml`; still verify locally: `pnpm type-check && pnpm lint && pnpm test` |
 
 ## What genuinely works

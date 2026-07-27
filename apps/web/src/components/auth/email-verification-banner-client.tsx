@@ -131,7 +131,7 @@ export function EmailVerificationBannerClient({ email: _email }: { email: string
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <span
           aria-hidden="true"
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-300"
+          className="bg-accent-indigo/10 text-accent-indigo flex h-7 w-7 shrink-0 items-center justify-center rounded-md"
         >
           <MailCheck className="h-4 w-4" />
         </span>
@@ -140,7 +140,7 @@ export function EmailVerificationBannerClient({ email: _email }: { email: string
           <p className="text-muted-foreground truncate text-xs">{t('banner_description')}</p>
         </div>
       </div>
-      <div className="flex shrink-0 items-center gap-1.5">
+      <div className="flex w-full flex-wrap items-center justify-end gap-1.5 sm:w-auto sm:shrink-0">
         <Button
           type="button"
           size="sm"

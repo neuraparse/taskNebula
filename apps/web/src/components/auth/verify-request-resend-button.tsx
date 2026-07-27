@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { Button } from '@/components/ui/button';
 
 interface VerifyRequestResendButtonProps {
   /**
@@ -51,21 +52,28 @@ export function VerifyRequestResendButton({ email }: VerifyRequestResendButtonPr
 
   return (
     <div className="flex flex-col gap-2">
-      <button
+      <Button
         type="button"
         onClick={handleResend}
         disabled={status === 'sending' || status === 'sent'}
-        className="auth-carbon-primary inline-flex items-center justify-center px-4 text-sm disabled:pointer-events-none disabled:opacity-60"
+        className="w-full text-sm"
+        size="xl"
       >
         {status === 'sending'
           ? t('sending_ellipsis')
           : status === 'sent'
             ? t('email_sent')
             : t('resend_verification_email')}
-      </button>
-      {status === 'error' && error ? <p className="text-xs text-[#a2191f]">{error}</p> : null}
+      </Button>
+      {status === 'error' && error ? (
+        <p role="alert" className="text-destructive text-sm leading-5">
+          {error}
+        </p>
+      ) : null}
       {status === 'sent' ? (
-        <p className="text-xs text-[#525252]">{t('check_inbox_new_link')}</p>
+        <p role="status" className="text-muted-foreground text-xs leading-5">
+          {t('check_inbox_new_link')}
+        </p>
       ) : null}
     </div>
   );

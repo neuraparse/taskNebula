@@ -58,7 +58,7 @@ export function ProofStrip() {
                 <a
                   href={href}
                   {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                  className="block rounded-sm text-[12px] font-[450] text-[var(--landing-text-body)] transition-colors duration-150 hover:text-[var(--landing-text-dark)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)]"
+                  className="block rounded-sm text-[12px] font-[450] text-[var(--landing-text-body)] transition-colors duration-150 hover:text-[var(--landing-text-dark)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)]"
                 >
                   {t(`items.${labelKey}`)}
                 </a>

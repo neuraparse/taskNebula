@@ -90,18 +90,16 @@ export function StandupWidget() {
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-2">
-          <span className="icon-tile icon-tile-accent-violet h-7 w-7">
-            <Sparkles className="h-3.5 w-3.5" />
-          </span>
-          <h3 className="min-w-0 truncate text-sm font-semibold">{t('standup.heading')}</h3>
+          <Sparkles className="text-primary h-4 w-4 shrink-0" aria-hidden="true" />
+          <h2 className="min-w-0 truncate text-sm font-semibold">{t('standup.heading')}</h2>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
           {data && (
             <Button
               size="sm"
               variant="outline"
               onClick={onCopy}
-              className="h-7 px-2 text-xs"
+              className="h-7 min-w-0 flex-1 px-2 text-xs sm:flex-none"
               data-testid="standup-copy"
             >
               {copied ? <Check className="mr-1 h-3 w-3" /> : <Copy className="mr-1 h-3 w-3" />}
@@ -113,7 +111,7 @@ export function StandupWidget() {
             variant="secondary"
             onClick={() => previewMutation.mutate()}
             disabled={previewMutation.isPending}
-            className="h-7 px-2 text-xs"
+            className="h-7 min-w-0 flex-1 px-2 text-xs sm:flex-none"
             data-testid="standup-refresh"
           >
             {previewMutation.isPending ? (

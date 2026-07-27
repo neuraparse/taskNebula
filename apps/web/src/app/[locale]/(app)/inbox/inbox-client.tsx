@@ -4,19 +4,18 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useFormatter, useTranslations } from 'next-intl';
-import {
-  Bell,
-  Bot,
-  CheckCheck,
-  Clock,
-  Inbox as InboxIcon,
-  Loader2,
-  Sparkles,
-  Webhook,
-  Zap,
-} from 'lucide-react';
+import { Bot, CheckCheck, ChevronDown, Clock, Loader2, Sparkles, Webhook, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { PageFrame } from '@/components/ui/page-frame';
+import { PageHeader } from '@/components/ui/page-header';
 import { cn } from '@/lib/utils';
 import {
   useInbox,
@@ -29,12 +28,12 @@ import {
   type InboxNotificationType,
 } from '@/lib/hooks/use-inbox';
 
-const ACTOR_CHIPS: { key: InboxActorType | 'all'; labelKey: string; icon: typeof Bell }[] = [
-  { key: 'all', labelKey: 'inbox_actor_all', icon: InboxIcon },
-  { key: 'user', labelKey: 'inbox_actor_people', icon: Bell },
-  { key: 'agent', labelKey: 'inbox_actor_agents', icon: Bot },
-  { key: 'webhook', labelKey: 'inbox_actor_webhooks', icon: Webhook },
-  { key: 'system', labelKey: 'inbox_actor_system', icon: Zap },
+const ACTOR_CHIPS: { key: InboxActorType | 'all'; labelKey: string }[] = [
+  { key: 'all', labelKey: 'inbox_actor_all' },
+  { key: 'user', labelKey: 'inbox_actor_people' },
+  { key: 'agent', labelKey: 'inbox_actor_agents' },
+  { key: 'webhook', labelKey: 'inbox_actor_webhooks' },
+  { key: 'system', labelKey: 'inbox_actor_system' },
 ];
 
 const TYPE_CHIPS: { key: InboxNotificationType | 'all'; labelKey: string }[] = [
@@ -138,15 +137,15 @@ function InboxRow({
 
       <div className="shrink-0">
         {item.actorType === 'agent' ? (
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-500/10 text-violet-600 ring-1 ring-violet-500/30">
+          <span className="bg-muted text-muted-foreground flex h-8 w-8 items-center justify-center rounded-md">
             <Bot className="h-4 w-4" />
           </span>
         ) : item.actorType === 'webhook' ? (
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500/10 text-blue-600 ring-1 ring-blue-500/30">
+          <span className="bg-muted text-muted-foreground flex h-8 w-8 items-center justify-center rounded-md">
             <Webhook className="h-4 w-4" />
           </span>
         ) : item.actorType === 'system' ? (
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/10 text-amber-600 ring-1 ring-amber-500/30">
+          <span className="bg-muted text-muted-foreground flex h-8 w-8 items-center justify-center rounded-md">
             <Zap className="h-4 w-4" />
           </span>
         ) : (
@@ -161,7 +160,7 @@ function InboxRow({
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 text-sm">
-          <span className="text-foreground font-medium">{actorName}</span>
+          <span className="text-foreground min-w-0 truncate font-medium">{actorName}</span>
           {item.project && (
             <span className="bg-muted text-muted-foreground rounded-sm px-1.5 py-0.5 font-mono text-[10px]">
               {item.project.key}
@@ -196,32 +195,32 @@ function InboxRow({
         )}
       </div>
 
-      <div className="flex shrink-0 flex-col items-end gap-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+      <div className="flex shrink-0 flex-col items-end gap-1 opacity-100 transition-opacity focus-within:opacity-100 sm:opacity-0 sm:group-hover:opacity-100">
         {!item.isRead && (
           <Button
             size="sm"
             variant="ghost"
-            className="h-6 px-2 text-[11px]"
+            className="h-8 w-8 px-0 text-[11px] sm:h-7 sm:w-auto sm:px-2"
             onClick={() => onMarkRead(item.id)}
             disabled={isPending}
             aria-label={t('inbox_mark_as_read')}
           >
-            <CheckCheck className="mr-1 h-3 w-3" />
-            {t('inbox_read')}
+            <CheckCheck className="h-3.5 w-3.5 sm:mr-1" />
+            <span className="hidden sm:inline">{t('inbox_read')}</span>
           </Button>
         )}
         <div className="relative">
           <Button
             size="sm"
             variant="ghost"
-            className="h-6 px-2 text-[11px]"
+            className="h-8 w-8 px-0 text-[11px] sm:h-7 sm:w-auto sm:px-2"
             onClick={() => setSnoozeOpen((v) => !v)}
             aria-haspopup="menu"
             aria-expanded={snoozeOpen}
             aria-label={t('inbox_snooze')}
           >
-            <Clock className="mr-1 h-3 w-3" />
-            {t('inbox_snooze')}
+            <Clock className="h-3.5 w-3.5 sm:mr-1" />
+            <span className="hidden sm:inline">{t('inbox_snooze')}</span>
           </Button>
           {snoozeOpen && (
             <div
@@ -346,129 +345,121 @@ export function InboxPageClient() {
 
   const items = data?.items ?? [];
   const unreadVisible = items.filter((i) => !i.isRead).length;
+  const activeActor = ACTOR_CHIPS.find((chip) => chip.key === actorChip) ?? ACTOR_CHIPS[0];
+  const activeType = TYPE_CHIPS.find((chip) => chip.key === typeChip) ?? TYPE_CHIPS[0];
 
   return (
-    <div className="mx-auto flex h-full max-w-4xl flex-col">
-      <div className="border-border flex items-center justify-between border-b px-6 py-4">
-        <div>
-          <h1 className="text-foreground flex items-center gap-2 text-xl font-semibold">
-            <InboxIcon className="h-5 w-5" />
-            {t('inbox_title')}
-          </h1>
-          <p className="text-muted-foreground text-xs">{t('inbox_subtitle')}</p>
-        </div>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => markAllRead.mutate(filters)}
-          disabled={markAllRead.isPending || unreadVisible === 0}
-        >
-          <CheckCheck className="mr-1 h-3.5 w-3.5" />
-          {t('inbox_mark_all_read')}
-        </Button>
-      </div>
+    <PageFrame contentClassName="max-w-4xl space-y-4">
+      <PageHeader
+        title={t('inbox_title')}
+        description={t('inbox_subtitle')}
+        actions={
+          <Button
+            size="sm"
+            variant="outline"
+            className="w-full sm:w-auto"
+            onClick={() => markAllRead.mutate(filters)}
+            disabled={markAllRead.isPending || unreadVisible === 0}
+          >
+            <CheckCheck className="mr-1 h-3.5 w-3.5" />
+            {t('inbox_mark_all_read')}
+          </Button>
+        }
+      />
 
       <div
-        className="border-border flex flex-wrap items-center gap-1.5 border-b px-6 py-3"
+        className="surface-card flex flex-wrap items-center gap-2 p-2 shadow-none"
         role="toolbar"
         aria-label={t('inbox_filter_chips')}
       >
-        {ACTOR_CHIPS.map((chip) => {
-          const Icon = chip.icon;
-          const active = actorChip === chip.key;
-          return (
-            <button
-              key={chip.key}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              onClick={() => updateUrlFilters({ actor: chip.key })}
-              className={cn(
-                'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors',
-                active
-                  ? 'bg-primary/10 text-primary ring-primary/30 ring-1'
-                  : 'bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground'
-              )}
-              data-chip={chip.key}
-              data-active={active || undefined}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="h-8 min-w-28 justify-between">
+              {t(activeActor?.labelKey ?? 'inbox_actor_all')}
+              <ChevronDown className="ml-2 h-3.5 w-3.5" aria-hidden="true" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuRadioGroup
+              value={actorChip}
+              onValueChange={(value) =>
+                updateUrlFilters({ actor: value as InboxActorType | 'all' })
+              }
             >
-              <Icon className="h-3 w-3" />
-              {t(chip.labelKey)}
-            </button>
-          );
-        })}
-        <span className="bg-border mx-2 h-4 w-px" aria-hidden="true" />
-        {TYPE_CHIPS.map((chip) => {
-          const active = typeChip === chip.key;
-          return (
-            <button
-              key={chip.key}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              onClick={() => updateUrlFilters({ type: chip.key })}
-              className={cn(
-                'rounded-full px-2.5 py-1 text-xs transition-colors',
-                active
-                  ? 'bg-primary/10 text-primary ring-primary/30 ring-1'
-                  : 'bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground'
-              )}
-              data-chip={`type-${chip.key}`}
-              data-active={active || undefined}
+              {ACTOR_CHIPS.map((chip) => (
+                <DropdownMenuRadioItem key={chip.key} value={chip.key}>
+                  {t(chip.labelKey)}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="h-8 min-w-28 justify-between">
+              {t(activeType?.labelKey ?? 'inbox_type_all')}
+              <ChevronDown className="ml-2 h-3.5 w-3.5" aria-hidden="true" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuRadioGroup
+              value={typeChip}
+              onValueChange={(value) =>
+                updateUrlFilters({ type: value as InboxNotificationType | 'all' })
+              }
             >
-              {t(chip.labelKey)}
-            </button>
-          );
-        })}
-        <span className="bg-border mx-2 h-4 w-px" aria-hidden="true" />
-        <button
+              {TYPE_CHIPS.map((chip) => (
+                <DropdownMenuRadioItem key={chip.key} value={chip.key}>
+                  {t(chip.labelKey)}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <Button
           type="button"
           role="checkbox"
           aria-checked={showUnreadOnly}
           onClick={() => updateUrlFilters({ unread: !showUnreadOnly })}
-          className={cn(
-            'rounded-full px-2.5 py-1 text-xs transition-colors',
-            showUnreadOnly
-              ? 'bg-primary/10 text-primary ring-primary/30 ring-1'
-              : 'bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground'
-          )}
+          variant={showUnreadOnly ? 'secondary' : 'ghost'}
+          size="sm"
+          className="h-8 text-xs"
         >
           {t('inbox_unread_only')}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           role="checkbox"
           aria-checked={showSnoozed}
           onClick={() => updateUrlFilters({ snoozed: !showSnoozed })}
-          className={cn(
-            'rounded-full px-2.5 py-1 text-xs transition-colors',
-            showSnoozed
-              ? 'bg-primary/10 text-primary ring-primary/30 ring-1'
-              : 'bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground'
-          )}
+          variant={showSnoozed ? 'secondary' : 'ghost'}
+          size="sm"
+          className="h-8 text-xs"
         >
           {t('inbox_snoozed')}
-        </button>
+        </Button>
       </div>
 
-      <div className="flex-1 overflow-auto">
+      <div className="surface-card min-h-64 overflow-hidden shadow-none">
         {isLoading ? (
-          <div className="text-muted-foreground flex h-full items-center justify-center py-20">
+          <div className="text-muted-foreground flex min-h-64 items-center justify-center py-20">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             {t('inbox_loading')}
           </div>
         ) : isError ? (
-          <div className="text-destructive flex h-full items-center justify-center py-20">
+          <div className="text-destructive flex min-h-64 items-center justify-center py-20">
             {t('inbox_load_error')}
           </div>
         ) : items.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center gap-2 py-20 text-center">
+          <div className="flex min-h-64 flex-col items-center justify-center gap-2 px-4 py-20 text-center">
             <Sparkles className="text-muted-foreground h-6 w-6" />
             <p className="text-foreground text-sm font-medium">{t('inbox_empty_title')}</p>
             <p className="text-muted-foreground max-w-xs text-xs">{t('inbox_empty_description')}</p>
           </div>
         ) : (
-          <ul role="list">
+          <ul role="list" className="[&>li:last-child>div]:border-b-0">
             {items.map((item) => (
               <li key={item.id}>
                 <InboxRow
@@ -482,6 +473,6 @@ export function InboxPageClient() {
           </ul>
         )}
       </div>
-    </div>
+    </PageFrame>
   );
 }

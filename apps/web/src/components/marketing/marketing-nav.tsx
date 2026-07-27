@@ -9,6 +9,7 @@ const navItems = [
   { labelKey: 'features', href: '#board' },
   { labelKey: 'compare', href: '#compare' },
   { labelKey: 'selfHost', href: '#self-host' },
+  { labelKey: 'faq', href: '#faq' },
 ] as const;
 
 export function MarketingNav() {
@@ -54,7 +55,7 @@ export function MarketingNav() {
             target="_blank"
             rel="noopener noreferrer"
             aria-label={t('githubAria')}
-            className={`ease-snap inline-flex h-[34px] items-center gap-2 rounded-md border border-[var(--landing-border-strong)] px-3 text-[13px] font-[430] text-[var(--landing-text)] transition-all duration-150 hover:-translate-y-0.5 hover:bg-[var(--landing-bg-elevated)] ${focusRingClass}`}
+            className={`ease-snap inline-flex h-[34px] items-center gap-2 rounded-md border border-[var(--landing-border-strong)] px-3 text-[13px] font-[430] text-[var(--landing-text)] transition duration-150 hover:-translate-y-0.5 hover:bg-[var(--landing-bg-elevated)] ${focusRingClass}`}
           >
             <Github className="h-4 w-4" aria-hidden="true" />
             <span className="hidden sm:inline">{t('github')}</span>
@@ -67,7 +68,7 @@ export function MarketingNav() {
           </Link>
           <Link
             href="/auth/signup"
-            className={`ease-snap group inline-flex h-[34px] items-center gap-1.5 rounded-md bg-[var(--landing-accent-blue)] px-3 text-[13px] font-[450] text-white transition-all duration-150 hover:-translate-y-0.5 hover:bg-[var(--landing-accent-blue-hover)] ${focusRingClass}`}
+            className={`ease-snap group inline-flex h-[34px] items-center gap-1.5 rounded-md bg-[var(--landing-accent-blue)] px-3 text-[13px] font-[450] text-white transition duration-150 hover:-translate-y-0.5 hover:bg-[var(--landing-accent-blue-hover)] ${focusRingClass}`}
           >
             {t('startFree')}
             <ArrowRight

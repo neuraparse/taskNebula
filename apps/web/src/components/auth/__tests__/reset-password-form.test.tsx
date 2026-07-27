@@ -77,6 +77,11 @@ describe('ResetPasswordForm', () => {
 
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent(/passwords do not match/i);
+    expect(screen.getByLabelText(/confirm password/i)).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText(/confirm password/i)).toHaveAttribute(
+      'aria-describedby',
+      alert.id
+    );
     expect(fetchMock).not.toHaveBeenCalled();
   });
 

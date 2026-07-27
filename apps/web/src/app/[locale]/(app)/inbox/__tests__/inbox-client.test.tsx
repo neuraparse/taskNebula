@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { InboxPageClient } from '../inbox-client';
 import {
   useInbox,
@@ -70,20 +71,22 @@ describe('InboxPageClient', () => {
         snoozed: false,
       })
     );
-    expect(screen.getByRole('radio', { name: /agents/i })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('button', { name: /agents/i })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: /unread only/i })).toHaveAttribute(
       'aria-checked',
       'true'
     );
   });
 
-  it('writes filter chip changes back to the URL', () => {
+  it('writes compact filter changes back to the URL', async () => {
+    const user = userEvent.setup();
     render(<InboxPageClient />);
 
     fireEvent.click(screen.getByRole('checkbox', { name: /unread only/i }));
     expect(replaceMock).toHaveBeenCalledWith('/inbox?unread=1', { scroll: false });
 
-    fireEvent.click(screen.getByRole('radio', { name: /agents/i }));
+    await user.click(screen.getByRole('button', { name: /^all$/i }));
+    await user.click(await screen.findByRole('menuitemradio', { name: /agents/i }));
     expect(replaceMock).toHaveBeenLastCalledWith('/inbox?actor=agent&unread=1', {
       scroll: false,
     });
@@ -99,9 +102,6 @@ describe('InboxPageClient', () => {
         notificationType: 'reaction',
       })
     );
-    expect(screen.getByRole('radio', { name: /reactions/i })).toHaveAttribute(
-      'aria-checked',
-      'true'
-    );
+    expect(screen.getByRole('button', { name: /reactions/i })).toBeInTheDocument();
   });
 });

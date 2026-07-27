@@ -1,10 +1,11 @@
 'use client';
 
 import { use } from 'react';
-import { Layers } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { ModulesGrid } from '@/components/modules/modules-grid';
 import { useProjectPermissions } from '@/lib/hooks/use-project-permissions';
+import { PageFrame } from '@/components/ui/page-frame';
+import { PageHeader } from '@/components/ui/page-header';
 
 export default function ModulesPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = use(params);
@@ -18,23 +19,9 @@ export default function ModulesPage({ params }: { params: Promise<{ projectId: s
       permissions.isOrgAdmin);
 
   return (
-    <div className="animate-fade-in h-full overflow-y-auto">
-      <div className="space-y-5 p-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="bg-primary/10 text-primary inline-flex h-9 w-9 items-center justify-center rounded-lg">
-              <Layers className="h-4 w-4" />
-            </span>
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight">{t('modules.title')}</h1>
-              <p className="text-muted-foreground text-sm">{t('modules.description')}</p>
-            </div>
-          </div>
-        </div>
-
-        <ModulesGrid projectId={projectId} canManageModules={canManageModules} />
-      </div>
-    </div>
+    <PageFrame className="animate-fade-in" contentClassName="space-y-5">
+      <PageHeader title={t('modules.title')} description={t('modules.description')} />
+      <ModulesGrid projectId={projectId} canManageModules={canManageModules} />
+    </PageFrame>
   );
 }

@@ -4585,7 +4585,9 @@
       "sprints": "Sprints",
       "sprintBreakdown": "{active} ativos, {completed} concluídos",
       "sprintVelocity": "Velocidade do sprint",
-      "velocityAverage": "Média: {issues} tarefas, {points} pontos/sprint"
+      "velocityAverage": "Média: {issues} tarefas, {points} pontos/sprint",
+      "exportCsv": "CSV",
+      "exportJson": "JSON"
     }
   },
   "pagesWork": {
@@ -5164,7 +5166,7 @@
           },
           "pin": {
             "title": "Fixe a versão em que confia",
-            "body": "Defina TASKNEBULA_IMAGE=neuraparse/tasknebula:0.4.0 para travar um release, ou siga :latest para o mais recente."
+            "body": "Defina TASKNEBULA_IMAGE=neuraparse/tasknebula:0.14.0 para travar um release, ou siga :latest para o mais recente."
           }
         },
         "terminalTitle": "início rápido — Docker Desktop ou qualquer host Docker (~2 min)",

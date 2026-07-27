@@ -10,6 +10,14 @@ import { Label } from '@/components/ui/label';
 import { AlertCircle, AlertTriangle, KeyRound, MailCheck, X } from 'lucide-react';
 import Link from 'next/link';
 import {
+  AUTH_INPUT_CLASS_NAME,
+  AUTH_STANDALONE_LINK_CLASS_NAME,
+  AuthDivider,
+  AuthFormAlert,
+  AuthIntro,
+  AuthLoading,
+} from './auth-ui';
+import {
   EMPTY_OAUTH_PROVIDER_AVAILABILITY,
   OAuthProviderButtons,
   hasOAuthProviders,
@@ -19,9 +27,6 @@ import {
 
 type BannerTone = 'success' | 'warn' | 'danger';
 
-// Banner messages were previously hard-coded in English here. They now live
-// in `messages/{en,tr,de,es}.json` under `auth.banner_*`; this resolver
-// returns the translation key so the component can call `t()` itself.
 type StatusBanner = {
   key: string;
   tone: BannerTone;
@@ -85,9 +90,9 @@ function resolveStatusBanner(params: URLSearchParams | null): StatusBanner | nul
 }
 
 const BANNER_TONE_STYLES: Record<BannerTone, string> = {
-  success: 'border-[#a7f0ba] bg-[#defbe6] text-[#0e6027]',
-  warn: 'border-[#f1c21b] bg-[#fcf4d6] text-[#684e00]',
-  danger: 'border-[#ffd7d9] bg-[#fff1f1] text-[#a2191f]',
+  success: 'panel-success text-accent-emerald',
+  warn: 'panel-warn text-accent-amber',
+  danger: 'panel-danger text-destructive',
 };
 
 export function SignInForm() {
@@ -179,42 +184,35 @@ export function SignInForm() {
   const hasOAuth = hasOAuthProviders(oauthProviders);
 
   if (checkingSetup) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="auth-carbon-spinner" aria-label={tAuth('loading')} />
-      </div>
-    );
+    return <AuthLoading label={tAuth('loading')} />;
   }
 
   return (
-    <div className="stagger space-y-7">
-      {/* Header */}
-      <div className="space-y-2">
-        <h1 className="auth-carbon-heading">{tAuth('welcome_back')}</h1>
-        <p className="auth-carbon-subtitle">{tAuth('subtitle')}</p>
-      </div>
+    <div className="animate-fade-up space-y-7">
+      <AuthIntro title={tAuth('welcome_back')} description={tAuth('subtitle')} />
 
-      {/* Status banner (verify / reset / error query params) */}
       {activeBanner && (
         <div
           key={activeBanner.key}
           role={activeBanner.tone === 'success' ? 'status' : 'alert'}
-          className={`${BANNER_TONE_STYLES[activeBanner.tone]} auth-carbon-alert animate-alert-in flex items-start gap-3 border text-sm`}
+          aria-live="polite"
+          className={`${BANNER_TONE_STYLES[activeBanner.tone]} animate-alert-in flex items-start gap-3 px-4 py-3 text-sm`}
         >
           <activeBanner.icon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
           <p className="flex-1 leading-snug">{tAuth(activeBanner.messageKey)}</p>
-          <button
+          <Button
             type="button"
             onClick={() => setDismissedBannerKey(activeBanner.key)}
-            className="shrink-0 p-0.5 text-[#525252] transition-colors duration-150 hover:text-[#161616] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f62fe]"
+            variant="ghost"
+            size="icon-xs"
+            className="hover:bg-background/50 -me-1 -mt-1 shrink-0 text-current hover:text-current"
             aria-label={tAuth('dismiss_notification')}
           >
             <X className="h-3.5 w-3.5" aria-hidden="true" />
-          </button>
+          </Button>
         </div>
       )}
 
-      {/* OAuth Buttons */}
       {hasOAuth ? (
         <OAuthProviderButtons
           providers={oauthProviders}
@@ -225,83 +223,71 @@ export function SignInForm() {
         />
       ) : null}
 
-      {/* Divider */}
-      {hasOAuth ? (
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="border-border w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs">
-            <span className="bg-white px-2.5 text-[#525252]">
-              {tAuth('or_continue_with_email')}
-            </span>
-          </div>
-        </div>
-      ) : null}
+      {hasOAuth ? <AuthDivider>{tAuth('or_continue_with_email')}</AuthDivider> : null}
 
-      {/* Email/Password Form */}
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="space-y-2">
-          <Label htmlFor="email" className="auth-carbon-label">
-            {tAuth('email_label')}
-          </Label>
+          <Label htmlFor="email">{tAuth('email_label')}</Label>
           <Input
             id="email"
             type="email"
-            className="auth-carbon-input"
+            className={AUTH_INPUT_CLASS_NAME}
             placeholder={tAuth('email_placeholder')}
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (error) setError('');
+            }}
             required
             autoComplete="email"
+            aria-invalid={!!error}
+            aria-describedby={error ? 'signin-form-error' : undefined}
           />
         </div>
 
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="password" className="auth-carbon-label">
-              {tAuth('password_label')}
-            </Label>
-            <Link href="/auth/forgot-password" className="auth-carbon-link text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-x-3">
+            <Label htmlFor="password">{tAuth('password_label')}</Label>
+            <Link
+              href="/auth/forgot-password"
+              className={`${AUTH_STANDALONE_LINK_CLASS_NAME} text-xs`}
+            >
               {tAuth('forgot_password')}
             </Link>
           </div>
           <Input
             id="password"
             type="password"
-            className="auth-carbon-input"
+            className={AUTH_INPUT_CLASS_NAME}
             placeholder={tAuth('password_placeholder')}
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              if (error) setError('');
+            }}
             required
             autoComplete="current-password"
+            aria-invalid={!!error}
+            aria-describedby={error ? 'signin-form-error' : undefined}
           />
         </div>
 
-        {error && (
-          <div
-            className="auth-carbon-alert animate-alert-in border border-[#ffd7d9] bg-[#fff1f1] text-sm text-[#a2191f]"
-            role="alert"
-          >
-            {error}
-          </div>
-        )}
+        {error ? <AuthFormAlert id="signin-form-error">{error}</AuthFormAlert> : null}
 
-        <Button type="submit" className="auth-carbon-primary w-full" size="lg" disabled={loading}>
+        <Button type="submit" className="w-full text-sm" size="xl" disabled={loading}>
           {loading ? tAuth('signin_loading') : tAuth('signin')}
         </Button>
       </form>
 
-      {/* Sign Up Link */}
-      <p className="text-sm text-[#525252]">
-        {tAuth('no_account')}{' '}
+      <p className="text-muted-foreground flex flex-wrap items-center gap-x-1 text-sm">
+        <span>{tAuth('no_account')}</span>
         <Link
           href={
             projectInviteToken
               ? `/auth/signup?projectInviteToken=${encodeURIComponent(projectInviteToken)}`
               : '/auth/signup'
           }
-          className="auth-carbon-link"
+          className={AUTH_STANDALONE_LINK_CLASS_NAME}
         >
           {tAuth('signup')}
         </Link>

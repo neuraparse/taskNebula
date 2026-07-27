@@ -13,6 +13,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000';
 const STORAGE_STATE = 'e2e/.auth/admin.json';
+const PUBLIC_SPEC_PATTERN = /(signup|workspace-setup|public-surfaces)\.spec\.ts/;
 
 export default defineConfig({
   testDir: './e2e',
@@ -47,7 +48,7 @@ export default defineConfig({
     // 2) Unauthenticated specs (signup, first-run wizard) run without state.
     {
       name: 'chromium-public',
-      testMatch: /(signup|workspace-setup)\.spec\.ts/,
+      testMatch: PUBLIC_SPEC_PATTERN,
       // These tests share the setup endpoint and intentionally run serially;
       // parallel cold compilation in Next dev can otherwise make the public
       // first-run check time out before the application is warm.
@@ -58,7 +59,7 @@ export default defineConfig({
     // 3) Authed product specs across three browsers.
     {
       name: 'chromium',
-      testIgnore: /(signup\.spec\.ts|workspace-setup\.spec\.ts|auth\.setup\.ts)$/,
+      testIgnore: [PUBLIC_SPEC_PATTERN, /auth\.setup\.ts$/],
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],
@@ -67,7 +68,7 @@ export default defineConfig({
     },
     {
       name: 'firefox',
-      testIgnore: /(signup\.spec\.ts|workspace-setup\.spec\.ts|auth\.setup\.ts)$/,
+      testIgnore: [PUBLIC_SPEC_PATTERN, /auth\.setup\.ts$/],
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Firefox'],
@@ -76,7 +77,7 @@ export default defineConfig({
     },
     {
       name: 'webkit',
-      testIgnore: /(signup\.spec\.ts|workspace-setup\.spec\.ts|auth\.setup\.ts)$/,
+      testIgnore: [PUBLIC_SPEC_PATTERN, /auth\.setup\.ts$/],
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Safari'],

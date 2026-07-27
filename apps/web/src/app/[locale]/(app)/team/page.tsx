@@ -8,6 +8,8 @@ import { Users } from 'lucide-react';
 import { hasPermission } from '@/lib/auth/permissions';
 import { TeamPageClient } from './team-page-client';
 import type { TeamMemberRow } from './team-members-list';
+import { PageFrame } from '@/components/ui/page-frame';
+import { PageHeader } from '@/components/ui/page-header';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('pagesWork');
@@ -38,22 +40,18 @@ export default async function TeamPage() {
   const primaryOrg = userOrgs[0];
   if (!primaryOrg) {
     return (
-      <div className="flex h-full min-h-0 flex-col">
-        <div className="bg-background border-b px-6 py-4">
-          <h1 className="text-xl font-semibold tracking-tight">{t('team.title')}</h1>
+      <PageFrame>
+        <PageHeader title={t('team.title')} />
+        <div className="surface-card space-y-3 p-8 text-center">
+          <Users className="text-muted-foreground mx-auto h-8 w-8" />
+          <p className="text-foreground text-sm font-medium">
+            {tProjects('projectInviteRequiredTitle')}
+          </p>
+          <p className="text-muted-foreground mx-auto max-w-md text-sm">
+            {tProjects('projectInviteRequiredDescription')}
+          </p>
         </div>
-        <div className="min-h-0 flex-1 p-6">
-          <div className="surface-card space-y-3 p-8 text-center">
-            <Users className="text-muted-foreground mx-auto h-8 w-8" />
-            <p className="text-foreground text-sm font-medium">
-              {tProjects('projectInviteRequiredTitle')}
-            </p>
-            <p className="text-muted-foreground mx-auto max-w-md text-sm">
-              {tProjects('projectInviteRequiredDescription')}
-            </p>
-          </div>
-        </div>
-      </div>
+      </PageFrame>
     );
   }
 

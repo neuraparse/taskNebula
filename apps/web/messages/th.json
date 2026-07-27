@@ -4585,7 +4585,9 @@
       "sprints": "สปรินต์",
       "sprintBreakdown": "ใช้งานอยู่ {active}, เสร็จสิ้น {completed}",
       "sprintVelocity": "Velocity สปรินต์",
-      "velocityAverage": "เฉลี่ย: {issues} งาน, {points} points/สปรินต์"
+      "velocityAverage": "เฉลี่ย: {issues} งาน, {points} points/สปรินต์",
+      "exportCsv": "CSV",
+      "exportJson": "JSON"
     }
   },
   "pagesWork": {
@@ -5164,7 +5166,7 @@
           },
           "pin": {
             "title": "Pin the version you trust",
-            "body": "Set TASKNEBULA_IMAGE=neuraparse/tasknebula:0.4.0 to lock a release, or follow :latest for the bleeding edge."
+            "body": "Set TASKNEBULA_IMAGE=neuraparse/tasknebula:0.14.0 to lock a release, or follow :latest for the bleeding edge."
           }
         },
         "terminalTitle": "quickstart — Docker Desktop or any Docker host (~2 min)",

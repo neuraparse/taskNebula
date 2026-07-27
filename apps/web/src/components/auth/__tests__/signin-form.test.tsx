@@ -149,6 +149,8 @@ describe('SignInForm', () => {
 
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent(/invalid email or password/i);
+    expect(screen.getByLabelText(/email address/i)).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText(/password/i)).toHaveAttribute('aria-describedby', alert.id);
     expect(pushMock).not.toHaveBeenCalled();
   });
 });

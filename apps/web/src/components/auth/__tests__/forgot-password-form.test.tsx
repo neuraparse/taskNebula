@@ -50,9 +50,7 @@ describe('ForgotPasswordForm', () => {
       );
     });
 
-    expect(
-      await screen.findByRole('heading', { name: /check your inbox/i })
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /check your inbox/i })).toBeInTheDocument();
   });
 
   it('shows an error message when the endpoint returns non-ok', async () => {
@@ -70,5 +68,7 @@ describe('ForgotPasswordForm', () => {
 
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent(/an error occurred/i);
+    expect(screen.getByLabelText(/email address/i)).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText(/email address/i)).toHaveAttribute('aria-describedby', alert.id);
   });
 });

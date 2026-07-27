@@ -12,6 +12,7 @@ const columns: Array<{ titleKey: string; links: FooterLink[] }> = [
       { labelKey: 'features', href: '#board' },
       { labelKey: 'compare', href: '#compare' },
       { labelKey: 'selfHost', href: '#self-host' },
+      { labelKey: 'faq', href: '#faq' },
     ],
   },
   {
@@ -59,7 +60,7 @@ export function MarketingFooter() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label={t('githubAria')}
-              className={`ease-snap mt-5 inline-flex h-[34px] items-center gap-2 rounded-md border border-[var(--landing-border-strong)] px-3 text-[12px] font-[430] text-[var(--landing-text)] transition-all duration-150 hover:-translate-y-0.5 hover:bg-[var(--landing-bg-elevated)] ${focusRingClass}`}
+              className={`ease-snap mt-5 inline-flex h-[34px] items-center gap-2 rounded-md border border-[var(--landing-border-strong)] px-3 text-[12px] font-[430] text-[var(--landing-text)] transition duration-150 hover:-translate-y-0.5 hover:bg-[var(--landing-bg-elevated)] ${focusRingClass}`}
             >
               <Github className="h-4 w-4" aria-hidden="true" />
               {t('starGithub')}

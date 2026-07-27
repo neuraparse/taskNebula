@@ -19,49 +19,49 @@ export function AuthShell({ children, contentClassName }: AuthShellProps) {
   const t = useTranslations('publicPages.landing.proof');
 
   return (
-    <main className="auth-carbon-ui relative min-h-dvh overflow-x-hidden">
-      <div className="flex min-h-dvh items-stretch justify-center p-0 sm:p-6 lg:p-8">
-        <section className="grid min-h-dvh w-full max-w-6xl border-x border-[var(--auth-border)] bg-[var(--auth-surface)] sm:min-h-[min(760px,calc(100dvh-3rem))] sm:border md:grid-cols-2">
-          <aside className="hidden min-h-full bg-[var(--auth-text)] text-[var(--auth-surface)] md:flex md:flex-col">
+    <main className="bg-muted/30 text-foreground relative min-h-dvh overflow-x-hidden">
+      <div className="mx-auto flex min-h-dvh max-w-7xl items-stretch justify-center md:p-8">
+        <section className="border-border bg-background grid min-h-dvh w-full overflow-hidden border-x md:min-h-[min(760px,calc(100dvh-4rem))] md:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] md:rounded-lg md:border">
+          <aside className="border-border bg-muted/40 hidden min-h-full flex-col border-e md:flex">
             <div className="p-8 lg:p-10">
-              <BrandLink tone="dark" />
+              <BrandLink />
             </div>
 
             <div className="mt-auto p-8 lg:p-10">
-              <div className="border-t border-[var(--auth-text-muted)] pt-6">
-                <p className="max-w-md text-2xl font-normal leading-tight tracking-tight">
+              <div className="border-border border-t pt-6">
+                <p className="text-foreground max-w-md text-2xl font-semibold leading-tight tracking-tight">
                   {t('headline')}
                 </p>
-                <p className="mt-4 max-w-sm text-sm leading-6 text-[var(--auth-border)]">
+                <p className="text-muted-foreground mt-3 max-w-sm text-sm leading-6">
                   {t('subline')}
                 </p>
               </div>
 
-              <ul className="mt-8 border-b border-[var(--auth-text-muted)] text-sm">
-                <li className="border-t border-[var(--auth-text-muted)]">
+              <ul className="divide-border border-border mt-8 divide-y border-y text-sm">
+                <li>
                   <a
                     href="https://github.com/neuraparse/tasknebula"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block py-3 text-[var(--auth-surface)] transition-colors duration-150 hover:text-[var(--auth-border)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--auth-blue)]"
+                    className="text-foreground hover:text-primary focus-visible:ring-ring focus-visible:ring-offset-muted block rounded-sm py-3 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                   >
                     {t('items.sourceGithub')}
                   </a>
                 </li>
-                <li className="border-t border-[var(--auth-text-muted)]">
+                <li>
                   <a
                     href="https://github.com/neuraparse/tasknebula/blob/main/LICENSE"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block py-3 text-[var(--auth-surface)] transition-colors duration-150 hover:text-[var(--auth-border)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--auth-blue)]"
+                    className="text-foreground hover:text-primary focus-visible:ring-ring focus-visible:ring-offset-muted block rounded-sm py-3 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                   >
                     {t('items.mitLicensed')}
                   </a>
                 </li>
-                <li className="border-t border-[var(--auth-text-muted)]">
+                <li>
                   <a
                     href="/openapi.json"
-                    className="block py-3 text-[var(--auth-surface)] transition-colors duration-150 hover:text-[var(--auth-border)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--auth-blue)]"
+                    className="text-foreground hover:text-primary focus-visible:ring-ring focus-visible:ring-offset-muted block rounded-sm py-3 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                   >
                     {t('items.openapiSpec')}
                   </a>
@@ -72,14 +72,14 @@ export function AuthShell({ children, contentClassName }: AuthShellProps) {
 
           <div
             className={cn(
-              'flex min-h-dvh flex-col justify-start overflow-y-auto px-5 pb-8 pt-10 sm:min-h-0 sm:justify-center sm:px-10 sm:py-8 md:px-12',
+              'bg-background flex min-h-dvh flex-col justify-start overflow-y-auto px-5 pb-8 pt-7 sm:min-h-0 sm:justify-center sm:px-10 sm:py-10 md:px-12 lg:px-16',
               contentClassName
             )}
           >
-            <div className="mb-10 md:hidden">
+            <div className="mb-12 md:hidden">
               <BrandLink />
             </div>
-            <div className="w-full max-w-[392px]">{children}</div>
+            <div className="w-full max-w-[400px] self-center">{children}</div>
           </div>
         </section>
       </div>
@@ -87,32 +87,20 @@ export function AuthShell({ children, contentClassName }: AuthShellProps) {
   );
 }
 
-function BrandLink({ tone = 'light' }: { tone?: 'light' | 'dark' }) {
-  const isDark = tone === 'dark';
-
+function BrandLink() {
   return (
     <Link
       href="/"
-      className={cn(
-        'inline-flex items-center gap-3 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2',
-        isDark
-          ? 'text-[var(--auth-surface)] focus-visible:outline-[var(--auth-surface)]'
-          : 'text-[var(--auth-text)] focus-visible:outline-[var(--auth-blue)]'
-      )}
+      className="text-foreground hover:text-primary focus-visible:ring-ring focus-visible:ring-offset-background inline-flex min-h-11 max-w-full items-center gap-3 rounded-sm text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
       aria-label={APP_NAME}
     >
       <span
-        className={cn(
-          'flex h-8 w-8 items-center justify-center text-xs font-semibold',
-          isDark
-            ? 'bg-[var(--auth-surface)] text-[var(--auth-text)]'
-            : 'bg-[var(--auth-text)] text-[var(--auth-surface)]'
-        )}
+        className="bg-primary text-primary-foreground flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-xs font-semibold"
         aria-hidden="true"
       >
         {BRAND_INITIALS}
       </span>
-      <span>{APP_NAME}</span>
+      <span className="truncate">{APP_NAME}</span>
     </Link>
   );
 }

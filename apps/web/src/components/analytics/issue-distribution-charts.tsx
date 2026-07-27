@@ -1,7 +1,6 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { AlertTriangle, Layers, ListTodo } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 interface IssueDistributionChartsProps {
@@ -71,16 +70,11 @@ function DistributionTooltip({
   );
 }
 
-type Tone = 'blue' | 'emerald' | 'amber' | 'violet' | 'cyan' | 'rose';
-
 interface PieCardProps {
-  kicker: string;
   title: string;
   subtitle?: string;
   data: ChartDatum[];
   colorMap: Record<string, string>;
-  tone: Tone;
-  icon: React.ReactNode;
 }
 
 function colorForDatum(entry: ChartDatum, index: number, colorMap: Record<string, string>): string {
@@ -90,15 +84,13 @@ function colorForDatum(entry: ChartDatum, index: number, colorMap: Record<string
   return ACCENT_PALETTE[index % ACCENT_PALETTE.length] ?? 'hsl(var(--muted-foreground))';
 }
 
-function PieCard({ kicker, title, subtitle, data, colorMap, tone, icon }: PieCardProps) {
+function PieCard({ title, subtitle, data, colorMap }: PieCardProps) {
   const t = useTranslations('charts');
   const total = data.reduce((sum, d) => sum + d.value, 0);
   return (
-    <div className="surface-card animate-fade-up space-y-3 p-5">
+    <section className="animate-fade-up space-y-3 p-4 sm:p-5">
       <div className="flex items-start gap-3">
-        <span className={`icon-tile icon-tile-accent-${tone} shrink-0`}>{icon}</span>
         <div className="min-w-0 flex-1 space-y-0.5">
-          <span className="kicker">{kicker}</span>
           <h3 className="text-foreground text-base font-semibold tracking-tight">{title}</h3>
           {subtitle && <p className="text-muted-foreground text-xs">{subtitle}</p>}
         </div>
@@ -152,7 +144,7 @@ function PieCard({ kicker, title, subtitle, data, colorMap, tone, icon }: PieCar
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -181,34 +173,30 @@ export function IssueDistributionCharts({
   }));
 
   return (
-    <div className="stagger grid gap-4 md:grid-cols-3">
-      <PieCard
-        kicker={t('distribution')}
-        title={t('byStatus')}
-        subtitle={t('byStatusSubtitle')}
-        data={statusData}
-        colorMap={{}}
-        tone="blue"
-        icon={<ListTodo className="h-3.5 w-3.5" />}
-      />
-      <PieCard
-        kicker={t('distribution')}
-        title={t('byPriority')}
-        subtitle={t('byPrioritySubtitle')}
-        data={priorityData}
-        colorMap={PRIORITY_COLORS}
-        tone="amber"
-        icon={<AlertTriangle className="h-3.5 w-3.5" />}
-      />
-      <PieCard
-        kicker={t('distribution')}
-        title={t('byType')}
-        subtitle={t('byTypeSubtitle')}
-        data={typeData}
-        colorMap={TYPE_COLORS}
-        tone="violet"
-        icon={<Layers className="h-3.5 w-3.5" />}
-      />
-    </div>
+    <section className="surface-card overflow-hidden shadow-none">
+      <div className="border-border border-b px-4 py-3 sm:px-5">
+        <h2 className="text-foreground text-sm font-semibold">{t('distribution')}</h2>
+      </div>
+      <div className="stagger divide-border divide-y md:grid md:grid-cols-3 md:divide-x md:divide-y-0">
+        <PieCard
+          title={t('byStatus')}
+          subtitle={t('byStatusSubtitle')}
+          data={statusData}
+          colorMap={{}}
+        />
+        <PieCard
+          title={t('byPriority')}
+          subtitle={t('byPrioritySubtitle')}
+          data={priorityData}
+          colorMap={PRIORITY_COLORS}
+        />
+        <PieCard
+          title={t('byType')}
+          subtitle={t('byTypeSubtitle')}
+          data={typeData}
+          colorMap={TYPE_COLORS}
+        />
+      </div>
+    </section>
   );
 }

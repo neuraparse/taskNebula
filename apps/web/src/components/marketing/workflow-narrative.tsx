@@ -85,7 +85,7 @@ function StepRow({ step, reversed }: { step: Step; reversed: boolean }) {
   const Visual = step.visual;
   return (
     <article
-      className={`ease-smooth grid items-center gap-6 rounded-lg border border-[var(--landing-border)] bg-[var(--landing-bg-card)] p-6 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md sm:p-8 lg:grid-cols-2 lg:gap-12 ${
+      className={`ease-smooth grid items-center gap-6 rounded-lg border border-[var(--landing-border)] bg-[var(--landing-bg-card)] p-6 transition duration-200 hover:-translate-y-0.5 hover:shadow-md sm:p-8 lg:grid-cols-2 lg:gap-12 ${
         reversed ? 'lg:[&>*:first-child]:order-2' : ''
       }`}
     >

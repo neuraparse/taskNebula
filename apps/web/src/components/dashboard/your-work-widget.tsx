@@ -53,7 +53,7 @@ function IssueLine({ issue }: { issue: MyIssue }) {
   return (
     <Link
       href={`/issues/${issue.id}`}
-      className="row-interactive ease-snap flex min-h-[40px] min-w-0 items-center gap-2 rounded-md px-2 py-2 text-left transition-all duration-150 sm:gap-3"
+      className="row-interactive flex min-h-10 min-w-0 items-center gap-2 rounded-md px-2 py-2 text-left transition-colors duration-150 sm:gap-3"
     >
       <Circle className={cn('h-3 w-3 shrink-0', color)} fill="currentColor" />
       <span className="text-muted-foreground w-14 shrink-0 truncate font-mono text-xs sm:w-16">
@@ -64,7 +64,7 @@ function IssueLine({ issue }: { issue: MyIssue }) {
         <span className="text-muted-foreground hidden shrink-0 text-[11px] sm:inline">{due}</span>
       )}
       <Badge variant="outline" className="max-w-[4rem] shrink-0 truncate text-[10px]">
-        {issue.project?.key ?? 'PRJ'}
+        {issue.project?.key ?? issue.key.split('-')[0]}
       </Badge>
     </Link>
   );
@@ -103,12 +103,12 @@ export function YourWorkWidget() {
   return (
     <div className="surface-card min-w-0 p-4">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <span className="text-foreground text-sm font-semibold tracking-tight">
+        <h2 className="text-foreground text-sm font-semibold tracking-tight">
           {t('your_work.heading')}
-        </span>
+        </h2>
         <Link
           href="/my-issues"
-          className="text-muted-foreground hover:text-foreground ease-snap inline-flex items-center gap-1 text-xs transition-all duration-150"
+          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs transition-colors duration-150"
         >
           {tActions('view_all')}
           <ArrowUpRight className="h-3 w-3" />

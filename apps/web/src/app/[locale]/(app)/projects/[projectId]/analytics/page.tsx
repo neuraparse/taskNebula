@@ -1,12 +1,15 @@
 'use client';
 
 import { use } from 'react';
-import { Download, TrendingUp, AlertCircle, Users, Calendar } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { useProjectHealth, useVelocity, exportIssues } from '@/lib/hooks/use-analytics';
 import { VelocityChart } from '@/components/analytics/velocity-chart';
 import { IssueDistributionCharts } from '@/components/analytics/issue-distribution-charts';
+import { PageFrame } from '@/components/ui/page-frame';
+import { PageHeader } from '@/components/ui/page-header';
+import { MetricStrip, type MetricStripItem } from '@/components/ui/metric-strip';
 
 export default function ProjectAnalyticsPage({
   params,
@@ -30,108 +33,76 @@ export default function ProjectAnalyticsPage({
     );
   }
 
+  const metrics: MetricStripItem[] = healthData
+    ? [
+        {
+          id: 'total',
+          label: t('analytics.totalIssues'),
+          value: healthData.overview.totalIssues,
+        },
+        {
+          id: 'overdue',
+          label: t('analytics.overdue'),
+          value: <span className="text-destructive">{healthData.overview.overdueIssues}</span>,
+        },
+        {
+          id: 'unassigned',
+          label: t('analytics.unassigned'),
+          value: healthData.overview.unassignedIssues,
+        },
+        {
+          id: 'sprints',
+          label: t('analytics.sprints'),
+          value: healthData.sprints.total,
+          hint: t('analytics.sprintBreakdown', {
+            active: healthData.sprints.active,
+            completed: healthData.sprints.completed,
+          }),
+        },
+      ]
+    : [];
+
   return (
-    <div className="animate-fade-in h-full overflow-y-auto">
-      <div className="space-y-6 p-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <span className="kicker">{t('analytics.kicker')}</span>
-            <h1 className="text-2xl font-semibold tracking-tight">{t('analytics.title')}</h1>
-            <p className="text-muted-foreground text-sm">{t('analytics.subtitle')}</p>
-          </div>
-          <div className="flex gap-2">
+    <PageFrame className="animate-fade-in" contentClassName="space-y-6">
+      <PageHeader
+        kicker={t('analytics.kicker')}
+        title={t('analytics.title')}
+        description={t('analytics.subtitle')}
+        actions={
+          <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
               size="sm"
-              className="h-8 gap-1.5 text-xs"
+              className="h-8 flex-1 gap-1.5 text-xs sm:flex-none"
               onClick={() => handleExport('csv')}
             >
               <Download className="h-3.5 w-3.5" />
-              CSV
+              {t('analytics.exportCsv')}
             </Button>
             <Button
               variant="outline"
               size="sm"
-              className="h-8 gap-1.5 text-xs"
+              className="h-8 flex-1 gap-1.5 text-xs sm:flex-none"
               onClick={() => handleExport('json')}
             >
               <Download className="h-3.5 w-3.5" />
-              JSON
+              {t('analytics.exportJson')}
             </Button>
           </div>
-        </div>
+        }
+      />
 
-        {/* Stats Grid */}
-        {healthData && (
-          <div className="stagger grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <div className="surface-card surface-card-hover ease-snap rounded-lg p-4 transition-all duration-150">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-muted-foreground text-xs">{t('analytics.totalIssues')}</span>
-                <TrendingUp className="text-muted-foreground/50 h-4 w-4" />
-              </div>
-              <div className="text-2xl font-semibold">{healthData.overview.totalIssues}</div>
-            </div>
+      {metrics.length > 0 ? <MetricStrip items={metrics} /> : null}
 
-            <div className="surface-card surface-card-hover ease-snap rounded-lg p-4 transition-all duration-150">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-muted-foreground text-xs">{t('analytics.overdue')}</span>
-                <AlertCircle className="text-destructive/50 h-4 w-4" />
-              </div>
-              <div className="text-destructive text-2xl font-semibold">
-                {healthData.overview.overdueIssues}
-              </div>
-            </div>
+      {velocityData && velocityData.sprints.length > 0 && <VelocityChart data={velocityData} />}
 
-            <div className="surface-card surface-card-hover ease-snap rounded-lg p-4 transition-all duration-150">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-muted-foreground text-xs">{t('analytics.unassigned')}</span>
-                <Users className="text-muted-foreground/50 h-4 w-4" />
-              </div>
-              <div className="text-2xl font-semibold">{healthData.overview.unassignedIssues}</div>
-            </div>
-
-            <div className="surface-card surface-card-hover ease-snap rounded-lg p-4 transition-all duration-150">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-muted-foreground text-xs">{t('analytics.sprints')}</span>
-                <Calendar className="text-muted-foreground/50 h-4 w-4" />
-              </div>
-              <div className="text-2xl font-semibold">{healthData.sprints.total}</div>
-              <p className="text-muted-foreground mt-0.5 text-[11px]">
-                {t('analytics.sprintBreakdown', {
-                  active: healthData.sprints.active,
-                  completed: healthData.sprints.completed,
-                })}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Velocity Chart */}
-        {velocityData && velocityData.sprints.length > 0 && (
-          <div className="surface-card rounded-lg p-5">
-            <div className="mb-4">
-              <p className="text-sm font-semibold">{t('analytics.sprintVelocity')}</p>
-              <p className="text-muted-foreground text-xs">
-                {t('analytics.velocityAverage', {
-                  issues: velocityData.averageVelocity.issues.toFixed(1),
-                  points: velocityData.averageVelocity.points.toFixed(1),
-                })}
-              </p>
-            </div>
-            <VelocityChart data={velocityData} />
-          </div>
-        )}
-
-        {/* Distribution Charts */}
-        {healthData && (
-          <IssueDistributionCharts
-            issuesByStatus={healthData.issuesByStatus}
-            issuesByPriority={healthData.issuesByPriority}
-            issuesByType={healthData.issuesByType}
-          />
-        )}
-      </div>
-    </div>
+      {healthData && (
+        <IssueDistributionCharts
+          issuesByStatus={healthData.issuesByStatus}
+          issuesByPriority={healthData.issuesByPriority}
+          issuesByType={healthData.issuesByType}
+        />
+      )}
+    </PageFrame>
   );
 }

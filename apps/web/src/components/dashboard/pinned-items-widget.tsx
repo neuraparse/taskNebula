@@ -63,9 +63,9 @@ export function PinnedItemsWidget() {
   return (
     <div className="surface-card min-w-0 p-4">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <span className="text-foreground text-sm font-semibold tracking-tight">
+        <h2 className="text-foreground text-sm font-semibold tracking-tight">
           {t('pinned.heading')}
-        </span>
+        </h2>
         {items.length > visible.length ? (
           <span className="text-muted-foreground text-xs">
             {t('pinned.count', { count: items.length })}
@@ -95,7 +95,7 @@ export function PinnedItemsWidget() {
             return (
               <li
                 key={item.id}
-                className="row-interactive ease-snap group flex min-h-[40px] min-w-0 items-center gap-3 rounded-md px-2 py-2 transition-all duration-150"
+                className="row-interactive group flex min-h-10 min-w-0 items-center gap-3 rounded-md px-2 py-2 transition-colors duration-150"
               >
                 <Icon className="text-muted-foreground h-4 w-4 shrink-0" />
                 <Link

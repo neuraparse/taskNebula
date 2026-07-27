@@ -31,7 +31,7 @@ export function CopyButton({ text, label }: { text: string; label?: string }) {
       type="button"
       onClick={handleCopy}
       aria-label={copied ? t('copied') : (label ?? t('copyCommand'))}
-      className="ease-snap inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-sm border border-[var(--landing-border)] text-[var(--landing-text-muted)] transition-all duration-150 hover:bg-[var(--landing-bg-elevated)] hover:text-[var(--landing-text)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)]"
+      className="ease-snap inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-sm border border-[var(--landing-border)] text-[var(--landing-text-muted)] transition duration-150 hover:bg-[var(--landing-bg-elevated)] hover:text-[var(--landing-text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)]"
     >
       {copied ? (
         <Check className="h-3.5 w-3.5 text-[var(--landing-accent-emerald)]" aria-hidden="true" />

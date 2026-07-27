@@ -1,5 +1,7 @@
 import { ResetPasswordForm } from '@/components/auth/reset-password-form';
 import { AuthShell } from '@/components/auth/auth-shell';
+import { AuthIntro } from '@/components/auth/auth-ui';
+import { Button } from '@/components/ui/button';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 
@@ -16,14 +18,14 @@ export default async function ResetPasswordPage({ searchParams }: { searchParams
       {token ? (
         <ResetPasswordForm token={token} />
       ) : (
-        <div className="stagger space-y-6">
-          <div className="space-y-2">
-            <h1 className="auth-carbon-heading">{t('resetPassword.invalidTitle')}</h1>
-            <p className="auth-carbon-subtitle">{t('resetPassword.invalidBody')}</p>
-          </div>
-          <Link href="/auth/forgot-password" className="auth-carbon-link inline-block text-sm">
-            {t('resetPassword.requestNew')}
-          </Link>
+        <div className="animate-fade-up space-y-7">
+          <AuthIntro
+            title={t('resetPassword.invalidTitle')}
+            description={t('resetPassword.invalidBody')}
+          />
+          <Button asChild className="w-full text-sm" size="xl">
+            <Link href="/auth/forgot-password">{t('resetPassword.requestNew')}</Link>
+          </Button>
         </div>
       )}
     </AuthShell>

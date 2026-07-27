@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { TeamMembersList, type TeamMemberRow } from './team-members-list';
 import { TeamspaceManager } from '@/components/organization/teamspace-manager';
 import { useOrganizationMembers } from '@/lib/hooks/use-members';
+import { PageFrame } from '@/components/ui/page-frame';
+import { PageHeader } from '@/components/ui/page-header';
 
 const TAB_VALUES = ['members', 'teamspaces', 'invites'] as const;
 type TabValue = (typeof TAB_VALUES)[number];
@@ -111,57 +113,52 @@ export function TeamPageClient({
   }, [canViewMembers, membersData]);
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="bg-background border-b px-6 py-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight">{t('team.title')}</h1>
-            {canViewMembers ? (
-              <p className="text-muted-foreground text-sm">
-                {t('team.memberCount', { count: liveMembers.length })}
-              </p>
-            ) : null}
-          </div>
-          {canInviteMembers ? (
-            <Button asChild size="sm">
+    <PageFrame>
+      <PageHeader
+        title={t('team.title')}
+        description={
+          canViewMembers ? t('team.memberCount', { count: liveMembers.length }) : undefined
+        }
+        actions={
+          canInviteMembers ? (
+            <Button asChild size="sm" className="w-full sm:w-auto">
               <Link href="/settings?tab=members">{t('team.inviteMember')}</Link>
             </Button>
-          ) : null}
-        </div>
-        <div
-          role="tablist"
-          aria-label={t('team.sectionsLabel')}
-          className="mt-3 flex gap-1 overflow-x-auto"
-        >
-          {visibleTabs.map(({ value, labelKey, icon: Icon }) => (
-            <button
-              key={value}
-              type="button"
-              role="tab"
-              aria-selected={activeTab === value}
-              onClick={() => handleTabChange(value)}
-              data-active={activeTab === value ? 'true' : undefined}
-              className="row-interactive shrink-0 gap-1.5 px-3 py-1.5 text-sm"
-            >
-              <Icon className="h-3.5 w-3.5" />
-              <span>{t(labelKey)}</span>
-            </button>
-          ))}
-        </div>
+          ) : null
+        }
+      />
+
+      <div
+        role="tablist"
+        aria-label={t('team.sectionsLabel')}
+        className="border-border flex gap-1 overflow-x-auto border-b pb-2"
+      >
+        {visibleTabs.map(({ value, labelKey, icon: Icon }) => (
+          <button
+            key={value}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === value}
+            onClick={() => handleTabChange(value)}
+            data-active={activeTab === value ? 'true' : undefined}
+            className="row-interactive shrink-0 gap-1.5 px-3 py-1.5 text-sm"
+          >
+            <Icon className="h-3.5 w-3.5" />
+            <span>{t(labelKey)}</span>
+          </button>
+        ))}
       </div>
 
-      <div className="min-h-0 flex-1 overflow-auto p-6">
-        {activeTab === 'members' && (
-          <TeamMembersList members={liveMembers} canInviteMembers={canInviteMembers} />
-        )}
-        {activeTab === 'teamspaces' && (
-          <TeamspaceManager organizationId={organizationId} canManage={canManageTeamspaces} />
-        )}
-        {activeTab === 'invites' && (
-          <InvitesPanel invites={pendingInvites} canInviteMembers={canInviteMembers} />
-        )}
-      </div>
-    </div>
+      {activeTab === 'members' && (
+        <TeamMembersList members={liveMembers} canInviteMembers={canInviteMembers} />
+      )}
+      {activeTab === 'teamspaces' && (
+        <TeamspaceManager organizationId={organizationId} canManage={canManageTeamspaces} />
+      )}
+      {activeTab === 'invites' && (
+        <InvitesPanel invites={pendingInvites} canInviteMembers={canInviteMembers} />
+      )}
+    </PageFrame>
   );
 }
 
@@ -193,9 +190,9 @@ function InvitesPanel({ canInviteMembers, invites }: InvitesPanelProps) {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="surface-card divide-border divide-y overflow-hidden shadow-none">
       {invites.map((invite) => (
-        <div key={invite.id} className="surface-card flex items-center gap-3 rounded-lg px-4 py-3">
+        <div key={invite.id} className="flex min-h-14 items-center gap-3 px-4 py-3">
           <UserPlus className="text-muted-foreground h-5 w-5 shrink-0" />
           <div className="min-w-0 flex-1">
             <p className="text-foreground truncate text-sm font-medium">
@@ -205,7 +202,9 @@ function InvitesPanel({ canInviteMembers, invites }: InvitesPanelProps) {
               {t('team.invites.rolePending', { role: invite.role })}
             </p>
           </div>
-          <span className="chip">{t('team.invites.invited')}</span>
+          <span className="text-muted-foreground text-xs font-medium">
+            {t('team.invites.invited')}
+          </span>
         </div>
       ))}
     </div>

@@ -3,7 +3,8 @@
 End-to-end tests for the Next.js app in `apps/web`, driven by
 [Playwright](https://playwright.dev). The suite covers signup, first-run
 workspace setup, the issue lifecycle, the Kanban board, the Cmd+K command
-palette, and the AI draft dialog across Chromium, Firefox, and WebKit.
+palette, the AI draft dialog, and the public design contract across Chromium,
+Firefox, and WebKit.
 
 ## Layout
 
@@ -14,6 +15,7 @@ apps/web/
     .auth/                    # storage state (gitignored)
     fixtures/seed.ts          # deterministic seeder (idempotent)
     auth.setup.ts             # signs in once, persists storage state
+    public-surfaces.spec.ts   # public route × viewport × light/dark contract
     signup.spec.ts            # public — email/password registration
     workspace-setup.spec.ts   # public — first-run admin wizard
     issue-lifecycle.spec.ts   # authed — create → priority → assign → close
@@ -52,6 +54,12 @@ pnpm --filter @tasknebula/web tests:e2e:ui
 
 # Single spec, single browser
 pnpm --filter @tasknebula/web exec playwright test e2e/cmd-k-palette.spec.ts --project=chromium
+
+# Public 320/390/desktop × light/dark surface contract
+pnpm --filter @tasknebula/web tests:e2e:public
+
+# Opt in to successful mobile audit screenshots (failure artifacts are automatic)
+UI_AUDIT=1 pnpm --filter @tasknebula/web exec playwright test e2e/mobile-layout.spec.ts --project=chromium
 ```
 
 Playwright auto-starts `pnpm dev` on `http://localhost:3000` (and reuses the
@@ -71,8 +79,8 @@ to point at a deployed environment.
 3. Writes the resulting `storageState` to `e2e/.auth/admin.json`, which is
    then shared by every authed project via the `storageState` use option.
 
-The two public specs (`signup`, `workspace-setup`) run without storage state
-under the `chromium-public` project.
+The public specs (`public-surfaces`, `signup`, `workspace-setup`) run without
+storage state under the `chromium-public` project.
 
 ## Artifacts
 

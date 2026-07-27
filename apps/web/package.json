@@ -1,6 +1,6 @@
 {
   "name": "@tasknebula/web",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "private": true,
   "scripts": {
     "build": "next build",
@@ -13,6 +13,7 @@
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch",
     "tests:e2e": "playwright test",
+    "tests:e2e:public": "playwright test e2e/public-surfaces.spec.ts --project=chromium-public",
     "tests:e2e:install": "playwright install --with-deps",
     "tests:e2e:ui": "playwright test --ui",
     "type-check": "tsc --noEmit"

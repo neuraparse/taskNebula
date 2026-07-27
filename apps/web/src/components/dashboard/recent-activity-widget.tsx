@@ -117,12 +117,12 @@ export function RecentActivityWidget() {
   return (
     <div className="surface-card p-4">
       <div className="mb-4 flex items-center justify-between">
-        <span className="text-foreground text-sm font-semibold tracking-tight">
+        <h2 className="text-foreground text-sm font-semibold tracking-tight">
           {t('activity.heading')}
-        </span>
+        </h2>
         <Link
           href="/activity"
-          className="text-muted-foreground hover:text-foreground ease-snap inline-flex items-center gap-1 text-xs transition-all duration-150"
+          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs transition-colors duration-150"
         >
           {tActions('view_all')}
           <ArrowUpRight className="h-3 w-3" />

@@ -20,6 +20,8 @@ import { CreateSprintModal } from '@/components/sprints/create-sprint-modal';
 import { useState } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { PageFrame } from '@/components/ui/page-frame';
+import { PageHeader } from '@/components/ui/page-header';
 
 export default function SprintsPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = use(params);
@@ -45,21 +47,21 @@ export default function SprintsPage({ params }: { params: Promise<{ projectId: s
     switch (status) {
       case 'active':
         return (
-          <Badge className="bg-accent-emerald/10 text-accent-emerald border-accent-emerald/20 hover:bg-accent-emerald/20">
+          <Badge className="bg-accent-emerald/10 text-accent-emerald border-accent-emerald/20 hover:bg-accent-emerald/20 rounded-sm">
             <span className="status-dot status-live mr-1.5" />
             {t('statusActive')}
           </Badge>
         );
       case 'completed':
         return (
-          <Badge className="bg-accent-blue/10 text-accent-blue border-accent-blue/20">
+          <Badge className="bg-accent-blue/10 text-accent-blue border-accent-blue/20 rounded-sm">
             <CheckCircle2 className="mr-1 h-3 w-3" />
             {t('statusCompleted')}
           </Badge>
         );
       default:
         return (
-          <Badge variant="outline" className="text-muted-foreground">
+          <Badge variant="outline" className="text-muted-foreground rounded-sm">
             <Calendar className="mr-1 h-3 w-3" />
             {t('statusPlanned')}
           </Badge>
@@ -94,25 +96,24 @@ export default function SprintsPage({ params }: { params: Promise<{ projectId: s
   }
 
   return (
-    <div className="animate-fade-in h-full overflow-y-auto">
-      <div className="space-y-5 p-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">{t('sprintsTitle')}</h1>
-            <p className="text-muted-foreground text-sm">{t('sprintsSubtitle')}</p>
-          </div>
-          {permissions.canManageSprints && (
-            <Button
-              size="sm"
-              className="h-8 gap-1.5 text-xs"
-              onClick={() => setIsCreateModalOpen(true)}
-            >
-              <Plus className="h-3.5 w-3.5" />
-              {t('newSprint')}
-            </Button>
-          )}
-        </div>
+    <>
+      <PageFrame className="animate-fade-in" contentClassName="space-y-5">
+        <PageHeader
+          title={t('sprintsTitle')}
+          description={t('sprintsSubtitle')}
+          actions={
+            permissions.canManageSprints ? (
+              <Button
+                size="sm"
+                className="h-8 w-full gap-1.5 text-xs sm:w-auto"
+                onClick={() => setIsCreateModalOpen(true)}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                {t('newSprint')}
+              </Button>
+            ) : null
+          }
+        />
 
         {/* Sprint List */}
         {sprints && sprints.length > 0 ? (
@@ -146,12 +147,12 @@ export default function SprintsPage({ params }: { params: Promise<{ projectId: s
                 <div
                   key={sprint.id}
                   className={cn(
-                    'surface-card surface-card-hover ease-snap group rounded-lg transition-all duration-150',
+                    'surface-card surface-card-hover ease-snap group rounded-lg transition-[border-color,background-color] duration-150',
                     sprint.status === 'active' && 'border-accent-emerald/20'
                   )}
                 >
-                  <div className="p-5">
-                    <div className="flex items-start justify-between gap-4">
+                  <div className="p-4 sm:p-5">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                       {/* Left */}
                       <div className="min-w-0 flex-1">
                         <div className="mb-2 flex items-center gap-2.5">
@@ -171,7 +172,7 @@ export default function SprintsPage({ params }: { params: Promise<{ projectId: s
                           </p>
                         )}
 
-                        <div className="text-muted-foreground flex items-center gap-4 text-xs">
+                        <div className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
                           <span className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
                             {formatter.dateTime(startDate, {
@@ -203,7 +204,7 @@ export default function SprintsPage({ params }: { params: Promise<{ projectId: s
                           <div className="mt-3 flex items-center gap-3">
                             <div className="bg-primary/10 h-1.5 flex-1 overflow-hidden rounded-sm">
                               <div
-                                className="bg-primary ease-snap h-full rounded-sm transition-all duration-150"
+                                className="bg-primary ease-snap h-full rounded-sm transition-[width] duration-150"
                                 style={{ width: `${progress}%` }}
                               />
                             </div>
@@ -215,7 +216,7 @@ export default function SprintsPage({ params }: { params: Promise<{ projectId: s
                       </div>
 
                       {/* Right actions */}
-                      <div className="flex shrink-0 items-center gap-1.5">
+                      <div className="flex shrink-0 items-center gap-1.5 self-end sm:self-auto">
                         <Button asChild variant="ghost" size="sm" className="h-8 gap-1.5 text-xs">
                           <Link href={`/projects/${projectId}/sprints/${sprint.id}`}>
                             {t('view')}
@@ -226,7 +227,7 @@ export default function SprintsPage({ params }: { params: Promise<{ projectId: s
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="text-muted-foreground hover:text-destructive h-8 w-8 opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100"
+                            className="text-muted-foreground hover:text-destructive h-8 w-8 opacity-100 transition-opacity focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
                             aria-label={tActions('delete')}
                             onClick={() => handleDeleteSprint(sprint.id)}
                             disabled={deleteSprint.isPending}
@@ -255,13 +256,13 @@ export default function SprintsPage({ params }: { params: Promise<{ projectId: s
             )}
           </div>
         )}
-      </div>
+      </PageFrame>
 
       <CreateSprintModal
         projectId={projectId}
         open={isCreateModalOpen}
         onOpenChange={setIsCreateModalOpen}
       />
-    </div>
+    </>
   );
 }

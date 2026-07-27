@@ -31,7 +31,7 @@ export function MobileMenu({ items }: { items: ReadonlyArray<{ label: string; hr
         aria-expanded={open}
         aria-controls="marketing-mobile-menu"
         aria-label={open ? t('closeMenuAria') : t('openMenuAria')}
-        className="ease-snap inline-flex h-[34px] w-[34px] items-center justify-center rounded-md border border-[var(--landing-border-strong)] text-[var(--landing-text)] transition-all duration-150 hover:bg-[var(--landing-bg-elevated)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)]"
+        className="ease-snap inline-flex h-[34px] w-[34px] items-center justify-center rounded-md border border-[var(--landing-border-strong)] text-[var(--landing-text)] transition duration-150 hover:bg-[var(--landing-bg-elevated)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)]"
       >
         {open ? (
           <X className="h-4 w-4" aria-hidden="true" />
@@ -51,7 +51,7 @@ export function MobileMenu({ items }: { items: ReadonlyArray<{ label: string; hr
                 key={item.href}
                 href={item.href}
                 onClick={() => setOpen(false)}
-                className="rounded-md px-3 py-2.5 text-[14px] text-[var(--landing-text-subtle)] transition-colors duration-150 hover:bg-[var(--landing-bg-elevated)] hover:text-[var(--landing-text-dark)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)]"
+                className="rounded-md px-3 py-2.5 text-[14px] text-[var(--landing-text-subtle)] transition-colors duration-150 hover:bg-[var(--landing-bg-elevated)] hover:text-[var(--landing-text-dark)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)]"
               >
                 {item.label}
               </a>
@@ -59,7 +59,7 @@ export function MobileMenu({ items }: { items: ReadonlyArray<{ label: string; hr
             <Link
               href="/auth/signin"
               onClick={() => setOpen(false)}
-              className="mt-1 rounded-md border-t border-[var(--landing-border)] px-3 pb-2.5 pt-3.5 text-[14px] text-[var(--landing-text-subtle)] transition-colors duration-150 hover:bg-[var(--landing-bg-elevated)] hover:text-[var(--landing-text-dark)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)] md:hidden"
+              className="mt-1 rounded-md border-t border-[var(--landing-border)] px-3 pb-2.5 pt-3.5 text-[14px] text-[var(--landing-text-subtle)] transition-colors duration-150 hover:bg-[var(--landing-bg-elevated)] hover:text-[var(--landing-text-dark)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)] md:hidden"
             >
               {t('signIn')}
             </Link>

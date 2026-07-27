@@ -8,6 +8,13 @@ import { Loader2, Search, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import {
   TEMPLATE_CATEGORIES,
@@ -274,34 +281,19 @@ export function TemplatesGrid({
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <div
-            role="tablist"
-            aria-label={t('filter_by_category')}
-            className="flex flex-wrap items-center gap-1.5"
-          >
-            {FILTERS.map((filter) => {
-              const active = category === filter.value;
-              return (
-                <button
-                  key={filter.value}
-                  type="button"
-                  role="tab"
-                  aria-selected={active}
-                  onClick={() => setCategory(filter.value)}
-                  className={cn(
-                    'ease-snap inline-flex h-7 items-center rounded-full border px-3 text-xs font-medium transition-colors duration-150',
-                    'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
-                    active
-                      ? 'bg-primary text-primary-foreground border-transparent'
-                      : 'border-border bg-card text-muted-foreground hover:bg-accent/60 hover:text-accent-foreground'
-                  )}
-                >
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+          <Select value={category} onValueChange={(value) => setCategory(value as FilterValue)}>
+            <SelectTrigger className="h-9 w-full sm:w-48" aria-label={t('filter_by_category')}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {FILTERS.map((filter) => (
+                <SelectItem key={filter.value} value={filter.value}>
                   {filter.value === 'all' ? t('filter_all') : t(`category_${filter.value}`)}
-                </button>
-              );
-            })}
-          </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {canAdminister ? <NewTemplateDialog /> : null}
         </div>
       </div>
@@ -323,14 +315,14 @@ export function TemplatesGrid({
             const realId = isDb ? template.id.slice(DB_PREFIX.length) : null;
             const canDelete = realId ? adminById.get(realId) === true : false;
             return (
-              <div key={template.id} className="relative">
+              <div key={template.id} className="group relative">
                 <TemplateCard template={template} onUse={handleUse} />
                 {canDelete && realId ? (
                   <Button
                     type="button"
                     size="sm"
                     variant="ghost"
-                    className="absolute right-2 top-2 h-7 w-7 p-0 opacity-0 transition-opacity duration-150 hover:opacity-100 focus-visible:opacity-100 group-hover:opacity-100"
+                    className="absolute right-2 top-2 h-7 w-7 p-0 opacity-100 transition-opacity duration-150 hover:opacity-100 focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
                     aria-label={t('delete_template_aria', { name: template.name })}
                     disabled={deleteMutation.isPending}
                     onClick={(event) => {

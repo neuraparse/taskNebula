@@ -53,7 +53,7 @@ export function SelfHost() {
               tabIndex={0}
               role="region"
               aria-label={t('quickstartAria')}
-              className="scrollbar-none overflow-x-auto p-4 font-mono text-[12px] leading-7 text-[var(--landing-text-body)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)]"
+              className="scrollbar-none overflow-x-auto p-4 font-mono text-[12px] leading-7 text-[var(--landing-text-body)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)]"
             >
               <code>
                 {QUICKSTART_LINES.map((line) => (
@@ -75,7 +75,7 @@ export function SelfHost() {
                       href={DOCKER_HUB_URL}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="rounded-sm text-[var(--landing-text-body)] underline decoration-[var(--landing-border-light)] underline-offset-2 transition-colors duration-150 hover:text-[var(--landing-text-dark)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)]"
+                      className="rounded-sm text-[var(--landing-text-body)] underline decoration-[var(--landing-border-light)] underline-offset-2 transition-colors duration-150 hover:text-[var(--landing-text-dark)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)]"
                     >
                       {chunks}
                     </a>

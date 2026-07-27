@@ -84,15 +84,13 @@ export function CatchMeUpBanner() {
   return (
     <div className="surface-card animate-fade-up border-primary/20 bg-card p-4">
       <div className="flex items-start gap-3">
-        <div className="icon-tile shrink-0">
-          <Sparkles className="h-4 w-4" />
-        </div>
+        <Sparkles className="text-primary mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-foreground min-w-0 text-sm font-semibold">
               {t('catchup.welcome_back')}
             </h2>
-            <span className="chip rounded-sm px-2 py-0.5 text-[10px]">
+            <span className="text-muted-foreground inline-flex items-center gap-1 text-[10px] tabular-nums">
               <Clock className="h-2.5 w-2.5" />
               {t('catchup.away', { gap: formatGap(lastSeenDate, t) })}
             </span>
@@ -130,22 +128,23 @@ export function CatchMeUpBanner() {
                         {t('catchup.suggested_next_steps')}
                       </p>
                       <ul className="space-y-1">
-                        {digest.action_items.map((action, idx) => (
-                          <li key={`${action.link}-${idx}`}>
+                        {digest.action_items.map((action) => (
+                          <li key={`${action.link}-${action.title}-${action.urgency}`}>
                             <Link
                               href={action.link}
                               className={cn(
                                 'border-border bg-background hover:bg-muted/40 flex items-center justify-between rounded-md border px-2.5 py-1.5 text-xs transition-colors',
-                                action.urgency === 'high' && 'border-rose-500/30',
-                                action.urgency === 'medium' && 'border-amber-500/30'
+                                action.urgency === 'high' && 'border-accent-rose/30',
+                                action.urgency === 'medium' && 'border-accent-amber/30'
                               )}
                             >
                               <span className="truncate">{action.title}</span>
                               <span
                                 className={cn(
-                                  'ml-2 rounded-full px-1.5 py-0.5 text-[9px] font-medium uppercase',
-                                  action.urgency === 'high' && 'bg-rose-500/10 text-rose-600',
-                                  action.urgency === 'medium' && 'bg-amber-500/10 text-amber-700',
+                                  'ml-2 rounded-sm px-1.5 py-0.5 text-[9px] font-medium uppercase',
+                                  action.urgency === 'high' && 'bg-accent-rose/10 text-accent-rose',
+                                  action.urgency === 'medium' &&
+                                    'bg-accent-amber/10 text-accent-amber',
                                   action.urgency === 'low' && 'bg-muted text-muted-foreground'
                                 )}
                               >

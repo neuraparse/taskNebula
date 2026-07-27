@@ -73,10 +73,10 @@ export function SectionHeader({
 
 /** Shared brand-colored focus ring — matches the landing showcase idiom. */
 export const focusRingClass =
-  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)]';
+  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)]';
 
 /** Canonical primary CTA classes for the landing IBM/Carbon palette. */
-export const primaryCtaClass = `inline-flex h-11 items-center gap-2 rounded-md bg-[var(--landing-accent-blue)] px-4 text-sm font-[450] text-white transition-all duration-150 ease-snap hover:-translate-y-0.5 hover:bg-[var(--landing-accent-blue-hover)] ${focusRingClass}`;
+export const primaryCtaClass = `inline-flex h-11 items-center gap-2 rounded-md bg-[var(--landing-accent-blue)] px-4 text-sm font-[450] text-white transition duration-150 ease-snap hover:-translate-y-0.5 hover:bg-[var(--landing-accent-blue-hover)] ${focusRingClass}`;
 
 /** Canonical secondary (outline) CTA classes. */
-export const secondaryCtaClass = `inline-flex h-11 items-center gap-2 rounded-md border border-[var(--landing-border-strong)] bg-[var(--landing-bg-elevated)] px-4 text-sm font-[450] text-[var(--landing-text)] transition-all duration-150 ease-snap hover:-translate-y-0.5 hover:bg-[var(--landing-bg-hover)] ${focusRingClass}`;
+export const secondaryCtaClass = `inline-flex h-11 items-center gap-2 rounded-md border border-[var(--landing-border-strong)] bg-[var(--landing-bg-elevated)] px-4 text-sm font-[450] text-[var(--landing-text)] transition duration-150 ease-snap hover:-translate-y-0.5 hover:bg-[var(--landing-bg-hover)] ${focusRingClass}`;

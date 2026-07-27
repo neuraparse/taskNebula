@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { AuthShell } from '@/components/auth/auth-shell';
+import { AuthIntro, AuthLoading } from '@/components/auth/auth-ui';
 import { AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 
@@ -18,22 +19,15 @@ function ErrorContent() {
   const errorMessage = t(`error.messages.${errorKey}`);
 
   return (
-    <div className="stagger space-y-6">
-      <div className="flex items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center bg-[#fff1f1] text-[#da1e28]">
-          <AlertCircle className="h-5 w-5" aria-hidden="true" />
-        </span>
-        <span className="border border-[#ffd7d9] bg-[#fff1f1] px-2 py-1 text-xs text-[#a2191f]">
-          {t('error.chip', { error })}
-        </span>
+    <div className="animate-fade-up space-y-7">
+      <div className="panel-danger text-destructive flex items-center gap-3 px-4 py-3">
+        <AlertCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
+        <p className="min-w-0 break-words font-mono text-xs">{t('error.chip', { error })}</p>
       </div>
 
-      <div className="space-y-2">
-        <h1 className="auth-carbon-heading">{t('error.title')}</h1>
-        <p className="auth-carbon-subtitle">{errorMessage}</p>
-      </div>
+      <AuthIntro title={t('error.title')} description={errorMessage} />
 
-      <Button asChild className="auth-carbon-primary w-full" size="lg">
+      <Button asChild className="w-full text-sm" size="xl">
         <Link href="/auth/signin">{t('error.tryAgain')}</Link>
       </Button>
     </div>
@@ -44,13 +38,7 @@ export default function AuthErrorPage() {
   const tCommon = useTranslations('common');
   return (
     <AuthShell>
-      <Suspense
-        fallback={
-          <div className="flex items-center justify-center py-8">
-            <div className="auth-carbon-spinner" aria-label={tCommon('loading')} />
-          </div>
-        }
-      >
+      <Suspense fallback={<AuthLoading label={tCommon('loading')} />}>
         <ErrorContent />
       </Suspense>
     </AuthShell>

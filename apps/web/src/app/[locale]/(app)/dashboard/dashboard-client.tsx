@@ -6,15 +6,17 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
+import { MetricStrip, type MetricStripItem } from '@/components/ui/metric-strip';
+import { PageFrame } from '@/components/ui/page-frame';
+import { PageHeader } from '@/components/ui/page-header';
 import { IssueDetailModal } from '@/components/issues/issue-detail-modal';
 import { CreateIssueModal } from '@/components/issues/create-issue-modal';
 import { ActivityFeed } from '@/components/activity/activity-feed';
-import { YourWorkWidget } from '@/components/dashboard/your-work-widget';
 import { UpcomingDeadlinesWidget } from '@/components/dashboard/upcoming-deadlines-widget';
 import { PinnedItemsWidget } from '@/components/dashboard/pinned-items-widget';
 import { CatchMeUpBanner } from '@/components/dashboard/catch-me-up-banner';
 import { StandupWidget } from '@/components/dashboard/standup-widget';
-import { AnalyticsBento } from '@/components/dashboard/analytics-bento';
+import { DeliveryAnalysis } from '@/components/dashboard/delivery-analysis';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { useProjects } from '@/lib/hooks/use-projects';
 import { ArrowUpRight, Target, Inbox } from 'lucide-react';
@@ -42,6 +44,33 @@ interface Issue {
     key: string;
     name: string;
   };
+}
+
+const STATUS_ACTION_ORDER: Record<string, number> = {
+  blocked: 0,
+  in_progress: 1,
+  todo: 2,
+  backlog: 3,
+};
+
+const PRIORITY_ACTION_ORDER: Record<string, number> = {
+  critical: 0,
+  high: 1,
+  medium: 2,
+  low: 3,
+};
+
+function compareActionableIssues(left: Issue, right: Issue): number {
+  const statusDelta =
+    (STATUS_ACTION_ORDER[left.status.category] ?? 4) -
+    (STATUS_ACTION_ORDER[right.status.category] ?? 4);
+  if (statusDelta !== 0) return statusDelta;
+
+  const priorityDelta =
+    (PRIORITY_ACTION_ORDER[left.priority] ?? 4) - (PRIORITY_ACTION_ORDER[right.priority] ?? 4);
+  if (priorityDelta !== 0) return priorityDelta;
+
+  return new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime();
 }
 
 export function DashboardClient() {
@@ -146,115 +175,110 @@ export function DashboardClient() {
     return { active, completed, blocked, points };
   }, [myIssues]);
 
+  const actionableIssues = useMemo(
+    () =>
+      (myIssues ?? [])
+        .filter((issue) => issue.status.category !== 'done')
+        .sort(compareActionableIssues),
+    [myIssues]
+  );
+
   if (isLoading) {
     return <DashboardLoadingShell />;
   }
 
   const firstName = session?.user?.name?.split(' ')[0] || t('greeting_fallback_name');
+  const metrics: MetricStripItem[] = [
+    { id: 'active', label: tDash('stat_active'), value: stats.active },
+    { id: 'blocked', label: tDash('stat_blocked'), value: stats.blocked },
+    { id: 'points', label: tDash('stat_story_points'), value: stats.points },
+    { id: 'completed', label: tDash('stat_completed'), value: stats.completed },
+  ];
 
   return (
     <>
-      <div className="dashboard-carbon bg-background flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
-        <div className="custom-scrollbar min-w-0 flex-1 overflow-y-auto overflow-x-hidden">
-          <div className="mx-auto w-full min-w-0 max-w-[1680px] space-y-3 p-3 sm:p-4 lg:p-5">
-            <CatchMeUpBanner />
+      <PageFrame className="dashboard-carbon">
+        <PageHeader
+          className="animate-fade-up"
+          kicker={tDash('kicker')}
+          title={tDash('welcome_back', { name: firstName })}
+          description={currentTeamId ? tDash('subtitle_team') : tDash('subtitle_personal')}
+          actions={
+            <Button asChild size="sm" className="w-full sm:w-auto">
+              <Link href="/my-issues">
+                <Target className="h-4 w-4" />
+                {tNav('my_issues')}
+              </Link>
+            </Button>
+          }
+        />
 
-            <header className="animate-fade-up flex flex-col gap-4 py-2 sm:flex-row sm:items-end sm:justify-between">
-              <div className="min-w-0 space-y-1">
-                <span className="kicker">{tDash('kicker')}</span>
-                <h1 className="text-foreground text-balance text-2xl font-[400] leading-tight tracking-normal sm:text-[28px]">
-                  {tDash('welcome_back', { name: firstName })}
-                </h1>
-                <p className="text-muted-foreground max-w-2xl text-sm">
-                  {currentTeamId ? tDash('subtitle_team') : tDash('subtitle_personal')}
-                </p>
-              </div>
-              <Button asChild size="sm" className="w-full gap-2 sm:w-auto">
-                <Link href="/my-issues">
-                  <Target className="h-4 w-4" />
-                  {tNav('my_issues')}
+        <MetricStrip items={metrics} />
+
+        <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="min-w-0 space-y-4">
+            <section
+              aria-labelledby="dashboard-action-queue"
+              className="surface-card animate-fade-up min-w-0 overflow-hidden shadow-none"
+            >
+              <div className="border-border flex min-h-11 items-center justify-between gap-3 border-b px-4 py-2.5">
+                <h2
+                  id="dashboard-action-queue"
+                  className="text-foreground min-w-0 truncate text-sm font-semibold"
+                >
+                  {tDash('my_issues_heading')}
+                </h2>
+                <Link
+                  href="/my-issues"
+                  className="text-muted-foreground hover:text-foreground inline-flex shrink-0 items-center gap-1 text-xs transition-colors duration-150"
+                >
+                  {tActions('view_all')}
+                  <ArrowUpRight className="h-3 w-3" />
                 </Link>
-              </Button>
-            </header>
+              </div>
 
-            {/* One subordinate KPI strip keeps the work queue as the focal surface. */}
-            <div className="surface-card grid grid-cols-2 overflow-hidden shadow-none lg:grid-cols-4">
-              <StatTile label={tDash('stat_active')} value={stats.active} />
-              <StatTile label={tDash('stat_completed')} value={stats.completed} />
-              <StatTile label={tDash('stat_blocked')} value={stats.blocked} />
-              <StatTile label={tDash('stat_story_points')} value={stats.points} />
-            </div>
-
-            {/* Main Content */}
-            <div className="stagger grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
-              {/* My Issues */}
-              <div className="surface-card animate-fade-up overflow-hidden shadow-none">
-                <div className="border-border flex items-center justify-between gap-3 border-b px-4 py-3">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <Inbox className="text-muted-foreground h-4 w-4" />
-                    <span className="text-foreground truncate text-sm font-medium">
-                      {tDash('my_issues_heading')}
-                    </span>
-                  </div>
-                  <Link
-                    href="/my-issues"
-                    className="text-muted-foreground hover:text-foreground ease-snap inline-flex items-center gap-1 text-xs transition-all duration-150"
-                  >
-                    {tActions('view_all')}
-                    <ArrowUpRight className="h-3 w-3" />
-                  </Link>
+              {actionableIssues.length === 0 ? (
+                <div className="flex flex-col items-center justify-center px-4 py-12 text-center">
+                  <Inbox className="text-muted-foreground mb-3 h-7 w-7" />
+                  <p className="text-muted-foreground mb-4 text-sm">{tDash('all_caught_up')}</p>
+                  {firstProjectId ? (
+                    <Button variant="outline" size="sm" onClick={() => setIsCreateIssueOpen(true)}>
+                      {tActions('create_issue')}
+                    </Button>
+                  ) : (
+                    <Button asChild variant="outline" size="sm">
+                      <Link href="/projects">{tActions('create_project')}</Link>
+                    </Button>
+                  )}
                 </div>
+              ) : (
+                <div className="divide-border divide-y px-2 py-2">
+                  {actionableIssues.slice(0, 7).map((issue) => (
+                    <IssueRow
+                      key={issue.id}
+                      issue={issue}
+                      onClick={() => setSelectedIssueId(issue.id)}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
 
-                {!myIssues || myIssues.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center px-4 py-12 text-center">
-                    <Inbox className="text-muted-foreground mb-3 h-8 w-8" />
-                    <p className="text-muted-foreground mb-4 text-sm">{tDash('all_caught_up')}</p>
-                    {firstProjectId ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsCreateIssueOpen(true)}
-                      >
-                        {tActions('create_issue')}
-                      </Button>
-                    ) : (
-                      <Button asChild variant="outline" size="sm">
-                        <Link href="/projects">{tActions('create_project')}</Link>
-                      </Button>
-                    )}
-                  </div>
-                ) : (
-                  <div className="divide-border divide-y px-2 py-2">
-                    {myIssues.slice(0, 7).map((issue) => (
-                      <IssueRow
-                        key={issue.id}
-                        issue={issue}
-                        onClick={() => setSelectedIssueId(issue.id)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-4">
-                <StandupWidget />
-                {currentOrganizationId ? (
-                  <ActivityFeed organizationId={currentOrganizationId} limit={6} />
-                ) : null}
-              </div>
-            </div>
-
-            {/* Workspace widgets */}
-            <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-              <YourWorkWidget />
-              <UpcomingDeadlinesWidget />
-              <PinnedItemsWidget />
-            </div>
-
-            <AnalyticsBento organizationId={currentOrganizationId} projectId={firstProjectId} />
+            <UpcomingDeadlinesWidget />
           </div>
+
+          <aside className="min-w-0 space-y-4">
+            <CatchMeUpBanner />
+            <StandupWidget />
+            <PinnedItemsWidget />
+            {currentOrganizationId ? (
+              <ActivityFeed organizationId={currentOrganizationId} limit={6} />
+            ) : null}
+          </aside>
         </div>
-      </div>
+
+        <DeliveryAnalysis organizationId={currentOrganizationId} projectId={firstProjectId} />
+      </PageFrame>
 
       {selectedIssueId && (
         <IssueDetailModal
@@ -272,17 +296,6 @@ export function DashboardClient() {
         />
       )}
     </>
-  );
-}
-
-function StatTile({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="border-border flex min-h-[72px] flex-col justify-center gap-1 border-b p-3 even:border-l lg:border-b-0 lg:border-l lg:first:border-l-0">
-      <p className="text-muted-foreground text-[11px] uppercase tracking-normal">{label}</p>
-      <p className="text-foreground text-2xl font-[450] tabular-nums leading-none tracking-normal">
-        {value}
-      </p>
-    </div>
   );
 }
 
@@ -308,7 +321,7 @@ function IssueRow({ issue, onClick }: { issue: Issue; onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="row-interactive ease-snap hover:border-border-strong flex min-h-[42px] w-full min-w-0 cursor-pointer items-center gap-2 rounded-none border border-transparent py-2.5 pl-2 pr-3 text-left transition-all duration-150 sm:gap-3"
+      className="row-interactive hover:border-border-strong flex min-h-11 w-full min-w-0 cursor-pointer items-center gap-2 rounded-none border border-transparent py-2.5 pl-2 pr-3 text-left transition-colors duration-150 sm:gap-3"
     >
       <span className={cn('priority-indicator h-6 shrink-0', priorityCls)} />
 

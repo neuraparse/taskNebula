@@ -2,7 +2,6 @@
 
 import { VelocityData } from '@/lib/hooks/use-analytics';
 import { useTranslations } from 'next-intl';
-import { Hash, Sparkles, TrendingUp, Zap } from 'lucide-react';
 import {
   Bar,
   XAxis,
@@ -20,13 +19,26 @@ interface VelocityChartProps {
   data: VelocityData;
 }
 
-function VelocityTooltip({ active, payload, label }: any) {
+interface VelocityTooltipEntry {
+  color?: string;
+  dataKey?: string | number;
+  name?: string;
+  value?: string | number;
+}
+
+interface VelocityTooltipProps {
+  active?: boolean;
+  label?: string | number;
+  payload?: VelocityTooltipEntry[];
+}
+
+function VelocityTooltip({ active, payload, label }: VelocityTooltipProps) {
   if (!active || !payload?.length) return null;
   return (
     <div className="surface-card space-y-1 px-3 py-2 text-xs">
       <p className="text-muted-foreground font-medium">{label}</p>
-      {payload.map((entry: any) => (
-        <div key={entry.name} className="flex items-center gap-2">
+      {payload.map((entry) => (
+        <div key={entry.dataKey ?? entry.name} className="flex items-center gap-2">
           <span
             className="inline-block h-1.5 w-1.5 rounded-full"
             style={{ backgroundColor: entry.color }}
@@ -39,32 +51,33 @@ function VelocityTooltip({ active, payload, label }: any) {
   );
 }
 
-type Tone = 'blue' | 'emerald' | 'amber' | 'violet' | 'cyan' | 'rose';
-
 function StatTile({
-  tone,
-  icon,
   label,
   value,
   trend,
 }: {
-  tone: Tone;
-  icon: React.ReactNode;
   label: string;
   value: number | string;
-  trend?: { value: string; tone: Tone };
+  trend?: { value: string; tone: 'emerald' | 'rose' };
 }) {
   return (
-    <div className="animate-scale-in flex items-start gap-2.5">
-      <span className={`icon-tile icon-tile-accent-${tone}`}>{icon}</span>
-      <div className="min-w-0 flex-1">
-        <div className="text-muted-foreground text-[10px] font-medium uppercase tracking-wide">
-          {label}
-        </div>
-        <div className="mt-0.5 flex items-baseline gap-1.5">
-          <span className="text-foreground text-xl font-semibold tabular-nums">{value}</span>
-          {trend ? <span className={`chip-${trend.tone} text-[10px]`}>{trend.value}</span> : null}
-        </div>
+    <div className="animate-scale-in min-w-0 space-y-1 px-3 py-3 first:pl-0 last:pr-0 sm:px-4">
+      <div className="text-muted-foreground text-[10px] font-medium uppercase tracking-wide">
+        {label}
+      </div>
+      <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+        <span className="text-foreground text-xl font-semibold tabular-nums">{value}</span>
+        {trend ? (
+          <span
+            className={
+              trend.tone === 'emerald'
+                ? 'text-accent-emerald text-[10px] font-medium'
+                : 'text-accent-rose text-[10px] font-medium'
+            }
+          >
+            {trend.value}
+          </span>
+        ) : null}
       </div>
     </div>
   );
@@ -98,10 +111,8 @@ export function VelocityChart({ data }: VelocityChartProps) {
       </div>
 
       {/* Stat tiles */}
-      <div className="stagger grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="stagger border-border divide-border grid grid-cols-2 divide-x border-y sm:grid-cols-4">
         <StatTile
-          tone="blue"
-          icon={<Hash className="h-3.5 w-3.5" />}
           label={t('lastIssues')}
           value={latestIssues}
           trend={
@@ -116,8 +127,6 @@ export function VelocityChart({ data }: VelocityChartProps) {
           }
         />
         <StatTile
-          tone="cyan"
-          icon={<Zap className="h-3.5 w-3.5" />}
           label={t('lastPoints')}
           value={latestPoints}
           trend={
@@ -131,18 +140,8 @@ export function VelocityChart({ data }: VelocityChartProps) {
               : undefined
           }
         />
-        <StatTile
-          tone="emerald"
-          icon={<TrendingUp className="h-3.5 w-3.5" />}
-          label={t('avgIssues')}
-          value={avgIssues.toFixed(1)}
-        />
-        <StatTile
-          tone="amber"
-          icon={<Sparkles className="h-3.5 w-3.5" />}
-          label={t('avgPoints')}
-          value={avgPoints.toFixed(1)}
-        />
+        <StatTile label={t('avgIssues')} value={avgIssues.toFixed(1)} />
+        <StatTile label={t('avgPoints')} value={avgPoints.toFixed(1)} />
       </div>
 
       <ResponsiveContainer width="100%" height={280}>

@@ -49,10 +49,10 @@ export function OAuthProviderButtons({
           variant="outline"
           onClick={() => signIn('github', { callbackUrl: postAuthUrl })}
           type="button"
-          className="auth-carbon-secondary w-full"
-          size="lg"
+          className="w-full text-sm"
+          size="xl"
         >
-          <Github className="me-2 h-4 w-4" />
+          <Github className="me-2 h-4 w-4" aria-hidden="true" />
           {githubLabel}
         </Button>
       ) : null}
@@ -61,8 +61,8 @@ export function OAuthProviderButtons({
           variant="outline"
           onClick={() => signIn('google', { callbackUrl: postAuthUrl })}
           type="button"
-          className="auth-carbon-secondary w-full"
-          size="lg"
+          className="w-full text-sm"
+          size="xl"
         >
           <GoogleIcon className="me-2 h-4 w-4" />
           {googleLabel}

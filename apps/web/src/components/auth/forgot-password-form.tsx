@@ -6,6 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
+import {
+  AUTH_INPUT_CLASS_NAME,
+  AUTH_STANDALONE_LINK_CLASS_NAME,
+  AuthFieldError,
+  AuthIntro,
+} from './auth-ui';
 
 export function ForgotPasswordForm() {
   const t = useTranslations('authExtra');
@@ -42,13 +48,10 @@ export function ForgotPasswordForm() {
 
   if (submitted) {
     return (
-      <div className="stagger space-y-6">
-        <div className="space-y-2">
-          <h1 className="auth-carbon-heading">{t('check_inbox_title')}</h1>
-          <p className="auth-carbon-subtitle">{t('check_inbox_description')}</p>
-        </div>
+      <div className="animate-fade-up space-y-7">
+        <AuthIntro title={t('check_inbox_title')} description={t('check_inbox_description')} />
 
-        <Link href="/auth/signin" className="auth-carbon-link inline-block text-sm">
+        <Link href="/auth/signin" className={`${AUTH_STANDALONE_LINK_CLASS_NAME} text-sm`}>
           {t('back_to_signin')}
         </Link>
       </div>
@@ -56,49 +59,38 @@ export function ForgotPasswordForm() {
   }
 
   return (
-    <div className="stagger space-y-7">
-      {/* Header */}
-      <div className="space-y-2">
-        <h1 className="auth-carbon-heading">{t('forgot_password_title')}</h1>
-        <p className="auth-carbon-subtitle">{t('forgot_password_subtitle')}</p>
-      </div>
+    <div className="animate-fade-up space-y-7">
+      <AuthIntro title={t('forgot_password_title')} description={t('forgot_password_subtitle')} />
 
-      {/* Email Form */}
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="space-y-2">
-          <Label htmlFor="email" className="auth-carbon-label">
-            {t('email_label')}
-          </Label>
+          <Label htmlFor="email">{t('email_label')}</Label>
           <Input
             id="email"
             type="email"
-            className="auth-carbon-input"
+            className={AUTH_INPUT_CLASS_NAME}
             placeholder={tAuth('email_placeholder')}
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (error) setError('');
+            }}
             required
             autoComplete="email"
+            aria-invalid={!!error}
+            aria-describedby={error ? 'forgot-email-error' : undefined}
           />
+          {error ? <AuthFieldError id="forgot-email-error">{error}</AuthFieldError> : null}
         </div>
 
-        {error && (
-          <div
-            className="auth-carbon-alert animate-alert-in border border-[#ffd7d9] bg-[#fff1f1] text-sm text-[#a2191f]"
-            role="alert"
-          >
-            {error}
-          </div>
-        )}
-
-        <Button type="submit" className="auth-carbon-primary w-full" size="lg" disabled={loading}>
+        <Button type="submit" className="w-full text-sm" size="xl" disabled={loading}>
           {loading ? t('sending') : t('send_reset_link')}
         </Button>
       </form>
 
-      {/* Back to Sign In */}
-      <p className="text-sm text-[#525252]">
-        {t('remember_password')}{' '}
-        <Link href="/auth/signin" className="auth-carbon-link">
+      <p className="text-muted-foreground flex flex-wrap items-center gap-x-1 text-sm">
+        <span>{t('remember_password')}</span>
+        <Link href="/auth/signin" className={AUTH_STANDALONE_LINK_CLASS_NAME}>
           {t('signin')}
         </Link>
       </p>

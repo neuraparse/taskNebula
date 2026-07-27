@@ -9,6 +9,16 @@ import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import {
+  AUTH_INPUT_CLASS_NAME,
+  AUTH_LINK_CLASS_NAME,
+  AUTH_STANDALONE_LINK_CLASS_NAME,
+  AuthDivider,
+  AuthFieldError,
+  AuthFormAlert,
+  AuthIntro,
+  AuthLoading,
+} from './auth-ui';
+import {
   EMPTY_OAUTH_PROVIDER_AVAILABILITY,
   OAuthProviderButtons,
   hasOAuthProviders,
@@ -37,7 +47,8 @@ export function SignUpForm() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(false);
   const [checkingSetup, setCheckingSetup] = useState(true);
   const [projectInviteToken, setProjectInviteToken] = useState<string | null>(null);
@@ -94,10 +105,11 @@ export function SignUpForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setPasswordError('');
+    setFormError('');
 
     if (password.length < 8) {
-      setError(t('password_min_length'));
+      setPasswordError(t('password_min_length'));
       return;
     }
 
@@ -129,7 +141,7 @@ export function SignUpForm() {
       const data = (await response.json()) as SignupResponse;
 
       if (!response.ok) {
-        setError(getSignupErrorMessage(data, t));
+        setFormError(getSignupErrorMessage(data, t));
         return;
       }
 
@@ -154,7 +166,7 @@ export function SignUpForm() {
           : `/auth/verify-request?email=${encodeURIComponent(normalizedEmail)}`
       );
     } catch {
-      setError(t('generic_error'));
+      setFormError(t('generic_error'));
     } finally {
       setLoading(false);
     }
@@ -163,22 +175,13 @@ export function SignUpForm() {
   const hasOAuth = hasOAuthProviders(oauthProviders);
 
   if (checkingSetup) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="auth-carbon-spinner" aria-label={t('loading')} />
-      </div>
-    );
+    return <AuthLoading label={t('loading')} />;
   }
 
   return (
-    <div className="stagger space-y-7">
-      {/* Header */}
-      <div className="space-y-2">
-        <h1 className="auth-carbon-heading">{t('create_account_title')}</h1>
-        <p className="auth-carbon-subtitle">{t('create_account_subtitle')}</p>
-      </div>
+    <div className="animate-fade-up space-y-7">
+      <AuthIntro title={t('create_account_title')} description={t('create_account_subtitle')} />
 
-      {/* OAuth Buttons */}
       {hasOAuth ? (
         <OAuthProviderButtons
           providers={oauthProviders}
@@ -188,91 +191,86 @@ export function SignUpForm() {
         />
       ) : null}
 
-      {/* Divider */}
-      {hasOAuth ? (
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="border-border w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs">
-            <span className="bg-white px-2.5 text-[#525252]">{t('or_continue_with_email')}</span>
-          </div>
-        </div>
-      ) : null}
+      {hasOAuth ? <AuthDivider>{t('or_continue_with_email')}</AuthDivider> : null}
 
-      {/* Email/Password Form */}
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="space-y-2">
-          <Label htmlFor="name" className="auth-carbon-label">
-            {t('full_name_label')}
-          </Label>
+          <Label htmlFor="name">{t('full_name_label')}</Label>
           <Input
             id="name"
             type="text"
-            className="auth-carbon-input"
+            className={AUTH_INPUT_CLASS_NAME}
             placeholder={t('full_name_placeholder')}
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => {
+              setName(e.target.value);
+              if (formError) setFormError('');
+            }}
             required
             autoComplete="name"
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email" className="auth-carbon-label">
-            {t('email_label')}
-          </Label>
+          <Label htmlFor="email">{t('email_label')}</Label>
           <Input
             id="email"
             type="email"
-            className="auth-carbon-input"
+            className={AUTH_INPUT_CLASS_NAME}
             placeholder={tAuth('email_placeholder')}
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (formError) setFormError('');
+            }}
             required
             autoComplete="email"
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="password" className="auth-carbon-label">
-            {t('password_label')}
-          </Label>
+          <Label htmlFor="password">{t('password_label')}</Label>
           <Input
             id="password"
             type="password"
-            className="auth-carbon-input"
+            className={AUTH_INPUT_CLASS_NAME}
             placeholder={t('password_placeholder')}
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              if (passwordError) setPasswordError('');
+              if (formError) setFormError('');
+            }}
             required
             autoComplete="new-password"
+            aria-invalid={!!passwordError}
+            aria-describedby={
+              passwordError ? 'signup-password-hint signup-password-error' : 'signup-password-hint'
+            }
           />
-          <p className="text-xs text-[#525252]">{t('password_hint')}</p>
+          <p id="signup-password-hint" className="text-muted-foreground text-xs leading-5">
+            {t('password_hint')}
+          </p>
+          {passwordError ? (
+            <AuthFieldError id="signup-password-error">{passwordError}</AuthFieldError>
+          ) : null}
         </div>
 
-        {error && (
-          <div
-            className="auth-carbon-alert animate-alert-in border border-[#ffd7d9] bg-[#fff1f1] text-sm text-[#a2191f]"
-            role="alert"
-          >
-            {error}
-          </div>
-        )}
+        {formError ? <AuthFormAlert id="signup-form-error">{formError}</AuthFormAlert> : null}
 
-        <Button type="submit" className="auth-carbon-primary w-full" size="lg" disabled={loading}>
+        <Button type="submit" className="w-full text-sm" size="xl" disabled={loading}>
           {loading ? t('creating_account') : t('create_account_submit')}
         </Button>
 
-        <p className="text-xs leading-5 text-[#525252]">
+        <p className="text-muted-foreground text-xs leading-5">
           {t.rich('terms_agreement', {
             terms: (chunks) => (
-              <Link href="/terms" className="auth-carbon-link" prefetch={false}>
+              <Link href="/terms" className={AUTH_LINK_CLASS_NAME} prefetch={false}>
                 {chunks}
               </Link>
             ),
             privacy: (chunks) => (
-              <Link href="/privacy" className="auth-carbon-link" prefetch={false}>
+              <Link href="/privacy" className={AUTH_LINK_CLASS_NAME} prefetch={false}>
                 {chunks}
               </Link>
             ),
@@ -280,16 +278,15 @@ export function SignUpForm() {
         </p>
       </form>
 
-      {/* Sign In Link */}
-      <p className="text-sm text-[#525252]">
-        {t('have_account')}{' '}
+      <p className="text-muted-foreground flex flex-wrap items-center gap-x-1 text-sm">
+        <span>{t('have_account')}</span>
         <Link
           href={
             projectInviteToken
               ? `/auth/signin?projectInviteToken=${encodeURIComponent(projectInviteToken)}`
               : '/auth/signin'
           }
-          className="auth-carbon-link"
+          className={AUTH_STANDALONE_LINK_CLASS_NAME}
         >
           {t('signin')}
         </Link>

@@ -223,6 +223,23 @@ describe('SignUpForm', () => {
     expect(signInMock).not.toHaveBeenCalled();
   });
 
+  it('associates the localized password requirement with the password field', async () => {
+    const user = userEvent.setup();
+    render(<SignUpForm />);
+
+    await user.type(await screen.findByLabelText(/full name/i), 'Alice');
+    await user.type(screen.getByLabelText(/email address/i), 'alice@example.com');
+    const passwordInput = screen.getByLabelText(/^password$/i);
+    await user.type(passwordInput, 'short');
+    await user.click(screen.getByRole('button', { name: /create account/i }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(/at least 8 characters/i);
+    expect(passwordInput).toHaveAttribute('aria-invalid', 'true');
+    expect(passwordInput.getAttribute('aria-describedby')).toContain(alert.id);
+    expect(fetchMock.mock.calls.some(([url]) => url === '/api/auth/signup')).toBe(false);
+  });
+
   it('maps registration policy error codes to localized messages', async () => {
     fetchMock.mockImplementation((url: string) => {
       if (url === '/api/setup') {

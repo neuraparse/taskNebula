@@ -39,7 +39,7 @@ export function Faq() {
         <div className="mt-10 max-w-3xl divide-y divide-[var(--landing-border)] rounded-lg border border-[var(--landing-border)] bg-[var(--landing-bg-card)]">
           {faqItems.map((item) => (
             <details key={item.key} className="group">
-              <summary className="flex cursor-pointer list-none items-center gap-3 px-5 py-4 text-[15px] font-[440] text-[var(--landing-text-dark)] transition-colors duration-150 hover:bg-[var(--landing-bg-surface)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)] [&::-webkit-details-marker]:hidden">
+              <summary className="flex cursor-pointer list-none items-center gap-3 px-5 py-4 text-[15px] font-[440] text-[var(--landing-text-dark)] transition-colors duration-150 hover:bg-[var(--landing-bg-surface)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)] [&::-webkit-details-marker]:hidden">
                 <ChevronRight
                   className="ease-snap h-4 w-4 shrink-0 text-[var(--landing-text-muted)] transition-transform duration-150 group-open:rotate-90"
                   aria-hidden="true"
@@ -60,7 +60,7 @@ export function Faq() {
                 href={`${GITHUB_URL}/issues`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-sm text-[var(--landing-text-body)] underline decoration-[var(--landing-border-light)] underline-offset-2 transition-colors duration-150 hover:text-[var(--landing-text-dark)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)]"
+                className="rounded-sm text-[var(--landing-text-body)] underline decoration-[var(--landing-border-light)] underline-offset-2 transition-colors duration-150 hover:text-[var(--landing-text-dark)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--landing-accent-blue)]"
               >
                 {chunks}
               </a>

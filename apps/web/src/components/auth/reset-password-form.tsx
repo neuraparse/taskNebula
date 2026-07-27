@@ -7,17 +7,31 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
+import {
+  AUTH_INPUT_CLASS_NAME,
+  AUTH_STANDALONE_LINK_CLASS_NAME,
+  AuthFieldError,
+  AuthFormAlert,
+  AuthIntro,
+  AuthLoading,
+} from './auth-ui';
 
 interface ResetPasswordFormProps {
   token: string;
 }
+
+type PasswordField = 'newPassword' | 'confirmPassword';
 
 export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
   const t = useTranslations('authExtra');
   const router = useRouter();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
+  const [fieldError, setFieldError] = useState<{
+    field: PasswordField;
+    message: string;
+  } | null>(null);
+  const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -31,15 +45,16 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setFieldError(null);
+    setFormError('');
 
     if (newPassword.length < 8) {
-      setError(t('password_min_length'));
+      setFieldError({ field: 'newPassword', message: t('password_min_length') });
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError(t('passwords_no_match'));
+      setFieldError({ field: 'confirmPassword', message: t('passwords_no_match') });
       return;
     }
 
@@ -53,13 +68,13 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
       });
 
       if (!response.ok) {
-        setError(t('reset_failed'));
+        setFormError(t('reset_failed'));
         return;
       }
 
       setSuccess(true);
     } catch {
-      setError(t('generic_error'));
+      setFormError(t('generic_error'));
     } finally {
       setLoading(false);
     }
@@ -67,82 +82,88 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 
   if (success) {
     return (
-      <div className="stagger space-y-6">
-        <div className="space-y-2">
-          <h1 className="auth-carbon-heading">{t('password_reset_title')}</h1>
-          <p className="auth-carbon-subtitle">{t('password_reset_redirecting')}</p>
-        </div>
-
-        <div className="flex items-center py-2">
-          <div className="auth-carbon-spinner" aria-label={t('redirecting')} />
-        </div>
+      <div className="animate-fade-up space-y-5">
+        <AuthIntro
+          title={t('password_reset_title')}
+          description={t('password_reset_redirecting')}
+        />
+        <AuthLoading label={t('redirecting')} />
       </div>
     );
   }
 
   return (
-    <div className="stagger space-y-7">
-      {/* Header */}
-      <div className="space-y-2">
-        <h1 className="auth-carbon-heading">{t('reset_password_title')}</h1>
-        <p className="auth-carbon-subtitle">{t('reset_password_subtitle')}</p>
-      </div>
+    <div className="animate-fade-up space-y-7">
+      <AuthIntro title={t('reset_password_title')} description={t('reset_password_subtitle')} />
 
-      {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="space-y-2">
-          <Label htmlFor="newPassword" className="auth-carbon-label">
-            {t('new_password_label')}
-          </Label>
+          <Label htmlFor="newPassword">{t('new_password_label')}</Label>
           <Input
             id="newPassword"
             type="password"
-            className="auth-carbon-input"
+            className={AUTH_INPUT_CLASS_NAME}
             placeholder={t('new_password_placeholder')}
             value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
+            onChange={(e) => {
+              setNewPassword(e.target.value);
+              if (fieldError?.field === 'newPassword') setFieldError(null);
+              if (formError) setFormError('');
+            }}
             required
             autoComplete="new-password"
             minLength={8}
+            aria-invalid={fieldError?.field === 'newPassword'}
+            aria-describedby={
+              fieldError?.field === 'newPassword'
+                ? 'new-password-hint new-password-error'
+                : 'new-password-hint'
+            }
           />
-          <p className="text-xs text-[#525252]">{t('password_hint')}</p>
+          <p id="new-password-hint" className="text-muted-foreground text-xs leading-5">
+            {t('password_hint')}
+          </p>
+          {fieldError?.field === 'newPassword' ? (
+            <AuthFieldError id="new-password-error">{fieldError.message}</AuthFieldError>
+          ) : null}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="confirmPassword" className="auth-carbon-label">
-            {t('confirm_password_label')}
-          </Label>
+          <Label htmlFor="confirmPassword">{t('confirm_password_label')}</Label>
           <Input
             id="confirmPassword"
             type="password"
-            className="auth-carbon-input"
+            className={AUTH_INPUT_CLASS_NAME}
             placeholder={t('confirm_password_placeholder')}
             value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
+            onChange={(e) => {
+              setConfirmPassword(e.target.value);
+              if (fieldError?.field === 'confirmPassword') setFieldError(null);
+              if (formError) setFormError('');
+            }}
             required
             autoComplete="new-password"
             minLength={8}
+            aria-invalid={fieldError?.field === 'confirmPassword'}
+            aria-describedby={
+              fieldError?.field === 'confirmPassword' ? 'confirm-password-error' : undefined
+            }
           />
+          {fieldError?.field === 'confirmPassword' ? (
+            <AuthFieldError id="confirm-password-error">{fieldError.message}</AuthFieldError>
+          ) : null}
         </div>
 
-        {error && (
-          <div
-            className="auth-carbon-alert animate-alert-in border border-[#ffd7d9] bg-[#fff1f1] text-sm text-[#a2191f]"
-            role="alert"
-          >
-            {error}
-          </div>
-        )}
+        {formError ? <AuthFormAlert id="reset-form-error">{formError}</AuthFormAlert> : null}
 
-        <Button type="submit" className="auth-carbon-primary w-full" size="lg" disabled={loading}>
+        <Button type="submit" className="w-full text-sm" size="xl" disabled={loading}>
           {loading ? t('resetting') : t('reset_password_submit')}
         </Button>
       </form>
 
-      {/* Back to Sign In */}
-      <p className="text-sm text-[#525252]">
-        {t('remember_password')}{' '}
-        <Link href="/auth/signin" className="auth-carbon-link">
+      <p className="text-muted-foreground flex flex-wrap items-center gap-x-1 text-sm">
+        <span>{t('remember_password')}</span>
+        <Link href="/auth/signin" className={AUTH_STANDALONE_LINK_CLASS_NAME}>
           {t('signin')}
         </Link>
       </p>

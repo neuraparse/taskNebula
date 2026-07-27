@@ -5,7 +5,7 @@ import { ViewTransition } from '@/components/ui/view-transition';
 import { cn } from '@/lib/utils';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { AlertCircle, CalendarDays, MessageCircle, Paperclip, GitBranch } from 'lucide-react';
+import { CalendarDays, MessageCircle, Paperclip, GitBranch } from 'lucide-react';
 import { useFormatter, useTranslations } from 'next-intl';
 
 interface KanbanCardProps {
@@ -53,9 +53,9 @@ function mapToKind(status?: string): StatusKind {
 const STATUS_COLOR: Record<StatusKind, string> = {
   backlog: 'text-muted-foreground',
   todo: 'text-muted-foreground',
-  in_progress: 'text-amber-500',
-  done: 'text-emerald-500',
-  cancelled: 'text-rose-500',
+  in_progress: 'text-accent-amber',
+  done: 'text-accent-emerald',
+  cancelled: 'text-accent-rose',
 };
 
 function InlineStatusIcon({ kind, size = 12 }: { kind: StatusKind; size?: number }) {
@@ -79,45 +79,13 @@ function InlineStatusIcon({ kind, size = 12 }: { kind: StatusKind; size?: number
   );
 }
 
-// --- Inline LabelPill (self-contained fallback) ---
-const LABEL_PALETTE = [
-  'bg-orange-500/15 text-orange-700 dark:text-orange-300 ring-1 ring-orange-500/20',
-  'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-500/20',
-  'bg-blue-500/15 text-blue-700 dark:text-blue-300 ring-1 ring-blue-500/20',
-  'bg-amber-500/15 text-amber-700 dark:text-amber-300 ring-1 ring-amber-500/20',
-  'bg-rose-500/15 text-rose-700 dark:text-rose-300 ring-1 ring-rose-500/20',
-  'bg-violet-500/15 text-violet-700 dark:text-violet-300 ring-1 ring-violet-500/20',
-];
-
-function hashString(input: string): number {
-  let h = 0;
-  for (let i = 0; i < input.length; i += 1) {
-    h = (h << 5) - h + input.charCodeAt(i);
-    h |= 0;
-  }
-  return Math.abs(h);
-}
-
-function InlineLabelPill({ label, hashSeed }: { label: string; hashSeed?: string }) {
-  const color = LABEL_PALETTE[hashString(hashSeed ?? label) % LABEL_PALETTE.length];
+function InlineLabel({ label }: { label: string }) {
   return (
-    <span
-      className={cn(
-        'inline-flex max-w-[140px] items-center truncate rounded-full px-2 py-0.5 text-[11.5px] font-medium',
-        color
-      )}
-    >
+    <span className="bg-muted/70 text-muted-foreground inline-flex max-w-[140px] items-center truncate rounded-sm px-1.5 py-0.5 text-[11px] font-medium">
       {label}
     </span>
   );
 }
-
-const TYPE_CHIP: Record<NonNullable<KanbanCardProps['issue']['type']>, string> = {
-  bug: 'chip-rose',
-  story: 'chip-blue',
-  epic: 'chip-violet',
-  task: 'chip',
-};
 
 type DueDescriptor =
   | { kind: 'overdue'; days: number; tone: 'danger' }
@@ -183,10 +151,10 @@ export function KanbanCard({ issue, draggableId, statusId, issueId, onClick }: K
   };
 
   const allAssignees = issue.assignees ?? (issue.assignee ? [issue.assignee] : []);
-  const visibleAssignees = allAssignees.slice(0, 3);
+  const visibleAssignees = allAssignees.slice(0, 2);
   const extraAssignees = Math.max(0, allAssignees.length - visibleAssignees.length);
 
-  const visibleLabels = (issue.labels ?? []).slice(0, 3);
+  const visibleLabels = (issue.labels ?? []).slice(0, 2);
   const extraLabels = Math.max(0, (issue.labels ?? []).length - visibleLabels.length);
 
   const due = describeDue(issue.dueDate, formatter);
@@ -211,12 +179,11 @@ export function KanbanCard({ issue, draggableId, statusId, issueId, onClick }: K
       : null;
   const comments = issue.commentCount ?? 0;
   const attachments = issue.attachmentCount ?? 0;
-  const typeChip = issue.type ? TYPE_CHIP[issue.type] : null;
   const keyChip = issue.key ?? (draggableId ? null : issue.id);
   const statusKind = mapToKind(issue.status);
   const isUrgent = issue.priority === 'urgent' || issue.priority === 'critical';
 
-  const hasTopRow = Boolean(keyChip || typeChip || issue.status);
+  const hasTopRow = Boolean(keyChip || issue.type || issue.status);
   const hasLabels = visibleLabels.length > 0;
   const hasFooter =
     visibleAssignees.length > 0 || due || subtasks || comments > 0 || attachments > 0;
@@ -254,45 +221,44 @@ export function KanbanCard({ issue, draggableId, statusId, issueId, onClick }: K
           )}
         />
 
-        {/* Urgent priority indicator — top-right corner */}
-        {isUrgent && (
-          <AlertCircle
-            className="absolute right-2 top-2 h-3.5 w-3.5 text-red-500"
-            aria-label={t('card.urgentPriority')}
-          />
-        )}
+        {isUrgent ? <span className="sr-only">{t('card.urgentPriority')}</span> : null}
 
         {/* Top row: status icon + issue key + type */}
         {hasTopRow && (
-          <div className={cn('mb-2 flex items-center gap-1.5', isUrgent && 'pr-5')}>
+          <div className="mb-2 flex items-center gap-1.5">
             <InlineStatusIcon kind={statusKind} size={12} />
             {keyChip && (
-              <span className="chip font-mono !text-[10px] tracking-tight">{keyChip}</span>
+              <span className="text-muted-foreground font-mono text-[10px] font-medium tracking-tight">
+                {keyChip}
+              </span>
             )}
-            {typeChip && issue.type && (
-              <span className={cn(typeChip, 'capitalize')}>{issue.type}</span>
-            )}
+            {issue.type ? (
+              <>
+                <span className="text-muted-foreground/40" aria-hidden>
+                  ·
+                </span>
+                <span className="text-muted-foreground text-[10px] capitalize">{issue.type}</span>
+              </>
+            ) : null}
+            {issue.status && !issue.type ? (
+              <span className="text-muted-foreground truncate text-[10px]">{issue.status}</span>
+            ) : null}
           </div>
         )}
 
         {/* Title */}
-        <h4
-          className={cn(
-            'text-foreground line-clamp-2 text-[13.5px] font-medium leading-snug',
-            !hasTopRow && isUrgent && 'pr-5'
-          )}
-        >
+        <h4 className="text-foreground line-clamp-2 text-[13.5px] font-medium leading-snug">
           {issue.title}
         </h4>
 
-        {/* Labels */}
+        {/* Labels stay neutral so status and priority retain semantic color. */}
         {hasLabels && (
-          <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+          <div className="mt-2.5 flex min-w-0 items-center gap-1.5 overflow-hidden">
             {visibleLabels.map((label) => (
-              <InlineLabelPill key={label} label={label} hashSeed={label} />
+              <InlineLabel key={label} label={label} />
             ))}
             {extraLabels > 0 && (
-              <span className="bg-muted text-muted-foreground inline-flex items-center rounded-full px-2 py-0.5 text-[11.5px] font-medium tabular-nums">
+              <span className="text-muted-foreground shrink-0 text-[11px] font-medium tabular-nums">
                 +{extraLabels}
               </span>
             )}

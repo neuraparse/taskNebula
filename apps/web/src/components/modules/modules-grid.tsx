@@ -50,7 +50,7 @@ function formatTargetDate(
 export function ModulesGrid({ projectId, canManageModules = false }: ModulesGridProps) {
   const { modules, isLoading, createModule } = useModules(projectId);
   const t = useTranslations('planning');
-  const [view, setView] = useState<ViewMode>('gallery');
+  const [view, setView] = useState<ViewMode>('list');
   const [filter, setFilter] = useState<FilterChip>('all');
   const [createOpen, setCreateOpen] = useState(false);
 
