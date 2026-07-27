@@ -111,18 +111,15 @@ export interface NotificationStackProps {
   loading?: boolean;
 }
 
-/**
- * Skeleton row shown while notifications load. Uses a pulsing gradient to
- * match the subtle shimmer idiom used elsewhere in the shell.
- */
+/** Skeleton row shown while notifications load. */
 function NotificationSkeletonRow() {
   return (
     <div aria-hidden="true" className="flex animate-pulse items-start gap-3 px-4 py-3">
       <span className="mt-0.5 h-5 w-5 shrink-0" />
-      <div className="from-muted to-muted/40 h-8 w-8 shrink-0 rounded-full bg-gradient-to-br" />
+      <div className="bg-muted/70 h-8 w-8 shrink-0 rounded-full" />
       <div className="min-w-0 flex-1 space-y-2 pt-1">
-        <div className="from-muted via-muted/60 to-muted/40 h-3 w-3/4 rounded-sm bg-gradient-to-r" />
-        <div className="from-muted via-muted/60 to-muted/30 h-3 w-1/3 rounded-sm bg-gradient-to-r" />
+        <div className="bg-muted/70 h-3 w-3/4 rounded-sm" />
+        <div className="bg-muted/50 h-3 w-1/3 rounded-sm" />
       </div>
       <div className="bg-muted/50 h-3 w-10 shrink-0 rounded-sm" />
     </div>
@@ -148,7 +145,7 @@ function NotificationStackEmpty() {
       role="status"
       className="flex flex-col items-center justify-center gap-2 px-6 py-14 text-center"
     >
-      <span className="bg-primary/10 text-primary ring-primary/20 flex h-10 w-10 items-center justify-center rounded-full ring-1">
+      <span className="bg-muted text-muted-foreground flex h-10 w-10 items-center justify-center rounded-md">
         <BellOff className="h-4 w-4" aria-hidden="true" />
       </span>
       <p className="text-foreground text-sm font-medium">{t('stack.empty_title')}</p>
@@ -245,7 +242,7 @@ export function NotificationStack({
           <ul
             role="list"
             className={cn(
-              'border-primary/30 bg-muted/20 border-l-2',
+              'border-border/60 bg-muted/20 border-l-2',
               'divide-border/40 ml-9 divide-y'
             )}
           >

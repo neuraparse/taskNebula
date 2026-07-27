@@ -105,12 +105,12 @@ export function CatchMeUpBanner() {
                 <Sparkles className="mr-1.5 h-3.5 w-3.5" />
                 {t('catchup.catch_me_up')}
               </Button>
-              <Link href="/inbox" className="w-full sm:w-auto">
-                <Button size="sm" variant="ghost" className="w-full sm:w-auto">
+              <Button asChild size="sm" variant="ghost" className="w-full sm:w-auto">
+                <Link href="/inbox">
                   {t('catchup.open_inbox')}
                   <ArrowRight className="ml-1 h-3 w-3" />
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
           ) : (
             <div className="mt-3 space-y-3">

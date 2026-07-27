@@ -143,11 +143,9 @@ export function YourWorkWidget() {
             <div className="flex flex-col items-center justify-center py-10 text-center">
               <Inbox className="text-muted-foreground mb-2 h-7 w-7" />
               <p className="text-muted-foreground mb-3 text-sm">{t('empty_no_items')}</p>
-              <Link href={`/my-issues?view=${tab}`}>
-                <Button variant="outline" size="sm">
-                  {t('your_work.open_my_issues')}
-                </Button>
-              </Link>
+              <Button asChild variant="outline" size="sm">
+                <Link href={`/my-issues?view=${tab}`}>{t('your_work.open_my_issues')}</Link>
+              </Button>
             </div>
           ) : (
             <div className="space-y-0.5">

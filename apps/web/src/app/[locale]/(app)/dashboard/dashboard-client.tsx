@@ -17,19 +17,10 @@ import { StandupWidget } from '@/components/dashboard/standup-widget';
 import { AnalyticsBento } from '@/components/dashboard/analytics-bento';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { useProjects } from '@/lib/hooks/use-projects';
-import {
-  ArrowUpRight,
-  Target,
-  Inbox,
-  Activity,
-  CheckCircle2,
-  AlertOctagon,
-  Gauge,
-} from 'lucide-react';
+import { ArrowUpRight, Target, Inbox } from 'lucide-react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
-import type { LucideIcon } from 'lucide-react';
 import { DashboardLoadingShell } from './dashboard-loading-shell';
 
 interface Issue {
@@ -52,8 +43,6 @@ interface Issue {
     name: string;
   };
 }
-
-type AccentHue = 'blue' | 'violet' | 'emerald' | 'amber' | 'rose' | 'cyan';
 
 export function DashboardClient() {
   const { data: session } = useSession();
@@ -170,13 +159,9 @@ export function DashboardClient() {
           <div className="mx-auto w-full min-w-0 max-w-[1680px] space-y-3 p-3 sm:p-4 lg:p-5">
             <CatchMeUpBanner />
 
-            {/* Greeting */}
-            <div className="surface-card animate-fade-up border-t-primary flex flex-col border-t-2 shadow-none sm:flex-row sm:items-stretch sm:justify-between">
-              <div className="min-w-0 space-y-1 p-4 sm:p-5">
-                <div className="flex items-center gap-2">
-                  <span className="kicker">{tDash('kicker')}</span>
-                  <span className="live-pill">{tDash('live')}</span>
-                </div>
+            <header className="animate-fade-up flex flex-col gap-4 py-2 sm:flex-row sm:items-end sm:justify-between">
+              <div className="min-w-0 space-y-1">
+                <span className="kicker">{tDash('kicker')}</span>
                 <h1 className="text-foreground text-balance text-2xl font-[400] leading-tight tracking-normal sm:text-[28px]">
                   {tDash('welcome_back', { name: firstName })}
                 </h1>
@@ -184,48 +169,26 @@ export function DashboardClient() {
                   {currentTeamId ? tDash('subtitle_team') : tDash('subtitle_personal')}
                 </p>
               </div>
-              <div className="border-border flex items-center border-t p-4 sm:border-l sm:border-t-0 sm:p-5">
-                <Link href="/my-issues" className="w-full sm:w-auto">
-                  <Button size="sm" className="w-full gap-2 rounded-none sm:w-auto">
-                    <Target className="h-4 w-4" />
-                    {tNav('my_issues')}
-                  </Button>
+              <Button asChild size="sm" className="w-full gap-2 sm:w-auto">
+                <Link href="/my-issues">
+                  <Target className="h-4 w-4" />
+                  {tNav('my_issues')}
                 </Link>
-              </div>
-            </div>
+              </Button>
+            </header>
 
-            {/* KPI Summary Row */}
-            <div className="stagger grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-              <StatTile
-                label={tDash('stat_active')}
-                value={stats.active}
-                hue="blue"
-                icon={Activity}
-              />
-              <StatTile
-                label={tDash('stat_completed')}
-                value={stats.completed}
-                hue="emerald"
-                icon={CheckCircle2}
-              />
-              <StatTile
-                label={tDash('stat_blocked')}
-                value={stats.blocked}
-                hue="rose"
-                icon={AlertOctagon}
-              />
-              <StatTile
-                label={tDash('stat_story_points')}
-                value={stats.points}
-                hue="violet"
-                icon={Gauge}
-              />
+            {/* One subordinate KPI strip keeps the work queue as the focal surface. */}
+            <div className="surface-card grid grid-cols-2 overflow-hidden shadow-none lg:grid-cols-4">
+              <StatTile label={tDash('stat_active')} value={stats.active} />
+              <StatTile label={tDash('stat_completed')} value={stats.completed} />
+              <StatTile label={tDash('stat_blocked')} value={stats.blocked} />
+              <StatTile label={tDash('stat_story_points')} value={stats.points} />
             </div>
 
             {/* Main Content */}
             <div className="stagger grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
               {/* My Issues */}
-              <div className="surface-card animate-fade-up border-t-primary overflow-hidden border-t-2 shadow-none">
+              <div className="surface-card animate-fade-up overflow-hidden shadow-none">
                 <div className="border-border flex items-center justify-between gap-3 border-b px-4 py-3">
                   <div className="flex min-w-0 items-center gap-2">
                     <Inbox className="text-muted-foreground h-4 w-4" />
@@ -255,11 +218,9 @@ export function DashboardClient() {
                         {tActions('create_issue')}
                       </Button>
                     ) : (
-                      <Link href="/projects">
-                        <Button variant="outline" size="sm">
-                          {tActions('create_project')}
-                        </Button>
-                      </Link>
+                      <Button asChild variant="outline" size="sm">
+                        <Link href="/projects">{tActions('create_project')}</Link>
+                      </Button>
                     )}
                   </div>
                 ) : (
@@ -314,26 +275,11 @@ export function DashboardClient() {
   );
 }
 
-function StatTile({
-  label,
-  value,
-  hue,
-  icon: Icon,
-}: {
-  label: string;
-  value: number;
-  hue: AccentHue;
-  icon: LucideIcon;
-}) {
+function StatTile({ label, value }: { label: string; value: number }) {
   return (
-    <div className="surface-card ease-snap border-l-primary hover:border-border-strong hover:bg-surface/50 flex min-h-[112px] flex-col justify-between border-l-2 p-4 shadow-none transition-colors duration-150">
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-muted-foreground text-[11px] uppercase tracking-normal">{label}</p>
-        <span className={cn('icon-tile h-8 w-8', `icon-tile-accent-${hue}`)}>
-          <Icon className="h-4 w-4" />
-        </span>
-      </div>
-      <p className="text-foreground text-[34px] font-[400] tabular-nums leading-none tracking-normal">
+    <div className="border-border flex min-h-[72px] flex-col justify-center gap-1 border-b p-3 even:border-l lg:border-b-0 lg:border-l lg:first:border-l-0">
+      <p className="text-muted-foreground text-[11px] uppercase tracking-normal">{label}</p>
+      <p className="text-foreground text-2xl font-[450] tabular-nums leading-none tracking-normal">
         {value}
       </p>
     </div>

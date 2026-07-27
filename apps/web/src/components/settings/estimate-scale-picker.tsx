@@ -24,7 +24,7 @@ import {
 
 export interface EstimateScalePickerProps {
   initialScale?: EstimateScale;
-  onSave?: (scale: EstimateScale) => void;
+  onSave: (scale: EstimateScale) => void;
   className?: string;
 }
 
@@ -137,8 +137,7 @@ export function EstimateScalePicker({ initialScale, onSave, className }: Estimat
   const handleSave = React.useCallback(() => {
     const scale = computeSelectedScale();
     if (!scale) return;
-    if (onSave) onSave(scale);
-    else console.info('[EstimateScalePicker] save', scale);
+    onSave(scale);
   }, [computeSelectedScale, onSave]);
 
   const handleReset = React.useCallback(() => {

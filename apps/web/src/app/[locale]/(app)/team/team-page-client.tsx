@@ -123,9 +123,9 @@ export function TeamPageClient({
             ) : null}
           </div>
           {canInviteMembers ? (
-            <Link href="/settings?tab=members">
-              <Button size="sm">{t('team.inviteMember')}</Button>
-            </Link>
+            <Button asChild size="sm">
+              <Link href="/settings?tab=members">{t('team.inviteMember')}</Link>
+            </Button>
           ) : null}
         </div>
         <div
@@ -184,11 +184,9 @@ function InvitesPanel({ canInviteMembers, invites }: InvitesPanelProps) {
         <UserPlus className="text-muted-foreground mx-auto h-8 w-8" />
         <p className="text-muted-foreground text-sm">{t('team.invites.empty')}</p>
         {canInviteMembers ? (
-          <Link href="/settings?tab=members">
-            <Button size="sm" variant="outline">
-              {t('team.inviteMember')}
-            </Button>
-          </Link>
+          <Button asChild size="sm" variant="outline">
+            <Link href="/settings?tab=members">{t('team.inviteMember')}</Link>
+          </Button>
         ) : null}
       </div>
     );

@@ -11,8 +11,6 @@
  */
 
 import type { Metadata } from 'next';
-import Link from 'next/link';
-import { Sparkles, ArrowLeft } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { AI_FEATURE_MODEL_CARDS, DISCLOSURE_VERSION } from '@/config/ai-model-cards';
 
@@ -84,89 +82,102 @@ function renderMarkdown(md: string): React.ReactNode {
 
 export default async function AiModelCardsPage() {
   const t = await getTranslations('aiModelCards');
-  return (
-    <main className="mx-auto max-w-3xl px-4 py-10 sm:py-16">
-      <Link
-        href="/"
-        className="text-muted-foreground hover:text-foreground mb-6 inline-flex items-center gap-1 text-xs"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        {t('back')}
-      </Link>
 
-      <header className="mb-8 space-y-2">
-        <div className="border-border bg-muted/40 text-muted-foreground inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs">
-          <Sparkles className="text-primary h-3 w-3" />
-          {t('disclosureBadge')}
+  return (
+    <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+      <header className="grid gap-6 border-b pb-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-12">
+        <div>
+          <p className="text-muted-foreground text-xs font-medium uppercase tracking-[0.14em]">
+            {t('disclosureBadge')}
+          </p>
+          <h1 className="mt-4 max-w-lg text-4xl font-semibold tracking-tight sm:text-5xl">
+            {t('title')}
+          </h1>
         </div>
-        <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
-        <p className="text-muted-foreground max-w-2xl text-sm">
-          {t.rich('intro', {
-            version: () => <code className="font-mono">{DISCLOSURE_VERSION}</code>,
-          })}
-        </p>
-        <p className="text-muted-foreground text-xs">{t('lastReviewed')}</p>
+        <div className="self-end">
+          <p className="text-muted-foreground max-w-2xl text-sm leading-7">
+            {t.rich('intro', {
+              version: () => (
+                <code className="text-foreground font-mono">{DISCLOSURE_VERSION}</code>
+              ),
+            })}
+          </p>
+          <p className="text-muted-foreground mt-3 text-xs">{t('lastReviewed')}</p>
+        </div>
       </header>
 
-      <nav className="border-border bg-muted/30 mb-10 rounded-md border p-4">
-        <p className="text-muted-foreground mb-2 text-xs uppercase tracking-wider">
-          {t('onThisPage')}
-        </p>
-        <ul className="grid grid-cols-1 gap-1.5 text-sm sm:grid-cols-2">
-          {AI_FEATURE_MODEL_CARDS.map((c) => (
-            <li key={c.id}>
-              <a href={`#${c.id}`} className="text-foreground hover:underline">
-                {c.name}
-              </a>
-            </li>
+      <div className="grid gap-10 py-10 lg:grid-cols-[12rem_minmax(0,1fr)] lg:gap-12">
+        <nav aria-label={t('onThisPage')} className="lg:sticky lg:top-6 lg:self-start">
+          <p className="text-muted-foreground mb-3 text-xs font-medium uppercase tracking-[0.14em]">
+            {t('onThisPage')}
+          </p>
+          <ul className="border-border grid grid-cols-1 border-t text-sm sm:grid-cols-2 lg:grid-cols-1">
+            {AI_FEATURE_MODEL_CARDS.map((card) => (
+              <li key={card.id} className="border-border border-b">
+                <a
+                  href={`#${card.id}`}
+                  className="hover:text-foreground focus-visible:ring-ring text-muted-foreground block rounded-sm py-2.5 transition-colors focus-visible:outline-none focus-visible:ring-2"
+                >
+                  {card.name}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <div className="border-border divide-border min-w-0 divide-y border-t">
+          {AI_FEATURE_MODEL_CARDS.map((card, index) => (
+            <section
+              key={card.id}
+              id={card.id}
+              className="grid scroll-mt-20 gap-5 py-10 sm:grid-cols-[2rem_minmax(0,1fr)]"
+              data-testid={`model-card-${card.id}`}
+            >
+              <span className="text-muted-foreground font-mono text-xs" aria-hidden="true">
+                {String(index + 1).padStart(2, '0')}
+              </span>
+
+              <div className="min-w-0">
+                <header>
+                  <h2 className="text-xl font-semibold tracking-tight">{card.name}</h2>
+                  <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-6">
+                    {card.purpose}
+                  </p>
+                </header>
+
+                <dl className="border-border divide-border my-6 grid border-y text-xs sm:grid-cols-3 sm:divide-x">
+                  <div className="py-3 sm:px-4 sm:first:pl-0">
+                    <dt className="text-muted-foreground mb-1 uppercase tracking-wider">
+                      {t('model')}
+                    </dt>
+                    <dd className="font-mono">{card.defaultModel}</dd>
+                  </div>
+                  <div className="border-border border-t py-3 sm:border-t-0 sm:px-4">
+                    <dt className="text-muted-foreground mb-1 uppercase tracking-wider">
+                      {t('provider')}
+                    </dt>
+                    <dd className="font-mono">{card.defaultProvider}</dd>
+                  </div>
+                  <div className="border-border border-t py-3 sm:border-t-0 sm:px-4 sm:last:pr-0">
+                    <dt className="text-muted-foreground mb-1 uppercase tracking-wider">
+                      {t('oversightDefault')}
+                    </dt>
+                    <dd>
+                      {card.defaultOversight === 'review_required'
+                        ? t('reviewRequired')
+                        : t('autoApplyAllowed')}
+                    </dd>
+                  </div>
+                </dl>
+
+                <div className="prose-sm space-y-2">{renderMarkdown(card.markdown)}</div>
+              </div>
+            </section>
           ))}
-        </ul>
-      </nav>
-
-      <div className="space-y-10">
-        {AI_FEATURE_MODEL_CARDS.map((card) => (
-          <section
-            key={card.id}
-            id={card.id}
-            className="scroll-mt-20"
-            data-testid={`model-card-${card.id}`}
-          >
-            <div className="border-primary mb-3 border-l-2 pl-4">
-              <h2 className="text-xl font-semibold">{card.name}</h2>
-              <p className="text-muted-foreground mt-1 text-xs">{card.purpose}</p>
-            </div>
-
-            <dl className="mb-4 grid grid-cols-1 gap-3 text-xs sm:grid-cols-3">
-              <div>
-                <dt className="text-muted-foreground mb-0.5 uppercase tracking-wider">
-                  {t('model')}
-                </dt>
-                <dd className="font-mono">{card.defaultModel}</dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground mb-0.5 uppercase tracking-wider">
-                  {t('provider')}
-                </dt>
-                <dd className="font-mono">{card.defaultProvider}</dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground mb-0.5 uppercase tracking-wider">
-                  {t('oversightDefault')}
-                </dt>
-                <dd>
-                  {card.defaultOversight === 'review_required'
-                    ? t('reviewRequired')
-                    : t('autoApplyAllowed')}
-                </dd>
-              </div>
-            </dl>
-
-            <div className="prose-sm space-y-2">{renderMarkdown(card.markdown)}</div>
-          </section>
-        ))}
+        </div>
       </div>
 
-      <footer className="border-border text-muted-foreground mt-16 border-t pt-6 text-xs">
+      <footer className="border-border text-muted-foreground border-t pt-6 text-xs">
         <p>
           {t.rich('footerContact', {
             link: () => (

@@ -16,7 +16,7 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      'bg-background/80 data-[state=open]:animate-fade-in data-[state=closed]:animate-fade-out fixed inset-0 z-50 backdrop-blur-sm',
+      'bg-foreground/25 dark:bg-background/75 data-[state=open]:animate-fade-in data-[state=closed]:animate-fade-out fixed inset-0 z-50',
       className
     )}
     {...props}
@@ -35,10 +35,7 @@ const DialogContent = React.forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          // FEAT-31: dark glassmorphism replaces the old `surface-card` look on
-          // modal content. Keeps positioning + animation classes identical so
-          // existing callers don't visually shift.
-          'glass-panel data-[state=open]:animate-fade-in data-[state=closed]:animate-fade-out fixed left-[50%] top-[50%] z-50 grid max-h-[85vh] w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto p-6',
+          'border-border bg-background text-foreground data-[state=open]:animate-fade-in data-[state=closed]:animate-fade-out fixed left-[50%] top-[50%] z-50 grid max-h-[85vh] w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-lg border p-6 shadow-md',
           className
         )}
         {...props}

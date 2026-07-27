@@ -418,7 +418,7 @@ export function NotificationPreferences() {
       <header className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between md:gap-4">
         <div className="space-y-2">
           <span className="kicker">{t('notifications.kicker')}</span>
-          <h2 className="text-balance bg-gradient-to-r from-indigo-500 to-violet-500 bg-clip-text text-2xl font-semibold tracking-tight text-transparent">
+          <h2 className="text-balance text-2xl font-semibold tracking-tight">
             {t('notifications.title')}
           </h2>
           <p className="text-muted-foreground max-w-2xl text-sm">{t('notifications.subtitle')}</p>
@@ -426,12 +426,12 @@ export function NotificationPreferences() {
         <div className="flex min-h-[1.75rem] items-center gap-3 pt-1">{saveIndicator}</div>
       </header>
 
-      {/* Channels card: master toggles */}
+      {/* Channel controls */}
       <section
         aria-labelledby="channels-heading"
-        className="surface-card animate-fade-up border-border/60 rounded-xl border p-6"
+        className="border-border/60 animate-fade-up border-b pb-6"
       >
-        <div className="mb-5 flex items-start justify-between gap-4">
+        <div className="mb-4 flex items-start justify-between gap-4">
           <div>
             <h3 id="channels-heading" className="text-base font-semibold tracking-tight">
               {t('notifications.channels_heading')}
@@ -439,10 +439,9 @@ export function NotificationPreferences() {
             <p className="text-muted-foreground mt-1 text-sm">{t('notifications.channels_desc')}</p>
           </div>
         </div>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <div className="divide-border/60 bg-card grid grid-cols-1 divide-y overflow-hidden rounded-lg border md:grid-cols-3 md:divide-x md:divide-y-0">
           <ChannelMasterCard
             icon={Bell}
-            tone="indigo"
             title={t('notifications.channel_inapp_title')}
             description={t('notifications.channel_inapp_desc')}
             checked={preferences.enableInApp}
@@ -451,7 +450,6 @@ export function NotificationPreferences() {
           />
           <ChannelMasterCard
             icon={Mail}
-            tone="violet"
             title={t('notifications.channel_email_title')}
             description={t('notifications.channel_email_desc')}
             checked={preferences.enableEmail}
@@ -460,7 +458,6 @@ export function NotificationPreferences() {
           />
           <ChannelMasterCard
             icon={Smartphone}
-            tone="muted"
             title={t('notifications.channel_push_title')}
             description={t('notifications.channel_push_desc')}
             checked={false}
@@ -472,11 +469,8 @@ export function NotificationPreferences() {
         </div>
       </section>
 
-      {/* Events card: per-event rows with 3 channel toggles */}
-      <section
-        aria-labelledby="events-heading"
-        className="surface-card animate-fade-up border-border/60 rounded-xl border p-6"
-      >
+      {/* Per-event delivery matrix */}
+      <section aria-labelledby="events-heading" className="animate-fade-up">
         <div className="mb-6 flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
           <div>
             <h3 id="events-heading" className="text-base font-semibold tracking-tight">
@@ -497,16 +491,16 @@ export function NotificationPreferences() {
           </div>
         </div>
 
-        <div className="space-y-8">
+        <div className="divide-border/60 bg-card divide-y overflow-hidden rounded-lg border">
           {EVENT_GROUPS.map((group) => (
-            <div key={group.key} className="space-y-2">
-              <div className="flex items-center gap-2">
+            <div key={group.key}>
+              <div className="bg-muted/25 border-border/60 flex items-center gap-2 border-b px-4 py-2.5">
                 <span className="kicker">{t(group.headingKey)}</span>
                 {group.recommended ? (
                   <span className="chip-emerald">{t('notifications.recommended')}</span>
                 ) : null}
               </div>
-              <div className="divide-border/60 border-border/60 bg-background/40 divide-y rounded-lg border">
+              <div className="divide-border/60 divide-y">
                 {group.rows.map((row) => {
                   const Icon = row.icon;
                   const rowLabel = t(row.labelKey);
@@ -517,7 +511,7 @@ export function NotificationPreferences() {
                     >
                       <div className="flex flex-1 items-start gap-3">
                         <div
-                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500/10 to-violet-500/10 text-indigo-500 ring-1 ring-inset ring-indigo-500/20"
+                          className="bg-muted/60 text-muted-foreground flex h-8 w-8 shrink-0 items-center justify-center rounded-md"
                           aria-hidden="true"
                         >
                           <Icon className="h-4 w-4" />
@@ -578,7 +572,7 @@ export function NotificationPreferences() {
       {/* Email digest */}
       <section
         aria-labelledby="digest-heading"
-        className="surface-card animate-fade-up border-border/60 rounded-xl border p-6"
+        className="border-border/60 animate-fade-up border-t pt-6"
       >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_auto] md:items-center">
           <div className="space-y-1">
@@ -609,11 +603,11 @@ export function NotificationPreferences() {
       {/* Do not disturb */}
       <section
         aria-labelledby="dnd-heading"
-        className="surface-card animate-fade-up border-border/60 rounded-xl border p-6"
+        className="border-border/60 animate-fade-up border-t pt-6"
       >
         <div className="flex items-start gap-4">
           <div
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500/15 to-violet-500/15 text-violet-500 ring-1 ring-inset ring-violet-500/25"
+            className="bg-muted/60 text-muted-foreground flex h-9 w-9 shrink-0 items-center justify-center rounded-md"
             aria-hidden="true"
           >
             <Clock className="h-5 w-5" />
@@ -680,10 +674,10 @@ export function NotificationPreferences() {
                       onClick={() => toggleWeekday(day.key)}
                       aria-pressed={active}
                       className={cn(
-                        'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                        'rounded-sm px-3 py-1.5 text-xs font-medium transition-colors duration-150',
                         active
-                          ? 'bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-sm'
-                          : 'border-border bg-background text-muted-foreground hover:bg-accent/40 border'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'border-border bg-background text-muted-foreground hover:bg-accent/40 hover:text-foreground border'
                       )}
                     >
                       {t(day.labelKey)}
@@ -703,12 +697,7 @@ export function NotificationPreferences() {
 
       {/* Sticky save button on narrow screens */}
       <div className="fixed bottom-4 right-4 z-30 md:hidden">
-        <Button
-          type="button"
-          onClick={handleSaveNow}
-          disabled={updatePreferences.isPending}
-          className="bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-lg hover:from-indigo-600 hover:to-violet-600"
-        >
+        <Button type="button" onClick={handleSaveNow} disabled={updatePreferences.isPending}>
           {updatePreferences.isPending
             ? t('notifications.working')
             : t('notifications.save_changes')}
@@ -718,11 +707,8 @@ export function NotificationPreferences() {
   );
 }
 
-type ChannelTone = 'indigo' | 'violet' | 'muted';
-
 function ChannelMasterCard({
   icon: Icon,
-  tone,
   title,
   description,
   checked,
@@ -732,7 +718,6 @@ function ChannelMasterCard({
   badge,
 }: {
   icon: LucideIcon;
-  tone: ChannelTone;
   title: string;
   description: string;
   checked: boolean;
@@ -741,35 +726,25 @@ function ChannelMasterCard({
   disabled?: boolean;
   badge?: string;
 }) {
-  const toneClasses =
-    tone === 'indigo'
-      ? 'from-indigo-500/15 to-indigo-500/5 text-indigo-500 ring-indigo-500/25'
-      : tone === 'violet'
-        ? 'from-violet-500/15 to-violet-500/5 text-violet-500 ring-violet-500/25'
-        : 'from-muted/50 to-muted/20 text-muted-foreground ring-border';
-
   return (
     <div
       className={cn(
-        'border-border/60 bg-background/40 flex items-start gap-3 rounded-lg border p-4 transition-colors',
-        disabled ? 'opacity-70' : 'hover:bg-background/70'
+        'flex items-start gap-3 p-4 transition-colors duration-150',
+        disabled ? 'bg-muted/20 opacity-70' : 'hover:bg-muted/20'
       )}
     >
       <div
-        className={cn(
-          'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ring-1 ring-inset',
-          toneClasses
-        )}
+        className="bg-muted/60 text-muted-foreground flex h-9 w-9 shrink-0 items-center justify-center rounded-md"
         aria-hidden="true"
       >
-        <Icon className="h-5 w-5" />
+        <Icon className="h-4 w-4" />
       </div>
       <div className="flex-1 space-y-1">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Label className="text-sm font-medium">{title}</Label>
             {badge ? (
-              <span className="bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
+              <span className="bg-muted text-muted-foreground rounded-sm px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
                 {badge}
               </span>
             ) : null}
@@ -794,15 +769,15 @@ function NotificationPreferencesSkeleton() {
       <p className="sr-only">{t('notifications.skeleton_loading')}</p>
       <div className="space-y-2">
         <Skeleton className="h-3 w-24" />
-        <Skeleton className="h-7 w-80" />
-        <Skeleton className="h-4 w-96" />
+        <Skeleton className="h-7 w-64 max-w-full" />
+        <Skeleton className="h-4 w-full max-w-96" />
       </div>
-      <div className="surface-card border-border/60 rounded-xl border p-6">
+      <div className="border-border/60 border-b pb-6">
         <Skeleton className="mb-4 h-4 w-28" />
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <div className="divide-border/60 bg-card grid grid-cols-1 divide-y overflow-hidden rounded-lg border md:grid-cols-3 md:divide-x md:divide-y-0">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="border-border/60 flex items-center gap-3 rounded-lg border p-4">
-              <Skeleton className="h-10 w-10 rounded-lg" />
+            <div key={i} className="flex items-center gap-3 p-4">
+              <Skeleton className="h-9 w-9 rounded-md" />
               <div className="flex-1 space-y-2">
                 <Skeleton className="h-3 w-16" />
                 <Skeleton className="h-3 w-32" />
@@ -812,24 +787,28 @@ function NotificationPreferencesSkeleton() {
           ))}
         </div>
       </div>
-      <div className="surface-card border-border/60 rounded-xl border p-6">
+      <div>
         <Skeleton className="mb-4 h-4 w-20" />
-        <div className="space-y-4">
+        <div className="divide-border/60 bg-card divide-y overflow-hidden rounded-lg border">
           {Array.from({ length: 3 }).map((_, g) => (
-            <div key={g} className="space-y-2">
-              <Skeleton className="h-3 w-28" />
-              <div className="border-border/60 rounded-lg border">
+            <div key={g}>
+              <div className="bg-muted/25 border-border/60 border-b px-4 py-2.5">
+                <Skeleton className="h-3 w-28" />
+              </div>
+              <div>
                 {Array.from({ length: 2 }).map((_, r) => (
                   <div
                     key={r}
-                    className="border-border/60 flex items-center gap-4 border-b p-4 last:border-0"
+                    className="border-border/60 flex flex-col gap-3 border-b p-4 last:border-0 md:flex-row md:items-center md:gap-4"
                   >
-                    <Skeleton className="h-9 w-9 rounded-lg" />
-                    <div className="flex-1 space-y-2">
-                      <Skeleton className="h-3 w-40" />
-                      <Skeleton className="h-3 w-64" />
+                    <div className="flex w-full flex-1 items-center gap-3">
+                      <Skeleton className="h-8 w-8 shrink-0 rounded-md" />
+                      <div className="min-w-0 flex-1 space-y-2">
+                        <Skeleton className="h-3 w-40 max-w-full" />
+                        <Skeleton className="h-3 w-full max-w-64" />
+                      </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="grid w-full grid-cols-3 justify-items-center gap-2 md:w-auto">
                       <Skeleton className="h-5 w-9 rounded-full" />
                       <Skeleton className="h-5 w-9 rounded-full" />
                       <Skeleton className="h-5 w-9 rounded-full" />
@@ -841,7 +820,7 @@ function NotificationPreferencesSkeleton() {
           ))}
         </div>
       </div>
-      <div className="surface-card border-border/60 rounded-xl border p-6">
+      <div className="border-border/60 border-t pt-6">
         <Skeleton className="h-4 w-40" />
         <Skeleton className="mt-3 h-8 w-48" />
       </div>

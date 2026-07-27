@@ -238,16 +238,13 @@ function MobileComparisonCards() {
   }[];
 
   return (
-    <div className="mt-10 space-y-3 md:hidden">
+    <div className="mt-10 border-t border-[var(--landing-border)] md:hidden">
       {rows.map((row) => (
-        <article
-          key={row.key}
-          className="rounded-lg border border-[var(--landing-border)] bg-[var(--landing-bg-card)] p-4"
-        >
+        <article key={row.key} className="border-b border-[var(--landing-border)] py-5">
           <h3 className="text-[13px] font-[520] text-[var(--landing-text-dark)]">
             {t(`rows.${row.key}.feature`)}
           </h3>
-          <dl className="mt-3 space-y-3">
+          <dl className="mt-4 grid gap-x-4 gap-y-3 sm:grid-cols-2">
             {products.map((product) => (
               <div key={product.key} className="grid gap-1">
                 <dt

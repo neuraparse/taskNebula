@@ -1,4 +1,5 @@
 const mockSetGenericPassword = jest.fn();
+const mockHasGenericPassword = jest.fn();
 const mockGetGenericPassword = jest.fn();
 const mockResetGenericPassword = jest.fn();
 
@@ -15,6 +16,7 @@ jest.mock('react-native-keychain', () => ({
     WHEN_UNLOCKED_THIS_DEVICE_ONLY: 'when-unlocked-this-device-only',
   },
   setGenericPassword: (...args: unknown[]) => mockSetGenericPassword(...args),
+  hasGenericPassword: (...args: unknown[]) => mockHasGenericPassword(...args),
   getGenericPassword: (...args: unknown[]) => mockGetGenericPassword(...args),
   resetGenericPassword: (...args: unknown[]) => mockResetGenericPassword(...args),
 }));
@@ -24,6 +26,7 @@ import { deleteSecure, getSecure, setSecure } from './storage';
 describe('secure storage keys', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockHasGenericPassword.mockResolvedValue(true);
   });
 
   it('stores values under deterministic keychain services with device-only accessibility', async () => {
@@ -70,17 +73,21 @@ describe('secure storage keys', () => {
 
   it('migrates legacy sanitized services to collision-safe hashed services when reading', async () => {
     const rawKey = 'session_cookie::https://tasks.example.com';
-    mockGetGenericPassword.mockResolvedValueOnce(false).mockResolvedValueOnce({
+    mockHasGenericPassword.mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+    mockGetGenericPassword.mockResolvedValueOnce({
       username: 'session_cookie__https___tasks.example.com',
       password: 'legacy-cookie',
     });
 
     await expect(getSecure(rawKey)).resolves.toBe('legacy-cookie');
 
-    expect(mockGetGenericPassword).toHaveBeenNthCalledWith(1, {
+    expect(mockHasGenericPassword).toHaveBeenNthCalledWith(1, {
       service: expect.stringMatching(/^session_cookie__https___tasks.example.com\./),
     });
-    expect(mockGetGenericPassword).toHaveBeenNthCalledWith(2, {
+    expect(mockHasGenericPassword).toHaveBeenNthCalledWith(2, {
+      service: 'session_cookie__https___tasks.example.com',
+    });
+    expect(mockGetGenericPassword).toHaveBeenCalledWith({
       service: 'session_cookie__https___tasks.example.com',
     });
     expect(mockSetGenericPassword).toHaveBeenCalledWith(
@@ -93,5 +100,14 @@ describe('secure storage keys', () => {
     expect(mockResetGenericPassword).toHaveBeenCalledWith({
       service: 'session_cookie__https___tasks.example.com',
     });
+  });
+
+  it('does not read a missing keychain item during first launch', async () => {
+    mockHasGenericPassword.mockResolvedValue(false);
+
+    await expect(getSecure('server_url')).resolves.toBeNull();
+
+    expect(mockHasGenericPassword).toHaveBeenCalledTimes(2);
+    expect(mockGetGenericPassword).not.toHaveBeenCalled();
   });
 });

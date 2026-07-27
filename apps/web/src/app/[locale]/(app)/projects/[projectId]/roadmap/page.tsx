@@ -2,10 +2,9 @@
 
 import { use, useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Lightbulb, ArrowDownUp } from 'lucide-react';
 import { RoadmapLoadingShell } from './roadmap-loading-shell';
 
 interface Epic {
@@ -54,35 +53,6 @@ interface PeriodResult {
   rangeEnd: Date;
 }
 
-const MONTH_ABBR = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];
-
-// Pastel palette for stable bar colours.
-// Use light tints + darker text for readability.
-const PASTEL_PALETTE = [
-  { bg: 'bg-orange-200/70', text: 'text-orange-900', border: 'border-orange-300/60' }, // peach
-  { bg: 'bg-purple-200/70', text: 'text-purple-900', border: 'border-purple-300/60' }, // lavender
-  { bg: 'bg-yellow-200/70', text: 'text-yellow-900', border: 'border-yellow-300/60' }, // yellow
-  { bg: 'bg-emerald-200/70', text: 'text-emerald-900', border: 'border-emerald-300/60' }, // emerald
-  { bg: 'bg-blue-200/70', text: 'text-blue-900', border: 'border-blue-300/60' }, // blue
-  { bg: 'bg-rose-200/70', text: 'text-rose-900', border: 'border-rose-300/60' }, // rose
-];
-
-// Deterministic emoji per initiative based on id hash.
-const EMOJI_PALETTE = ['💡', '🚀', '🎯', '🌱', '⚡', '🔧', '📦', '🌟', '🛠️', '🧭'];
-
 const ROW_HEIGHT_PX = 44;
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
@@ -122,10 +92,14 @@ function isSameMonth(a: Date, b: Date): boolean {
  * - weekly:    4 consecutive weeks starting this week (Mon)
  * - today:     a single day (today)
  */
-function getPeriod(mode: PeriodMode, today: Date = new Date()): PeriodResult {
-  const t = startOfDay(today);
+type RoadmapFormatter = ReturnType<typeof useFormatter>;
 
-  const monthAbbr = (i: number) => MONTH_ABBR[i] ?? '';
+function getPeriod(
+  mode: PeriodMode,
+  formatter: RoadmapFormatter,
+  today: Date = new Date()
+): PeriodResult {
+  const t = startOfDay(today);
 
   if (mode === 'today') {
     const start = t;
@@ -133,7 +107,7 @@ function getPeriod(mode: PeriodMode, today: Date = new Date()): PeriodResult {
     return {
       columns: [
         {
-          label: `${monthAbbr(start.getMonth())} ${start.getDate()}`,
+          label: formatter.dateTime(start, { month: 'short', day: 'numeric' }),
           start,
           end,
           isCurrent: true,
@@ -152,7 +126,10 @@ function getPeriod(mode: PeriodMode, today: Date = new Date()): PeriodResult {
       const s = addDays(weekStart, i * 7);
       const e = addDays(s, 7);
       columns.push({
-        label: `Week of ${monthAbbr(s.getMonth())} ${s.getDate()}`,
+        label: `${formatter.dateTime(s, {
+          month: 'short',
+          day: 'numeric',
+        })}–${formatter.dateTime(addDays(e, -1), { month: 'short', day: 'numeric' })}`,
         start: s,
         end: e,
         isCurrent: t >= s && t < e,
@@ -177,7 +154,7 @@ function getPeriod(mode: PeriodMode, today: Date = new Date()): PeriodResult {
       const s = new Date(baseYear, baseMonth + i, 1);
       const e = new Date(baseYear, baseMonth + i + 1, 1);
       columns.push({
-        label: monthAbbr(s.getMonth()),
+        label: formatter.dateTime(s, { month: 'short' }),
         start: s,
         end: e,
         isCurrent: isSameMonth(s, t),
@@ -202,7 +179,7 @@ function getPeriod(mode: PeriodMode, today: Date = new Date()): PeriodResult {
     const s = new Date(baseYear, firstMonth + i, 1);
     const e = new Date(baseYear, firstMonth + i + 1, 1);
     columns.push({
-      label: monthAbbr(s.getMonth()),
+      label: formatter.dateTime(s, { month: 'short' }),
       start: s,
       end: e,
       isCurrent: isSameMonth(s, t),
@@ -253,26 +230,19 @@ function computeBarPlacement(
   return { left, width };
 }
 
-function pickPalette(id: string) {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
-  }
-  return PASTEL_PALETTE[hash % PASTEL_PALETTE.length] ?? PASTEL_PALETTE[0]!;
-}
-
-function pickEmoji(id: string) {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = (hash * 17 + id.charCodeAt(i)) >>> 0;
-  }
-  return EMOJI_PALETTE[hash % EMOJI_PALETTE.length] ?? '💡';
+function statusDotClass(status: string): string {
+  const normalized = status.toLowerCase();
+  if (normalized.includes('done') || normalized.includes('complete')) return 'status-live';
+  if (normalized.includes('block') || normalized.includes('cancel')) return 'status-danger';
+  if (normalized.includes('progress') || normalized.includes('active')) return 'status-live';
+  return 'status-idle';
 }
 
 export default function RoadmapPage({ params }: RoadmapPageProps) {
   const { projectId } = use(params);
   const router = useRouter();
   const t = useTranslations('pagesProjectTabs');
+  const formatter = useFormatter();
   const errorT = useTranslations('componentErrors.projects');
   const [epics, setEpics] = useState<Epic[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -316,7 +286,7 @@ export default function RoadmapPage({ params }: RoadmapPageProps) {
     };
   }, [errorT, projectId, toast, t]);
 
-  const periodData = useMemo(() => getPeriod(period), [period]);
+  const periodData = useMemo(() => getPeriod(period, formatter), [formatter, period]);
 
   if (isLoading) {
     return <RoadmapLoadingShell />;
@@ -326,25 +296,14 @@ export default function RoadmapPage({ params }: RoadmapPageProps) {
     <div className="animate-fade-in flex h-full flex-col overflow-hidden">
       {/* Page Header */}
       <div className="border-border bg-background shrink-0 border-b px-6 py-4">
-        <div className="flex items-center gap-2">
-          <Lightbulb className="text-accent-amber h-5 w-5" />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-xl font-semibold tracking-tight">{t('roadmap.title')}</h1>
-        </div>
-        <div className="mt-3">
           <Tabs value={period} onValueChange={(v) => setPeriod(v as PeriodMode)}>
-            <TabsList className="bg-muted rounded-full p-1">
-              <TabsTrigger value="today" className="rounded-full px-4">
-                {t('roadmap.period.today')}
-              </TabsTrigger>
-              <TabsTrigger value="weekly" className="rounded-full px-4">
-                {t('roadmap.period.weekly')}
-              </TabsTrigger>
-              <TabsTrigger value="monthly" className="rounded-full px-4">
-                {t('roadmap.period.monthly')}
-              </TabsTrigger>
-              <TabsTrigger value="quarterly" className="rounded-full px-4">
-                {t('roadmap.period.quarterly')}
-              </TabsTrigger>
+            <TabsList>
+              <TabsTrigger value="today">{t('roadmap.period.today')}</TabsTrigger>
+              <TabsTrigger value="weekly">{t('roadmap.period.weekly')}</TabsTrigger>
+              <TabsTrigger value="monthly">{t('roadmap.period.monthly')}</TabsTrigger>
+              <TabsTrigger value="quarterly">{t('roadmap.period.quarterly')}</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -353,19 +312,12 @@ export default function RoadmapPage({ params }: RoadmapPageProps) {
       {/* Two-pane Layout */}
       <div className="flex min-h-0 flex-1">
         {/* Left Pane: Initiatives list */}
-        <aside className="border-border bg-background flex min-h-0 w-[320px] shrink-0 flex-col border-r">
-          <div className="border-border flex shrink-0 items-center justify-between border-b px-4 py-3">
+        <aside className="border-border bg-background flex min-h-0 w-[240px] shrink-0 flex-col border-r sm:w-[280px] lg:w-[320px]">
+          <div className="border-border flex shrink-0 items-center border-b px-4 py-3">
             <p className="text-sm font-semibold">
               {t('roadmap.title')}{' '}
               <span className="text-muted-foreground tabular-nums">{epics.length}</span>
             </p>
-            <button
-              type="button"
-              className="text-muted-foreground hover:bg-accent/50 hover:text-foreground inline-flex h-7 w-7 items-center justify-center rounded-md transition-colors"
-              aria-label={t('roadmap.sortAriaLabel')}
-            >
-              <ArrowDownUp className="h-3.5 w-3.5" />
-            </button>
           </div>
           <div className="flex-1 overflow-y-auto">
             {epics.length === 0 ? (
@@ -382,9 +334,10 @@ export default function RoadmapPage({ params }: RoadmapPageProps) {
                       className="hover:bg-accent/50 flex w-full items-center gap-2 px-4 text-left transition-colors"
                       style={{ height: ROW_HEIGHT_PX }}
                     >
-                      <span className="shrink-0 text-base leading-none" aria-hidden>
-                        {pickEmoji(epic.id)}
-                      </span>
+                      <span
+                        className={`status-dot shrink-0 ${statusDotClass(epic.status)}`}
+                        aria-hidden
+                      />
                       <span className="truncate text-sm">{epic.title}</span>
                     </button>
                   </li>
@@ -408,12 +361,12 @@ export default function RoadmapPage({ params }: RoadmapPageProps) {
                 <div
                   key={idx}
                   className={`border-border flex items-center gap-2 border-r px-3 py-3 text-xs font-medium last:border-r-0 ${
-                    col.isCurrent ? 'bg-blue-50/30' : ''
+                    col.isCurrent ? 'bg-accent-blue/5' : ''
                   }`}
                 >
                   <span className="text-muted-foreground">{col.label}</span>
                   {col.isCurrent && (
-                    <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-medium text-blue-700">
+                    <span className="bg-accent-blue/10 text-accent-blue inline-flex items-center rounded-sm px-2 py-0.5 text-[10px] font-medium">
                       {t('roadmap.current')}
                     </span>
                   )}
@@ -435,7 +388,7 @@ export default function RoadmapPage({ params }: RoadmapPageProps) {
                   <div
                     key={idx}
                     className={`border-border/60 border-r last:border-r-0 ${
-                      col.isCurrent ? 'bg-blue-50/30' : ''
+                      col.isCurrent ? 'bg-accent-blue/5' : ''
                     }`}
                   />
                 ))}
@@ -456,7 +409,6 @@ export default function RoadmapPage({ params }: RoadmapPageProps) {
                       epic.targetDate,
                       periodData
                     );
-                    const palette = pickPalette(epic.id);
                     return (
                       <li
                         key={epic.id}
@@ -467,7 +419,7 @@ export default function RoadmapPage({ params }: RoadmapPageProps) {
                           <button
                             type="button"
                             onClick={() => router.push(`/issues/${epic.id}`)}
-                            className={`absolute top-1/2 flex -translate-y-1/2 items-center rounded-full border ${palette.bg} ${palette.border} ${palette.text} shadow-xs ease-snap px-3 text-xs font-medium transition-transform duration-150 hover:scale-[1.01]`}
+                            className="border-accent-blue/30 bg-accent-blue/15 text-foreground hover:bg-accent-blue/20 absolute top-1/2 flex -translate-y-1/2 items-center rounded-sm border px-3 text-xs font-medium transition-colors duration-150"
                             style={{
                               left: `${placement.left}%`,
                               width: `${placement.width}%`,

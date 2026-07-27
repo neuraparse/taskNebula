@@ -76,7 +76,7 @@ export function getActorName(notification: Notification, t: NotificationTranslat
 }
 
 /* -------------------------------------------------------------------------- */
-/* Type → visual mapping (inline, since notification-visuals.tsx isn't present) */
+/* Type → restrained semantic visual mapping */
 /* -------------------------------------------------------------------------- */
 
 type TypeVisual = {
@@ -96,27 +96,27 @@ const TYPE_VISUALS: Record<NotificationType, TypeVisual> = {
   comment: {
     Icon: MessageSquare,
     labelKey: 'comment',
-    tone: 'bg-indigo-500/10 text-indigo-600 ring-indigo-500/30 dark:text-indigo-300',
+    tone: 'bg-accent-blue/10 text-accent-blue ring-accent-blue/20',
   },
   assigned: {
     Icon: UserCheck,
     labelKey: 'assigned',
-    tone: 'bg-violet-500/10 text-violet-600 ring-violet-500/30 dark:text-violet-300',
+    tone: 'bg-muted text-muted-foreground ring-border',
   },
   status_changed: {
     Icon: Activity,
     labelKey: 'status',
-    tone: 'bg-sky-500/10 text-sky-600 ring-sky-500/30 dark:text-sky-300',
+    tone: 'bg-accent-blue/10 text-accent-blue ring-accent-blue/20',
   },
   issue_created: {
     Icon: CheckCircle2,
     labelKey: 'created',
-    tone: 'bg-emerald-500/10 text-emerald-600 ring-emerald-500/30 dark:text-emerald-300',
+    tone: 'bg-accent-emerald/10 text-accent-emerald ring-accent-emerald/20',
   },
   issue_updated: {
     Icon: GitBranch,
     labelKey: 'updated',
-    tone: 'bg-amber-500/10 text-amber-600 ring-amber-500/30 dark:text-amber-300',
+    tone: 'bg-accent-amber/10 text-accent-amber ring-accent-amber/20',
   },
   issue_linked: {
     Icon: Link2,
@@ -126,12 +126,12 @@ const TYPE_VISUALS: Record<NotificationType, TypeVisual> = {
   sprint_started: {
     Icon: Flag,
     labelKey: 'sprint',
-    tone: 'bg-fuchsia-500/10 text-fuchsia-600 ring-fuchsia-500/30 dark:text-fuchsia-300',
+    tone: 'bg-accent-emerald/10 text-accent-emerald ring-accent-emerald/20',
   },
   sprint_completed: {
     Icon: Flag,
     labelKey: 'sprint',
-    tone: 'bg-fuchsia-500/10 text-fuchsia-600 ring-fuchsia-500/30 dark:text-fuchsia-300',
+    tone: 'bg-accent-emerald/10 text-accent-emerald ring-accent-emerald/20',
   },
   ai_draft_failed: {
     Icon: Sparkles,
@@ -146,7 +146,7 @@ const TYPE_VISUALS: Record<NotificationType, TypeVisual> = {
   project_created: {
     Icon: FolderPlus,
     labelKey: 'project_created',
-    tone: 'bg-emerald-500/10 text-emerald-600 ring-emerald-500/30 dark:text-emerald-300',
+    tone: 'bg-accent-emerald/10 text-accent-emerald ring-accent-emerald/20',
   },
   project_archived: {
     Icon: Archive,
@@ -188,7 +188,7 @@ export function NotificationAvatar({ notification }: { notification: Notificatio
     const { Icon } = visual;
     return (
       <span
-        className={cn('flex h-9 w-9 items-center justify-center rounded-full ring-1', visual.tone)}
+        className={cn('flex h-9 w-9 items-center justify-center rounded-md ring-1', visual.tone)}
       >
         <Icon className="h-4 w-4" />
       </span>
@@ -201,7 +201,7 @@ export function NotificationAvatar({ notification }: { notification: Notificatio
     <span className="relative">
       <Avatar className="ring-border h-9 w-9 ring-1">
         <AvatarImage src={notification.actor?.image || undefined} alt="" />
-        <AvatarFallback className="text-foreground bg-gradient-to-br from-indigo-500/15 to-violet-500/15 text-[11px] font-semibold">
+        <AvatarFallback className="bg-muted text-foreground text-[11px] font-semibold">
           {initial}
         </AvatarFallback>
       </Avatar>
@@ -258,8 +258,8 @@ export interface NotificationItemProps {
  *   [stack toggle] [avatar/icon] [title + body + chips] [time | hover actions] [unread dot]
  *
  * - Clicking the row triggers `onSelect` and auto-marks as read.
- * - When a target href exists, the row is wrapped in a Link so keyboard /
- *   middle-click navigation keeps working.
+ * - When a target href exists, the primary content uses a Link so keyboard /
+ *   middle-click navigation works without nesting action buttons.
  * - Hover reveals an inline action bar (mark read/unread, open, snooze, archive).
  */
 export const NotificationItem = forwardRef<HTMLDivElement, NotificationItemProps>(
@@ -302,62 +302,12 @@ export const NotificationItem = forwardRef<HTMLDivElement, NotificationItemProps
       fn?.(notification.id);
     };
 
-    const body: ReactNode = (
-      <div
-        ref={ref}
-        data-selected={selected ? 'true' : undefined}
-        data-unread={isUnread ? 'true' : undefined}
-        className={cn(
-          'ease-snap group relative flex items-start gap-3 px-4 py-3 transition-all duration-150',
-          'hover:bg-accent/50',
-          selected && 'bg-accent/70',
-          isUnread && 'from-primary/[0.04] bg-gradient-to-r via-transparent to-transparent',
-          compact ? 'gap-2.5 py-2' : 'py-3'
-        )}
-      >
-        {/* Unread left accent bar */}
-        {isUnread && (
-          <span
-            aria-hidden="true"
-            className="absolute bottom-2 left-0 top-2 w-[2px] rounded-r-full bg-gradient-to-b from-indigo-500 to-violet-500"
-          />
-        )}
-
-        {/* Stack toggle slot (keeps row alignment consistent) */}
-        {showStackToggle ? (
-          <button
-            type="button"
-            aria-label={stackOpen ? t('item.collapse_stack') : t('item.expand_stack')}
-            aria-expanded={stackOpen}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onToggleStack?.();
-            }}
-            className={cn(
-              'text-muted-foreground mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-sm',
-              'ease-snap hover:bg-accent hover:text-foreground transition-transform duration-150',
-              'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2'
-            )}
-            data-open={stackOpen ? 'true' : undefined}
-          >
-            <ChevronRight
-              className={cn(
-                'ease-snap h-3.5 w-3.5 transition-transform duration-150',
-                stackOpen && 'rotate-90'
-              )}
-            />
-          </button>
-        ) : (
-          <span aria-hidden="true" className="mt-1 h-5 w-5 shrink-0" />
-        )}
-
-        {/* Left: avatar / typed icon */}
+    const primaryContent: ReactNode = (
+      <>
         <div className="shrink-0 pt-0.5">
           <NotificationAvatar notification={notification} />
         </div>
 
-        {/* Middle: title, body preview, chips */}
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline gap-2">
             <p
@@ -382,22 +332,16 @@ export const NotificationItem = forwardRef<HTMLDivElement, NotificationItemProps
           {/* Chip row */}
           {(referenceChip || (typeof stackCount === 'number' && stackCount > 1)) && (
             <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-              <span
-                className={cn(
-                  'inline-flex items-center gap-1 rounded-full px-1.5 py-[1px] text-[10px] font-medium ring-1',
-                  visual.tone
-                )}
-              >
-                <visual.Icon className="h-2.5 w-2.5" />
+              <span className="bg-muted text-muted-foreground ring-border inline-flex items-center rounded-sm px-1.5 py-[1px] text-[10px] font-medium ring-1">
                 {typeLabel}
               </span>
               {referenceChip && (
-                <span className="bg-muted text-muted-foreground ring-border inline-flex items-center rounded-full px-1.5 py-[1px] font-mono text-[10px] font-medium ring-1">
+                <span className="bg-muted text-muted-foreground ring-border inline-flex items-center rounded-sm px-1.5 py-[1px] font-mono text-[10px] font-medium ring-1">
                   {referenceChip}
                 </span>
               )}
               {typeof stackCount === 'number' && stackCount > 1 && (
-                <span className="bg-accent text-foreground/80 ring-border inline-flex items-center rounded-full px-1.5 py-[1px] text-[10px] font-medium ring-1">
+                <span className="bg-accent text-foreground/80 ring-border inline-flex items-center rounded-sm px-1.5 py-[1px] text-[10px] font-medium ring-1">
                   {t('item.stack_more', { count: stackCount - 1 })}
                 </span>
               )}
@@ -405,7 +349,6 @@ export const NotificationItem = forwardRef<HTMLDivElement, NotificationItemProps
           )}
         </div>
 
-        {/* Right: time + unread dot + hover action bar */}
         <div className="flex shrink-0 items-start gap-2">
           <div className="flex flex-col items-end gap-1">
             <time
@@ -421,115 +364,156 @@ export const NotificationItem = forwardRef<HTMLDivElement, NotificationItemProps
             {isUnread && (
               <span
                 aria-label={t('item.unread')}
-                className="h-2 w-2 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 shadow-[0_0_0_2px_var(--background)] group-hover:opacity-0"
+                className="bg-primary ring-background h-2 w-2 rounded-full ring-2 group-hover:opacity-0"
               />
             )}
           </div>
-
-          {/* Hover action bar (absolutely positioned so it doesn't reflow the row) */}
-          <div
-            className={cn(
-              'bg-popover/95 pointer-events-none absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-0.5 rounded-md border p-0.5 opacity-0 shadow-sm backdrop-blur',
-              'ease-snap transition-opacity duration-150',
-              'group-hover:pointer-events-auto group-hover:opacity-100',
-              'focus-within:pointer-events-auto focus-within:opacity-100'
-            )}
-          >
-            {notification.isRead && onMarkUnread ? (
-              <Button
-                variant="ghost"
-                size="icon"
-                type="button"
-                className="text-muted-foreground hover:text-foreground h-7 w-7"
-                aria-label={t('item.mark_unread')}
-                title={t('item.mark_unread')}
-                onClick={(e) => handleAction(e, onMarkUnread)}
-              >
-                <Bell className="h-3.5 w-3.5" />
-              </Button>
-            ) : onMarkRead ? (
-              <Button
-                variant="ghost"
-                size="icon"
-                type="button"
-                className="text-muted-foreground hover:text-foreground h-7 w-7"
-                aria-label={t('item.mark_read')}
-                title={t('item.mark_read')}
-                onClick={(e) => handleAction(e, onMarkRead)}
-              >
-                <Check className="h-3.5 w-3.5" />
-              </Button>
-            ) : null}
-
-            {href && (
-              <Button
-                variant="ghost"
-                size="icon"
-                type="button"
-                className="text-muted-foreground hover:text-foreground h-7 w-7"
-                aria-label={t('item.open')}
-                title={t('item.open')}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSelect(notification);
-                }}
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-              </Button>
-            )}
-
-            {onSnooze && (
-              <Button
-                variant="ghost"
-                size="icon"
-                type="button"
-                className="text-muted-foreground hover:text-foreground h-7 w-7"
-                aria-label={t('item.snooze')}
-                title={t('item.snooze')}
-                onClick={(e) => handleAction(e, onSnooze)}
-              >
-                <Clock className="h-3.5 w-3.5" />
-              </Button>
-            )}
-
-            {onArchive && (
-              <Button
-                variant="ghost"
-                size="icon"
-                type="button"
-                className="text-muted-foreground hover:text-foreground h-7 w-7"
-                aria-label={t('item.archive')}
-                title={t('item.archive')}
-                onClick={(e) => handleAction(e, onArchive)}
-              >
-                <Archive className="h-3.5 w-3.5" />
-              </Button>
-            )}
-          </div>
         </div>
-      </div>
+      </>
     );
 
-    if (href) {
-      return (
-        <Link
-          href={href}
-          onClick={handleRowClick}
-          className="focus-visible:ring-ring block focus-visible:outline-none focus-visible:ring-2"
-        >
-          {body}
-        </Link>
-      );
-    }
+    const primaryClassName = cn(
+      'focus-visible:ring-ring flex min-w-0 flex-1 items-start text-left focus-visible:outline-none focus-visible:ring-2',
+      compact ? 'gap-2.5' : 'gap-3'
+    );
 
     return (
-      <button
-        type="button"
-        onClick={handleRowClick}
-        className="focus-visible:ring-ring w-full text-left focus-visible:outline-none focus-visible:ring-2"
+      <div
+        ref={ref}
+        data-selected={selected ? 'true' : undefined}
+        data-unread={isUnread ? 'true' : undefined}
+        className={cn(
+          'ease-snap group relative flex items-start gap-3 px-4 py-3 transition-all duration-150',
+          'hover:bg-accent/50',
+          selected && 'bg-accent/70',
+          isUnread && 'bg-primary/[0.04]',
+          compact ? 'gap-2.5 py-2' : 'py-3'
+        )}
       >
-        {body}
-      </button>
+        {isUnread && (
+          <span
+            aria-hidden="true"
+            className="bg-primary/70 absolute bottom-2 left-0 top-2 w-[2px] rounded-r-sm"
+          />
+        )}
+
+        {showStackToggle ? (
+          <button
+            type="button"
+            aria-label={stackOpen ? t('item.collapse_stack') : t('item.expand_stack')}
+            aria-expanded={stackOpen}
+            onClick={(event) => {
+              event.stopPropagation();
+              onToggleStack?.();
+            }}
+            className={cn(
+              'text-muted-foreground mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-sm',
+              'ease-snap hover:bg-accent hover:text-foreground transition-transform duration-150',
+              'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2'
+            )}
+            data-open={stackOpen ? 'true' : undefined}
+          >
+            <ChevronRight
+              className={cn(
+                'ease-snap h-3.5 w-3.5 transition-transform duration-150',
+                stackOpen && 'rotate-90'
+              )}
+            />
+          </button>
+        ) : (
+          <span aria-hidden="true" className="mt-1 h-5 w-5 shrink-0" />
+        )}
+
+        {href ? (
+          <Link href={href} onClick={handleRowClick} className={primaryClassName}>
+            {primaryContent}
+          </Link>
+        ) : (
+          <button type="button" onClick={handleRowClick} className={primaryClassName}>
+            {primaryContent}
+          </button>
+        )}
+
+        <div
+          className={cn(
+            'border-border/60 bg-popover pointer-events-none absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-0.5 rounded-md border p-0.5 opacity-0 shadow-sm',
+            'ease-snap transition-opacity duration-150',
+            'group-hover:pointer-events-auto group-hover:opacity-100',
+            'focus-within:pointer-events-auto focus-within:opacity-100'
+          )}
+        >
+          {notification.isRead && onMarkUnread ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              type="button"
+              className="text-muted-foreground hover:text-foreground h-7 w-7"
+              aria-label={t('item.mark_unread')}
+              title={t('item.mark_unread')}
+              onClick={(event) => handleAction(event, onMarkUnread)}
+            >
+              <Bell className="h-3.5 w-3.5" />
+            </Button>
+          ) : onMarkRead ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              type="button"
+              className="text-muted-foreground hover:text-foreground h-7 w-7"
+              aria-label={t('item.mark_read')}
+              title={t('item.mark_read')}
+              onClick={(event) => handleAction(event, onMarkRead)}
+            >
+              <Check className="h-3.5 w-3.5" />
+            </Button>
+          ) : null}
+
+          {href && (
+            <Button
+              variant="ghost"
+              size="icon"
+              type="button"
+              className="text-muted-foreground hover:text-foreground h-7 w-7"
+              aria-label={t('item.open')}
+              title={t('item.open')}
+              onClick={(event) => {
+                event.stopPropagation();
+                onSelect(notification);
+              }}
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+            </Button>
+          )}
+
+          {onSnooze && (
+            <Button
+              variant="ghost"
+              size="icon"
+              type="button"
+              className="text-muted-foreground hover:text-foreground h-7 w-7"
+              aria-label={t('item.snooze')}
+              title={t('item.snooze')}
+              onClick={(event) => handleAction(event, onSnooze)}
+            >
+              <Clock className="h-3.5 w-3.5" />
+            </Button>
+          )}
+
+          {onArchive && (
+            <Button
+              variant="ghost"
+              size="icon"
+              type="button"
+              className="text-muted-foreground hover:text-foreground h-7 w-7"
+              aria-label={t('item.archive')}
+              title={t('item.archive')}
+              onClick={(event) => handleAction(event, onArchive)}
+            >
+              <Archive className="h-3.5 w-3.5" />
+            </Button>
+          )}
+        </div>
+      </div>
     );
   }
 );

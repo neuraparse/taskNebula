@@ -1,6 +1,6 @@
 {
   "name": "tasknebula",
-  "version": "0.7.11",
+  "version": "0.13.0",
   "private": true,
   "description": "AI-native, real-time, keyboard-first project management platform",
   "author": "Neura Parse <hello@neuraparse.com>",
@@ -39,6 +39,8 @@
     "clean": "turbo run clean && rm -rf node_modules",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,md,json}\"",
+    "hygiene:check": "node scripts/repository-hygiene-check.mjs",
+    "ui:check": "node scripts/ui-quality-check.mjs",
     "db:generate": "turbo run db:generate",
     "db:migrate": "turbo run db:migrate",
     "db:studio": "turbo run db:studio",

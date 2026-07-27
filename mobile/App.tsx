@@ -117,7 +117,7 @@ function NavigationShell() {
       onReady={markNavigationReady}
     >
       <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
-        <StatusBar barStyle={theme.statusBarStyle} backgroundColor={theme.colors.background} />
+        <StatusBar barStyle={theme.statusBarStyle} />
         <NetworkBanner />
         <EmailVerificationBanner />
         <SessionGate />

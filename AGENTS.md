@@ -8,6 +8,10 @@ workflow, and architecture.
 Tools that follow the `AGENTS.md` convention should read `CLAUDE.md` as the
 full instruction set.
 
+Operator checkouts may also contain an ignored `AGENTS.local.md`. If present,
+read it after `CLAUDE.md`; it contains private deployment context and must never
+be committed, quoted in public issues/PRs, or copied into tracked source.
+
 > **i18n is mandatory.** The app ships 30 languages with device auto-detection.
 > Never hardcode user-facing strings — route every one through `next-intl` and
 > add the key to all 30 catalogs in `apps/web/messages/*.json` (key parity:

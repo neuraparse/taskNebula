@@ -99,7 +99,7 @@ export function ModulesGrid({ projectId, canManageModules = false }: ModulesGrid
                   type="button"
                   onClick={() => setFilter(opt.value)}
                   className={cn(
-                    'rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-colors',
+                    'rounded-sm border px-2.5 py-0.5 text-[11px] font-medium transition-colors',
                     active
                       ? 'border-primary/30 bg-primary/10 text-primary'
                       : 'border-border bg-card text-muted-foreground hover:text-foreground'
@@ -132,13 +132,13 @@ export function ModulesGrid({ projectId, canManageModules = false }: ModulesGrid
           canManageModules={canManageModules}
         />
       ) : view === 'gallery' ? (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
           {filtered.map((m) => (
             <ModuleCard key={m.id} module={m} />
           ))}
         </div>
       ) : (
-        <ModulesList projectId={projectId} modules={filtered} />
+        <ModulesList modules={filtered} />
       )}
 
       {canManageModules ? (
@@ -163,7 +163,7 @@ function EmptyState({
 }) {
   const t = useTranslations('planning');
   return (
-    <div className="border-border mx-auto flex max-w-md flex-col items-center gap-3 rounded-xl border border-dashed p-8 text-center">
+    <div className="border-border/60 mx-auto flex max-w-md flex-col items-center gap-3 rounded-lg border border-dashed p-8 text-center">
       <Layers className="text-muted-foreground h-8 w-8" />
       <p className="text-muted-foreground text-sm">
         {hasAny
@@ -180,17 +180,11 @@ function EmptyState({
   );
 }
 
-function ModulesList({
-  projectId,
-  modules,
-}: {
-  projectId: string;
-  modules: ReturnType<typeof useModules>['modules'];
-}) {
+function ModulesList({ modules }: { modules: ReturnType<typeof useModules>['modules'] }) {
   const t = useTranslations('planning');
   const formatter = useFormatter();
   return (
-    <div className="divide-border border-border bg-card divide-y rounded-xl border">
+    <div className="divide-border border-border/60 bg-card divide-y rounded-lg border">
       {modules.map((m) => {
         const palette = getModuleStatusPalette(m.status);
         const total = m.totalIssues ?? 0;
@@ -199,23 +193,13 @@ function ModulesList({
         const targetLabel = formatTargetDate(m.targetDate, formatter);
 
         return (
-          <button
+          <div
             key={m.id}
-            type="button"
-            onClick={() =>
-              // eslint-disable-next-line no-console
-              console.info(`[modules] navigate → /projects/${projectId}/modules/${m.id}`)
-            }
             className={cn(
               'flex w-full items-center gap-3 px-4 py-2.5 text-left',
-              'hover:bg-muted/40 transition-colors',
-              'focus-visible:bg-muted/40 focus-visible:outline-none'
+              'transition-colors'
             )}
           >
-            <span
-              className={cn('inline-block h-2 w-2 shrink-0 rounded-full', palette.dot)}
-              aria-hidden
-            />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <span className="truncate text-sm font-medium">{m.name}</span>
@@ -250,7 +234,7 @@ function ModulesList({
                 <span className="text-muted-foreground/50">—</span>
               )}
             </span>
-          </button>
+          </div>
         );
       })}
     </div>

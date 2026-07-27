@@ -1,6 +1,6 @@
 'use client';
 
-import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -8,8 +8,6 @@ import {
   type SidecarContextValue,
   type SidecarEntity,
   type SidecarMessage,
-  type SidecarMode,
-  describeEntity,
 } from '@/lib/ai/sidecar-context';
 import { AiSidecar } from './ai-sidecar';
 import { AiDisclosureModal } from './ai-disclosure-modal';
@@ -112,17 +110,6 @@ function AiSidecarProviderInner({ children }: { children: ReactNode }) {
   const [entity, setEntity] = useState<SidecarEntity | null>(null);
   const [messages, setMessages] = useState<SidecarMessage[]>([]);
 
-  // Track pending simulated response timers so we can cancel on unmount.
-  const timersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
-
-  useEffect(() => {
-    const timers = timersRef.current;
-    return () => {
-      timers.forEach((timer) => clearTimeout(timer));
-      timers.clear();
-    };
-  }, []);
-
   const setOpen = useCallback((next: boolean) => {
     setOpenState(next);
   }, []);
@@ -157,7 +144,7 @@ function AiSidecarProviderInner({ children }: { children: ReactNode }) {
   }, [toggle]);
 
   const sendMessage = useCallback(
-    async (content: string, mode: SidecarMode) => {
+    async (content: string) => {
       const trimmed = content.trim();
       if (!trimmed) return;
 
@@ -173,83 +160,48 @@ function AiSidecarProviderInner({ children }: { children: ReactNode }) {
 
       setMessages((prev) => [...prev, userMessage]);
 
-      if (mode === 'ask') {
-        const assistantId =
-          typeof crypto !== 'undefined' && 'randomUUID' in crypto
-            ? crypto.randomUUID()
-            : `a_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-        setMessages((prev) => [
-          ...prev,
-          { id: assistantId, role: 'assistant', content: '', createdAt: Date.now() },
-        ]);
+      const assistantId =
+        typeof crypto !== 'undefined' && 'randomUUID' in crypto
+          ? crypto.randomUUID()
+          : `a_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      setMessages((prev) => [
+        ...prev,
+        { id: assistantId, role: 'assistant', content: '', createdAt: Date.now() },
+      ]);
 
-        try {
-          const projectId = entity?.kind === 'project' ? entity.id : undefined;
-          const response = await fetch('/api/ask', {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({
-              query: trimmed,
-              ...(projectId ? { projectId } : {}),
-            }),
-          });
+      try {
+        const projectId = entity?.kind === 'project' ? entity.id : undefined;
+        const response = await fetch('/api/ask', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            query: trimmed,
+            ...(projectId ? { projectId } : {}),
+          }),
+        });
 
-          const answer = await consumeAskStream(response, (text) => {
-            setMessages((prev) =>
-              prev.map((message) =>
-                message.id === assistantId
-                  ? { ...message, content: `${message.content}${text}` }
-                  : message
-              )
-            );
-          });
-
-          if (!answer.trim()) throw new Error('ask_empty_response');
-        } catch {
+        const answer = await consumeAskStream(response, (text) => {
           setMessages((prev) =>
             prev.map((message) =>
               message.id === assistantId
-                ? { ...message, content: t('assist.assistFailed') }
+                ? { ...message, content: `${message.content}${text}` }
                 : message
             )
           );
-          toast({
-            title: t('assist.assistFailed'),
-            description: tErrors('error.description'),
-          });
-        }
-        return;
-      }
+        });
 
-      if (mode === 'build') {
-        // Build mode is stubbed for now — surface a toast so the user knows
-        // the action landed, then still produce an assistant acknowledgement
-        // so the thread stays coherent.
+        if (!answer.trim()) throw new Error('ask_empty_response');
+      } catch {
+        setMessages((prev) =>
+          prev.map((message) =>
+            message.id === assistantId ? { ...message, content: t('assist.assistFailed') } : message
+          )
+        );
         toast({
-          title: t('sidecar.buildStubTitle'),
-          description: t('sidecar.buildStubDescription'),
+          title: t('assist.assistFailed'),
+          description: tErrors('error.description'),
         });
       }
-
-      await new Promise<void>((resolve) => {
-        const timer = setTimeout(() => {
-          timersRef.current.delete(timer);
-          const entityLabel = describeEntity(entity);
-          const reply: SidecarMessage = {
-            id:
-              typeof crypto !== 'undefined' && 'randomUUID' in crypto
-                ? crypto.randomUUID()
-                : `a_${Date.now()}_${Math.random().toString(36).slice(2)}`,
-            role: 'assistant',
-            content: t('sidecar.stubBuild', { prompt: trimmed, entity: entityLabel }),
-            thinking: t('sidecar.stubThinkingBuild', { prompt: trimmed, entity: entityLabel }),
-            createdAt: Date.now(),
-          };
-          setMessages((prev) => [...prev, reply]);
-          resolve();
-        }, 500);
-        timersRef.current.add(timer);
-      });
     },
     [entity, toast, t, tErrors]
   );
@@ -265,7 +217,7 @@ function AiSidecarProviderInner({ children }: { children: ReactNode }) {
       if (typeof prompt !== 'string' || !prompt.trim()) return;
 
       setOpenState(true);
-      void sendMessage(prompt, 'ask');
+      void sendMessage(prompt);
     };
 
     window.addEventListener('tasknebula:ask-ai', onAskAi);

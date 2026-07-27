@@ -4,6 +4,10 @@ AI-native, real-time, keyboard-first project management platform (Jira/Linear al
 Monorepo managed with **pnpm + Turborepo**. Node **>=22**, pnpm **>=9**, TypeScript **5.7** (strict).
 
 > Always use `pnpm` (never `npm`/`yarn`). Run repo-wide commands from the root; they fan out via Turbo.
+>
+> Operator checkouts may contain an ignored `CLAUDE.local.md`. Read it after
+> this guide when present, keep its contents private, and never copy its
+> deployment-specific values into tracked source or public collaboration.
 
 ## Monorepo layout
 
@@ -54,7 +58,8 @@ pnpm openapi:gen      # regenerate public/openapi.json
 - **Branches**: `feature/`, `fix/`, `docs/`, `refactor/`, `test/`.
 - **TypeScript**: explicit types, avoid `any`. Base config is strict; `apps/web` opts out of `exactOptionalPropertyTypes` while ~146 violations are migrated (see `docs/TS_STRICT_MIGRATION.md`). Don't introduce new violations.
 - **Path aliases** (apps/web): `@/*`, `@/components/*`, `@/lib/*`, `@/app/*`.
-- **Design system**: follow `apps/web/DESIGN_SYSTEM.md` (square-ish radii: `rounded-sm`=2px pills, `rounded-md`=4px default, `rounded-lg`=6px cards; semantic `accent-*` colors; spring motion 150–200ms; first-class dark mode). See `.claude/rules/frontend.md`.
+- **Product design**: `apps/web/DESIGN.md` defines page archetypes, hierarchy, anti-slop acceptance criteria, and the evidence loop. `apps/web/DESIGN_SYSTEM.md` is the token/component contract (square-ish radii: `rounded-sm`=2px pills, `rounded-md`=4px default, `rounded-lg`=6px cards; semantic `accent-*` colors; spring motion 150–200ms; first-class dark mode). See `.claude/rules/frontend.md`.
+- **Open-source hygiene**: operator domains, host ports, deployment topology, screenshots, dumps, and temporary notes stay in ignored local files or `/tmp`, never tracked source. Prefer updating a canonical document over adding a one-off report. Run `pnpm hygiene:check`. See `.claude/rules/repository-hygiene.md`.
 - **i18n is MANDATORY — zero hardcoded user-facing strings.** The app ships **30 languages** with device/browser auto-detection. EVERY user-facing string (JSX text **and** props like `placeholder`/`aria-label`/`title`/`alt`/`label`/`description`, plus `toast`/error messages) MUST go through `next-intl` — `useTranslations('ns')` in client components, `await getTranslations('ns')` in async server components. Add the English key to `apps/web/messages/en.json` **and the same key, translated, to all 30 locale catalogs** (`apps/web/messages/*.json`); keep full key parity (`node scripts/i18n-check.mjs`). Preserve ICU placeholders/plurals verbatim. The only English-only surface is the marketing landing (`components/marketing/*`). Lint (`react/jsx-no-literals`) blocks new hardcoded JSX text. **All future work — by any assistant (Claude/Cursor/Codex/…) — must follow this.** See `.claude/rules/frontend.md` and `.cursor/rules/i18n.mdc`.
 
 ## apps/web structure
@@ -75,7 +80,13 @@ pnpm openapi:gen      # regenerate public/openapi.json
 
 - Remote is **SSH**: `git@github.com:neuraparse/taskNebula.git`. Default branch: `main`.
 - **Push work directly to `main`** (`git push origin main`) — this repo's owner prefers no branch/PR ceremony for normal work. Commits are authored as **Neura Parse `<hello@neuraparse.com>`**.
-- Only commit/push when the user asks (push is irreversible/outward-facing). Use Conventional Commit messages (see Conventions).
+- **Publication requires explicit user authorization.** Never push commits or
+  tags, create a GitHub release, or publish Docker images (including moving
+  `latest`) unless the user explicitly requests that outward action in the
+  current task. Approval to deploy an operator checkout does not authorize a
+  GitHub or registry publication, and publication approval for one destination
+  does not imply approval for another. Use Conventional Commit messages (see
+  Conventions).
 - CI (`.github/workflows/ci.yml`) runs type-check, lint, and tests on every push/PR to `main` — but it is minimal and pushes go straight to `main`, so **still verify locally before every push**: `pnpm type-check && pnpm lint && pnpm test` (or `/verify`). This repo is **open-source** — never commit secrets (see `.gitignore` hardening; `.env`, certs, keys, local files are ignored).
 - External contributors still use branches + PRs (`.github/PULL_REQUEST_TEMPLATE.md`); the direct-to-main rule is for the maintainer's own Claude-assisted work.
 

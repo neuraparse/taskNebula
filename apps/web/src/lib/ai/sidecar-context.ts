@@ -24,8 +24,6 @@ export interface SidecarMessage {
   createdAt: number;
 }
 
-export type SidecarMode = 'ask' | 'build';
-
 export interface SidecarContextValue {
   open: boolean;
   setOpen: (next: boolean) => void;
@@ -33,7 +31,7 @@ export interface SidecarContextValue {
   entity: SidecarEntity | null;
   setEntity: (next: SidecarEntity | null) => void;
   messages: SidecarMessage[];
-  sendMessage: (content: string, mode: SidecarMode) => Promise<void>;
+  sendMessage: (content: string) => Promise<void>;
   clear: () => void;
 }
 
@@ -58,22 +56,16 @@ export function useSidecar(): SidecarContextValue {
  *     return () => setEntity(null);
  *   }, [issue.id]);
  */
-export function useSidecarContext(): Pick<
-  SidecarContextValue,
-  'entity' | 'setEntity'
-> {
+export function useSidecarContext(): Pick<SidecarContextValue, 'entity' | 'setEntity'> {
   const { entity, setEntity } = useSidecar();
   return { entity, setEntity };
 }
 
 /** Render-friendly label for the badge in the sidecar header. */
-export function describeEntity(entity: SidecarEntity | null): string {
-  if (!entity) return 'No context';
+export function describeEntity(entity: SidecarEntity): string {
   switch (entity.kind) {
     case 'work_item':
-      return entity.projectKey
-        ? `${entity.projectKey}-${entity.id}`
-        : entity.id;
+      return entity.projectKey ? `${entity.projectKey}-${entity.id}` : entity.id;
     case 'project':
       return entity.name;
     case 'page':

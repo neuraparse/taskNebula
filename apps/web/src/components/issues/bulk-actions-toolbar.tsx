@@ -4,13 +4,11 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Trash2, Edit, UserPlus, Tag, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import {
   Dialog,
@@ -32,7 +30,7 @@ import { Label } from '@/components/ui/label';
 interface BulkActionsToolbarProps {
   selectedIssueIds: string[];
   onClearSelection: () => void;
-  onBulkUpdate: (updates: any) => Promise<void>;
+  onBulkUpdate: (updates: Record<string, string>) => Promise<void>;
   onBulkDelete: () => Promise<void>;
 }
 
@@ -87,7 +85,7 @@ export function BulkActionsToolbar({
   return (
     <>
       <div className="animate-fade-up fixed bottom-6 left-1/2 z-50 -translate-x-1/2">
-        <div className="surface-glass border-border flex items-center gap-3 rounded-full border px-4 py-2.5 shadow-lg">
+        <div className="surface-card border-border flex items-center gap-3 rounded-lg border px-3 py-2 shadow-md">
           <span className="chip-accent text-xs">
             {t('bulk.selected_count', { count: selectedIssueIds.length })}
           </span>

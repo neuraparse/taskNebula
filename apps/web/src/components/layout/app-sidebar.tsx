@@ -434,7 +434,6 @@ export function AppSidebar({
   const isAdminRoute = normalizedPathname.startsWith('/admin');
   const tNav = useTranslations('nav');
   const tHome = useTranslations('pagesHome');
-  const tActions = useTranslations('actions');
   const tCommon = useTranslations('common');
   const tLayout = useTranslations('layoutNav');
   const { data: session } = useSession();
@@ -577,18 +576,14 @@ export function AppSidebar({
       <AppRail hasWorkspaceAccess={hasWorkspaceAccess} isSuperAdmin={isSuperAdmin} />
       <aside className="border-border bg-background flex w-64 flex-col border-r">
         <div className="bg-surface-dark border-border-strong flex h-12 items-center border-b px-3 text-white">
-          <button
-            className="ease-snap flex w-full items-center justify-between rounded-md px-1 py-1.5 text-sm font-medium transition-all duration-150 hover:bg-white/10"
-            aria-label={tActions('switch_workspace')}
-          >
+          <div className="flex w-full items-center px-1 py-1.5 text-sm font-medium">
             <div className="flex items-center gap-2.5">
               <div className="bg-primary flex h-7 w-7 shrink-0 items-center justify-center rounded-md">
                 <TaskNebulaLogo compact className="h-5 w-5" />
               </div>
               <span className="font-semibold tracking-tight text-white">TaskNebula</span>
             </div>
-            <ChevronDown className="h-4 w-4 text-white/55" />
-          </button>
+          </div>
         </div>
 
         <nav
@@ -790,16 +785,16 @@ export function AppSidebar({
                     )}
                     <span className="kicker">{tNav('projects')}</span>
                   </button>
-                  <Link href="/projects">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-muted-foreground hover:text-foreground h-6 w-6 rounded-sm"
-                      aria-label={tNav('projects')}
-                    >
+                  <Button
+                    asChild
+                    variant="ghost"
+                    size="icon"
+                    className="text-muted-foreground hover:text-foreground h-6 w-6 rounded-sm"
+                  >
+                    <Link href="/projects" aria-label={tNav('projects')}>
                       <Plus className="h-3 w-3" />
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 </div>
                 {isProjectsOpen ? (
                   <div className="space-y-0.5">
@@ -1345,12 +1340,17 @@ function SidebarVoiceWorkspace({
         </div>
 
         <div className="flex items-center gap-1">
-          <Link href={currentTarget.roomHref} className="min-w-0 flex-1">
-            <Button size="sm" variant="outline" className="h-6 w-full rounded-sm px-2 text-[11px]">
+          <Button
+            asChild
+            size="sm"
+            variant="outline"
+            className="h-6 min-w-0 flex-1 rounded-sm px-2 text-[11px]"
+          >
+            <Link href={currentTarget.roomHref}>
               <PhoneCall className="mr-1 h-3 w-3" />
               {tLayout('voice.room')}
-            </Button>
-          </Link>
+            </Link>
+          </Button>
           <Button
             size="sm"
             variant="outline"
@@ -1700,6 +1700,7 @@ function SidebarVoiceFallbackCard({
           variant="ghost"
           className="text-muted-foreground h-6 w-6 rounded-sm px-0"
           onClick={onOpenVoiceSettings}
+          aria-label={tLayout('voice.openVoiceSettings')}
         >
           <SlidersHorizontal className="h-3.5 w-3.5" />
         </Button>
@@ -1710,18 +1711,24 @@ function SidebarVoiceFallbackCard({
       </div>
 
       <div className="flex items-center gap-1">
-        <Link href={currentTarget.roomHref} className="min-w-0 flex-1">
-          <Button size="sm" variant="outline" className="h-6 w-full rounded-sm px-2 text-[11px]">
+        <Button
+          asChild
+          size="sm"
+          variant="outline"
+          className="h-6 min-w-0 flex-1 rounded-sm px-2 text-[11px]"
+        >
+          <Link href={currentTarget.roomHref}>
             <PhoneCall className="mr-1 h-3 w-3" />
             {tLayout('voice.room')}
-          </Button>
-        </Link>
+          </Link>
+        </Button>
         <Button
           size="sm"
           variant="outline"
           className="h-6 w-6 rounded-sm px-0"
           onClick={onToggleMicrophone}
           disabled={isConnecting || isTogglingMicrophone}
+          aria-label={isMicrophoneEnabled ? tLayout('voice.muteMic') : tLayout('voice.unmuteMic')}
         >
           {isTogglingMicrophone ? (
             <Loader2 className="h-3 w-3 animate-spin" />
@@ -1736,6 +1743,7 @@ function SidebarVoiceFallbackCard({
           variant="outline"
           className="h-6 w-6 rounded-sm px-0"
           onClick={onLeaveCurrentCall}
+          aria-label={tLayout('voice.leaveCall')}
         >
           <PhoneOff className="h-3 w-3" />
         </Button>

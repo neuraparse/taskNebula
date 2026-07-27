@@ -3,7 +3,7 @@
 import { Menu, Search } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { OrganizationSwitcher } from '@/components/organization/organization-switcher';
 import { UserProfileDropdown } from '@/components/user/user-profile-dropdown';
 import { NotificationBell } from '@/components/notifications/notification-bell';
@@ -36,6 +36,7 @@ export function MobileHeader({ title, showSearch = false, onSearchClick }: Mobil
             side="left"
             className="animate-slide-in-from-left border-border bg-surface w-72 rounded-r-lg border-r"
           >
+            <SheetTitle className="sr-only">{t('openMenu')}</SheetTitle>
             <div className="space-y-4 py-4">
               <div className="px-2">
                 <OrganizationSwitcher />

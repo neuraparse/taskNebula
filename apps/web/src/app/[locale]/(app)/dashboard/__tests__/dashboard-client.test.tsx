@@ -122,7 +122,7 @@ describe('DashboardClient', () => {
     expect(await screen.findByText('Ship dashboard refresh')).toBeInTheDocument();
     expect(document.querySelector('.dashboard-carbon')).toHaveClass('min-w-0', 'overflow-hidden');
     expect(screen.getByText('Ship dashboard refresh').closest('button')).toHaveClass('min-w-0');
-    expect(screen.getByRole('button', { name: /my issues/i })).toHaveClass('rounded-none');
+    expect(screen.getByRole('link', { name: /my issues/i })).toHaveAttribute('href', '/my-issues');
   });
 
   it('shows the empty state when no issues are returned', async () => {

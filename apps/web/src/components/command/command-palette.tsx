@@ -505,10 +505,8 @@ export function CommandPalette({
       <DialogContent
         onKeyDown={onContentKeyDown}
         className={cn(
-          'w-[92vw] max-w-2xl gap-0 overflow-hidden border-0 p-0',
-          'left-[50%] top-[18vh] translate-x-[-50%] translate-y-0',
-          // Theme-aware glass surface (light: frosted white, dark: frosted dark).
-          'glass-panel'
+          'w-[92vw] max-w-2xl gap-0 overflow-hidden p-0',
+          'left-[50%] top-[18vh] translate-x-[-50%] translate-y-0'
         )}
       >
         <DialogTitle className="sr-only">{t('paletteTitle')}</DialogTitle>

@@ -11,7 +11,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import {
   useNotifications,
@@ -108,9 +107,8 @@ export function NotificationsInboxShell({
 }: NotificationsInboxShellProps) {
   const t = useTranslations('notifications');
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
-  const { data, isLoading, isFetching, isError, error, refetch } = useNotifications();
+  const { data, isLoading, isFetching, isError, refetch } = useNotifications();
   const markAsRead = useMarkNotificationAsRead();
   const markAllAsRead = useMarkAllNotificationsAsRead();
 
@@ -167,43 +165,6 @@ export function NotificationsInboxShell({
     [markAsRead]
   );
 
-  // Stub: backend endpoint not wired yet — surface intent via toast.
-  const handleMarkUnread = useCallback(
-    (id: string) => {
-      toast({
-        title: t('shell.toast.mark_unread_title'),
-        description: t('shell.toast.mark_unread_description'),
-      });
-      // eslint-disable-next-line no-console
-      console.info('[notifications] mark-unread stub', { id });
-    },
-    [toast, t]
-  );
-
-  const handleArchive = useCallback(
-    (id: string) => {
-      toast({
-        title: t('shell.toast.archive_title'),
-        description: t('shell.toast.archive_description'),
-      });
-      // eslint-disable-next-line no-console
-      console.info('[notifications] archive stub', { id });
-    },
-    [toast, t]
-  );
-
-  const handleSnooze = useCallback(
-    (id: string) => {
-      toast({
-        title: t('shell.toast.snooze_title'),
-        description: t('shell.toast.snooze_description'),
-      });
-      // eslint-disable-next-line no-console
-      console.info('[notifications] snooze stub', { id });
-    },
-    [toast, t]
-  );
-
   const handleRefresh = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['notifications'] });
     void refetch();
@@ -254,7 +215,7 @@ export function NotificationsInboxShell({
               <span className="text-muted-foreground text-sm tabular-nums">
                 {totalCount}
                 {unreadCount > 0 && (
-                  <span className="bg-primary/10 text-primary ml-1.5 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium">
+                  <span className="bg-primary/10 text-primary ml-1.5 inline-flex items-center rounded-sm px-2 py-0.5 text-[11px] font-medium">
                     {t('shell.unread_count', { count: unreadCount })}
                   </span>
                 )}
@@ -280,7 +241,7 @@ export function NotificationsInboxShell({
       <div
         className={cn(
           'border-border/60 bg-background flex min-h-0 flex-1 overflow-hidden border',
-          isPage ? 'mx-4 mb-4 rounded-xl shadow-sm md:mx-0 md:mb-0' : 'rounded-lg'
+          isPage ? 'mx-4 mb-4 rounded-lg md:mx-0 md:mb-0' : 'rounded-lg'
         )}
       >
         {/* Left pane: list. Hidden on mobile when a detail is active. */}
@@ -325,9 +286,6 @@ export function NotificationsInboxShell({
                 selectedId={selectedId}
                 onSelect={handleSelect}
                 onMarkRead={handleMarkRead}
-                onMarkUnread={handleMarkUnread}
-                onArchive={handleArchive}
-                onSnooze={handleSnooze}
               />
             )}
           </ScrollArea>
@@ -364,9 +322,6 @@ export function NotificationsInboxShell({
               notification={selected}
               related={notifications}
               onMarkRead={handleMarkRead}
-              onMarkUnread={handleMarkUnread}
-              onArchive={handleArchive}
-              onSnooze={handleSnooze}
             />
           )}
         </div>
@@ -431,10 +386,9 @@ function InboxEmptyState() {
     <div className="flex h-full min-h-[320px] flex-col items-center justify-center gap-4 px-8 py-16 text-center">
       <div
         aria-hidden="true"
-        className="ring-border/60 relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500/15 via-violet-500/10 to-transparent ring-1"
+        className="bg-muted text-muted-foreground flex h-10 w-10 items-center justify-center rounded-md"
       >
-        <Inbox className="h-7 w-7 text-indigo-500" strokeWidth={1.5} />
-        <span className="ring-background absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-violet-500/60 ring-2" />
+        <Inbox className="h-4 w-4" strokeWidth={1.5} />
       </div>
       <div className="space-y-1">
         <p className="text-foreground text-sm font-semibold">{t('shell.empty_state.title')}</p>
@@ -462,7 +416,7 @@ function FilteredEmptyState({
   const t = useTranslations('notifications');
   return (
     <div className="flex h-full min-h-[240px] flex-col items-center justify-center gap-3 px-8 py-14 text-center">
-      <div className="bg-muted text-muted-foreground flex h-10 w-10 items-center justify-center rounded-full">
+      <div className="bg-muted text-muted-foreground flex h-10 w-10 items-center justify-center rounded-md">
         <BellOff className="h-4 w-4" aria-hidden="true" />
       </div>
       <p className="text-muted-foreground text-sm">{copy}</p>
@@ -493,7 +447,7 @@ function InboxErrorState({
         variant === 'list' ? 'min-h-[280px] py-14' : 'h-full py-16'
       )}
     >
-      <div className="bg-destructive/10 text-destructive ring-destructive/30 flex h-10 w-10 items-center justify-center rounded-full ring-1">
+      <div className="bg-destructive/10 text-destructive ring-destructive/30 flex h-10 w-10 items-center justify-center rounded-md ring-1">
         <AlertTriangle className="h-4 w-4" aria-hidden="true" />
       </div>
       <div className="space-y-1">

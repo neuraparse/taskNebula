@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   verify:
-    name: Type-check, lint & test
+    name: Product gates, type-check, lint & test
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -42,6 +42,15 @@ jobs:
       # points at dist/ — build it first or type-check fails on a fresh clone.
       - name: Build workspace packages consumed via dist
         run: pnpm --filter @tasknebula/mcp-server build
+
+      - name: Verify web i18n catalog parity
+        run: node scripts/i18n-check.mjs
+
+      - name: Verify open-source repository hygiene
+        run: pnpm hygiene:check
+
+      - name: Verify web UI design contract
+        run: pnpm ui:check
 
       - name: Type-check
         run: pnpm type-check

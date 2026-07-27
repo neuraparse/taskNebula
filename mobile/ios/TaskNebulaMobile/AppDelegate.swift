@@ -1,6 +1,5 @@
 import UIKit
 import React
-import React_RCTLinking
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
 import livekit_react_native

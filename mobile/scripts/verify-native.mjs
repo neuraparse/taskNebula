@@ -352,6 +352,13 @@ assert(
   'Android release build must not use the debug signing config.',
 );
 
+const androidGradleProperties = read('android/gradle.properties');
+assertIncludes(
+  androidGradleProperties,
+  'edgeToEdgeEnabled=true',
+  'Android must explicitly opt into edge-to-edge behavior for target SDK 36.',
+);
+
 const androidStyles = read('android/app/src/main/res/values/styles.xml');
 assertIncludes(
   androidStyles,
@@ -542,10 +549,9 @@ assertIncludes(
   'withModuleName: "TaskNebulaMobile"',
   'iOS AppDelegate module name must match app.json.',
 );
-assertIncludes(
-  appDelegate,
-  'import React_RCTLinking',
-  'iOS AppDelegate must import React_RCTLinking for native deep links.',
+assert(
+  !appDelegate.includes('import React_RCTLinking'),
+  'iOS AppDelegate must not import the unavailable React_RCTLinking Swift module.',
 );
 assertIncludes(
   appDelegate,
@@ -579,6 +585,9 @@ assertIncludes(
 );
 
 const xcodeProject = read('ios/TaskNebulaMobile.xcodeproj/project.pbxproj');
+const xcodeScheme = read(
+  'ios/TaskNebulaMobile.xcodeproj/xcshareddata/xcschemes/TaskNebulaMobile.xcscheme',
+);
 assertIncludes(
   xcodeProject,
   'InfoPlist.strings in Resources',
@@ -613,10 +622,49 @@ for (const locale of expectedLocales) {
     `iOS Xcode project must reference ${locale}.lproj/InfoPlist.strings.`,
   );
 }
+assertMatches(
+  xcodeProject,
+  /PRODUCT_BUNDLE_IDENTIFIER\s*=\s*"?io\.tasknebula\.app"?\s*;/,
+  'iOS bundle identifier must stay io.tasknebula.app, with or without Xcode quoting.',
+);
+assert(
+  !xcodeScheme.includes('<TestAction') && !xcodeScheme.includes('<TestableReference'),
+  'iOS scheme must not reference a test target that is absent from the project.',
+);
 assertIncludes(
   xcodeProject,
-  'PRODUCT_BUNDLE_IDENTIFIER = "io.tasknebula.app";',
-  'iOS bundle identifier must stay io.tasknebula.app.',
+  'CODE_SIGN_STYLE = Automatic;',
+  'iOS target must use automatic signing so Xcode can resolve a device/archive profile.',
+);
+assertIncludes(
+  xcodeProject,
+  'DEVELOPMENT_TEAM = "$(TASKNEBULA_DEVELOPMENT_TEAM)";',
+  'iOS target must accept the real Apple development team through TASKNEBULA_DEVELOPMENT_TEAM.',
+);
+assertIncludes(
+  xcodeProject,
+  'PROVISIONING_PROFILE_SPECIFIER = "$(TASKNEBULA_PROVISIONING_PROFILE_SPECIFIER)";',
+  'iOS target must accept a manual provisioning profile through TASKNEBULA_PROVISIONING_PROFILE_SPECIFIER.',
+);
+assertIncludes(
+  xcodeProject,
+  'CODE_SIGN_ENTITLEMENTS = TaskNebulaMobile/TaskNebulaMobile.entitlements;',
+  'iOS target must use the checked entitlements file for device/archive signing.',
+);
+assert(
+  !xcodeProject.includes('"-lc++"'),
+  'iOS target must not add a duplicate -lc++ linker flag already supplied by React Native pods.',
+);
+const entitlements = read('ios/TaskNebulaMobile/TaskNebulaMobile.entitlements');
+assertMatches(
+  entitlements,
+  /<plist[\s\S]*<dict>[\s\S]*<\/dict>[\s\S]*<\/plist>/,
+  'iOS entitlements file must be a valid plist.',
+);
+const appSource = read('App.tsx');
+assert(
+  !/<StatusBar[^>]*\bbackgroundColor=/.test(appSource),
+  'Android edge-to-edge screens must not set StatusBar.backgroundColor, which is ignored by the OS.',
 );
 assertIncludes(
   xcodeProject,

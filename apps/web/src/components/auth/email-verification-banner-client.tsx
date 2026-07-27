@@ -124,8 +124,7 @@ export function EmailVerificationBannerClient({ email: _email }: { email: string
       aria-live="polite"
       className={cn(
         'relative flex flex-wrap items-center justify-between gap-x-4 gap-y-2',
-        'border-b border-indigo-500/15 px-4 py-2 sm:px-6',
-        'bg-gradient-to-r from-indigo-500/[0.06] via-violet-500/[0.05] to-transparent',
+        'border-accent-indigo/20 bg-accent-indigo/5 border-b px-4 py-2 sm:px-6',
         'text-foreground text-sm'
       )}
     >

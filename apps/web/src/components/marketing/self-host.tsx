@@ -1,5 +1,3 @@
-import { Container, Database, HeartPulse, Package } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { CopyButton } from './copy-button';
 import { DOCKER_HUB_URL, SectionHeader, Shell } from './primitives';
@@ -10,28 +8,7 @@ const QUICKSTART_LINES = [
   'docker compose up -d',
 ] as const;
 
-const checklist: Array<{ icon: LucideIcon; tone: string; key: string }> = [
-  {
-    icon: Database,
-    tone: 'blue',
-    key: 'postgres',
-  },
-  {
-    icon: Package,
-    tone: 'violet',
-    key: 'migrations',
-  },
-  {
-    icon: HeartPulse,
-    tone: 'emerald',
-    key: 'health',
-  },
-  {
-    icon: Container,
-    tone: 'amber',
-    key: 'pin',
-  },
-];
+const checklist = ['postgres', 'migrations', 'health', 'pin'] as const;
 
 export function SelfHost() {
   const t = useTranslations('publicPages.landing.selfHost');
@@ -48,24 +25,21 @@ export function SelfHost() {
               description={t('description')}
               compact
             />
-            <div className="stagger mt-8 grid gap-3 sm:grid-cols-2">
-              {checklist.map(({ icon: Icon, tone, key }) => (
-                <div
+            <ul className="mt-8 border-t border-[var(--landing-border)]">
+              {checklist.map((key) => (
+                <li
                   key={key}
-                  className="rounded-md border border-[var(--landing-border)] bg-[var(--landing-bg-surface)] p-4"
+                  className="grid gap-1 border-b border-[var(--landing-border)] py-4 sm:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)] sm:gap-6"
                 >
-                  <div className={`icon-tile icon-tile-accent-${tone} h-9 w-9`}>
-                    <Icon className="h-4 w-4" aria-hidden="true" />
-                  </div>
-                  <p className="mt-3 text-[13px] font-[500] text-[var(--landing-text-dark)]">
+                  <p className="text-[13px] font-[500] text-[var(--landing-text-dark)]">
                     {t(`cards.${key}.title`)}
                   </p>
-                  <p className="mt-1.5 text-[12px] leading-5 text-[var(--landing-text-subtle)]">
+                  <p className="text-[12px] leading-5 text-[var(--landing-text-subtle)]">
                     {t(`cards.${key}.body`)}
                   </p>
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
 
           <div className="landing-terminal overflow-hidden">

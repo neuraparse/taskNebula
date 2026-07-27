@@ -1,6 +1,6 @@
 # TaskNebula — Project Status
 
-**Last updated:** 2026-07-11 · **Version:** 0.7.11 · **Status:** Beta, self-hostable (Docker Hub `neuraparse/tasknebula`)
+**Last updated:** 2026-07-27 · **Version:** 0.13.0 · **Status:** Beta, self-hostable (Docker Hub `neuraparse/tasknebula`)
 
 > This is a short, honest snapshot. For the full picture use:
 >
@@ -8,7 +8,7 @@
 > - **`docs/ROADMAP_2026.md`** — per-item status of the 2026 plan (#1–27) and the H2-2026 extension (#28–50).
 > - **`CHANGELOG.md`** — what shipped, release by release.
 
-## By the numbers (at v0.7.11, current tree)
+## By the numbers (at v0.13.0, current tree)
 
 | Metric                                         | Value                                                                                                             |
 | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |

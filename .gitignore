@@ -603,6 +603,21 @@ data-dump/
 
 # Local UI audit screenshots — never commit
 .ui-audit/
+screenshots/
+screen-captures/
+artifacts/
+/screenshot*.png
+/capture*.png
+/tmp-*.png
+
+# Ephemeral agent/operator markdown — durable guidance belongs in an existing
+# canonical README, CLAUDE.md, DESIGN.md, or docs/ page.
+/AGENTS.local.md
+/CLAUDE.local.md
+*.scratch.md
+*.handoff.md
+*.private.md
+*.local.md
 
 # Local scratch/diagnostic scripts — never commit
 apps/web/_*.mjs

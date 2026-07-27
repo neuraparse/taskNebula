@@ -144,7 +144,7 @@ export function CommentItem({ comment, issueId, currentUserId, isAgent }: Commen
   return (
     <div className="group flex gap-3">
       {isAgent ? (
-        <div className="bg-gradient-primary flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white">
+        <div className="bg-foreground text-background flex h-7 w-7 shrink-0 items-center justify-center rounded-full">
           <Bot className="h-3.5 w-3.5" />
         </div>
       ) : (
@@ -157,7 +157,7 @@ export function CommentItem({ comment, issueId, currentUserId, isAgent }: Commen
         <div className="flex items-baseline gap-2">
           <span className="text-sm font-medium">{authorName}</span>
           {isAgent && (
-            <span className="rounded-full bg-violet-100 px-1.5 text-[9px] font-semibold tracking-wider text-violet-700">
+            <span className="bg-muted text-muted-foreground rounded-sm px-1.5 text-[9px] font-semibold tracking-wider">
               {t('agentBadge')}
             </span>
           )}

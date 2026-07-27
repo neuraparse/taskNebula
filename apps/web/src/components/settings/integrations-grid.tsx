@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { useOrganization } from '@/lib/hooks/use-organization';
 import { cn } from '@/lib/utils';
 
@@ -380,16 +381,24 @@ function IntegrationCard({ integration, footer, accountLabel }: IntegrationCardP
   const card = (
     <article
       className={cn(
-        'border-border bg-card group relative rounded-xl border p-5 transition-all',
-        isInteractive && 'hover:border-foreground/20 hover:shadow-sm'
+        'group relative p-4 transition-colors duration-150 sm:p-5',
+        isInteractive && 'hover:bg-muted/30'
       )}
     >
       <div className="flex items-start gap-3">
-        <div className="bg-muted/50 flex h-11 w-11 items-center justify-center rounded-lg">
-          <Icon className="h-6 w-6" />
+        <div className="bg-muted/50 flex h-9 w-9 shrink-0 items-center justify-center rounded-md">
+          <Icon className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="text-[14px] font-semibold leading-tight">{name}</h3>
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-[14px] font-semibold leading-tight">{name}</h3>
+            {status === 'connected' && (
+              <Badge variant="success">{t('integrations.connected')}</Badge>
+            )}
+            {status === 'coming_soon' && (
+              <Badge variant="muted">{t('integrations.coming_soon')}</Badge>
+            )}
+          </div>
           <p className="text-muted-foreground mt-1 text-[12.5px] leading-snug">{description}</p>
           {accountLabel && (
             <p className="text-foreground/80 mt-1 truncate text-[11.5px] font-medium">
@@ -398,16 +407,6 @@ function IntegrationCard({ integration, footer, accountLabel }: IntegrationCardP
           )}
         </div>
       </div>
-      {status === 'connected' && (
-        <Badge variant="success" className="absolute right-4 top-4">
-          {t('integrations.connected')}
-        </Badge>
-      )}
-      {status === 'coming_soon' && (
-        <Badge variant="muted" className="absolute right-4 top-4">
-          {t('integrations.coming_soon')}
-        </Badge>
-      )}
       {footer && <div className="mt-4 flex items-center gap-2">{footer}</div>}
     </article>
   );
@@ -416,7 +415,7 @@ function IntegrationCard({ integration, footer, accountLabel }: IntegrationCardP
     return (
       <Link
         href={href}
-        className="focus-visible:ring-ring focus-visible:ring-offset-background block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+        className="focus-visible:ring-ring block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset"
       >
         {card}
       </Link>
@@ -574,13 +573,16 @@ function GitLabIntegrationCard({ integration }: IntegrationCardProps) {
   };
 
   return (
-    <article className="border-border bg-card hover:border-foreground/20 group relative rounded-xl border p-5 transition-all hover:shadow-sm">
+    <article className="hover:bg-muted/30 group relative p-4 transition-colors duration-150 sm:p-5">
       <div className="flex items-start gap-3">
-        <div className="bg-muted/50 flex h-11 w-11 items-center justify-center rounded-lg">
-          <Icon className="h-6 w-6" />
+        <div className="bg-muted/50 flex h-9 w-9 shrink-0 items-center justify-center rounded-md">
+          <Icon className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="text-[14px] font-semibold leading-tight">{name}</h3>
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-[14px] font-semibold leading-tight">{name}</h3>
+            {connected && <Badge variant="success">{t('integrations.connected')}</Badge>}
+          </div>
           <p className="text-muted-foreground mt-1 text-[12.5px] leading-snug">{description}</p>
           {connected && accountLabel && (
             <p className="text-muted-foreground mt-1 text-[11.5px]">
@@ -617,11 +619,6 @@ function GitLabIntegrationCard({ integration }: IntegrationCardProps) {
           </div>
         </div>
       </div>
-      {connected && (
-        <Badge variant="success" className="absolute right-4 top-4">
-          {t('integrations.connected')}
-        </Badge>
-      )}
     </article>
   );
 }
@@ -711,13 +708,16 @@ function JiraIntegrationCard({ integration }: IntegrationCardProps) {
   };
 
   return (
-    <article className="border-border bg-card hover:border-foreground/20 group relative rounded-xl border p-5 transition-all hover:shadow-sm">
+    <article className="hover:bg-muted/30 group relative p-4 transition-colors duration-150 sm:p-5">
       <div className="flex items-start gap-3">
-        <div className="bg-muted/50 flex h-11 w-11 items-center justify-center rounded-lg">
-          <Icon className="h-6 w-6" />
+        <div className="bg-muted/50 flex h-9 w-9 shrink-0 items-center justify-center rounded-md">
+          <Icon className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="text-[14px] font-semibold leading-tight">{name}</h3>
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-[14px] font-semibold leading-tight">{name}</h3>
+            {connected && <Badge variant="success">{t('integrations.connected')}</Badge>}
+          </div>
           <p className="text-muted-foreground mt-1 text-[12.5px] leading-snug">{description}</p>
           {connected && accountLabel && (
             <p className="text-muted-foreground mt-1 text-[11.5px]">
@@ -767,11 +767,6 @@ function JiraIntegrationCard({ integration }: IntegrationCardProps) {
           </div>
         </div>
       </div>
-      {connected && (
-        <Badge variant="success" className="absolute right-4 top-4">
-          {t('integrations.connected')}
-        </Badge>
-      )}
     </article>
   );
 }
@@ -874,13 +869,16 @@ function GitHubIntegrationCard({ integration }: IntegrationCardProps) {
   };
 
   return (
-    <article className="border-border bg-card hover:border-foreground/20 group relative rounded-xl border p-5 transition-all hover:shadow-sm">
+    <article className="hover:bg-muted/30 group relative p-4 transition-colors duration-150 sm:p-5">
       <div className="flex items-start gap-3">
-        <div className="bg-muted/50 flex h-11 w-11 items-center justify-center rounded-lg">
-          <Icon className="h-6 w-6" />
+        <div className="bg-muted/50 flex h-9 w-9 shrink-0 items-center justify-center rounded-md">
+          <Icon className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="text-[14px] font-semibold leading-tight">{name}</h3>
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-[14px] font-semibold leading-tight">{name}</h3>
+            {connected && <Badge variant="success">{t('integrations.connected')}</Badge>}
+          </div>
           <p className="text-muted-foreground mt-1 text-[12.5px] leading-snug">{description}</p>
           {connected && accountLabel && (
             <p className="text-muted-foreground mt-1 text-[11.5px]">
@@ -917,11 +915,6 @@ function GitHubIntegrationCard({ integration }: IntegrationCardProps) {
           </div>
         </div>
       </div>
-      {connected && (
-        <Badge variant="success" className="absolute right-4 top-4">
-          {t('integrations.connected')}
-        </Badge>
-      )}
     </article>
   );
 }
@@ -1027,13 +1020,16 @@ function SentryIntegrationCard({ integration }: IntegrationCardProps) {
   };
 
   return (
-    <article className="border-border bg-card hover:border-foreground/20 group relative rounded-xl border p-5 transition-all hover:shadow-sm">
+    <article className="hover:bg-muted/30 group relative p-4 transition-colors duration-150 sm:p-5">
       <div className="flex items-start gap-3">
-        <div className="bg-muted/50 flex h-11 w-11 items-center justify-center rounded-lg">
-          <Icon className="h-6 w-6" />
+        <div className="bg-muted/50 flex h-9 w-9 shrink-0 items-center justify-center rounded-md">
+          <Icon className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="text-[14px] font-semibold leading-tight">{name}</h3>
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-[14px] font-semibold leading-tight">{name}</h3>
+            {connected && <Badge variant="success">{t('integrations.connected')}</Badge>}
+          </div>
           <p className="text-muted-foreground mt-1 text-[12.5px] leading-snug">{description}</p>
           {connected && accountLabel && (
             <p className="text-muted-foreground mt-1 text-[11.5px]">
@@ -1083,11 +1079,6 @@ function SentryIntegrationCard({ integration }: IntegrationCardProps) {
           </div>
         </div>
       </div>
-      {connected && (
-        <Badge variant="success" className="absolute right-4 top-4">
-          {t('integrations.connected')}
-        </Badge>
-      )}
     </article>
   );
 }
@@ -1195,21 +1186,14 @@ export function IntegrationsGrid({ integrations = INTEGRATIONS }: IntegrationsGr
   };
 
   return (
-    <div className="space-y-4">
-      <div>
-        <input
-          type="search"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder={t('integrations.search_placeholder')}
-          aria-label={t('integrations.search_placeholder')}
-          className={cn(
-            'border-border bg-background w-full rounded-lg border px-3 py-2 text-sm',
-            'placeholder:text-muted-foreground',
-            'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2'
-          )}
-        />
-      </div>
+    <div className="space-y-3">
+      <Input
+        type="search"
+        value={search}
+        onChange={(event) => setSearch(event.target.value)}
+        placeholder={t('integrations.search_placeholder')}
+        aria-label={t('integrations.search_placeholder')}
+      />
 
       <div
         className="flex flex-wrap gap-1.5"
@@ -1226,10 +1210,10 @@ export function IntegrationsGrid({ integrations = INTEGRATIONS }: IntegrationsGr
               aria-selected={isActive}
               onClick={() => setActiveCategory(chip.value)}
               className={cn(
-                'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+                'rounded-sm border px-3 py-1 text-xs font-medium transition-colors duration-150',
                 isActive
-                  ? 'border-foreground bg-foreground text-background'
-                  : 'border-border bg-background text-muted-foreground hover:text-foreground'
+                  ? 'border-primary/20 bg-primary/10 text-primary'
+                  : 'border-border bg-background text-muted-foreground hover:bg-muted/40 hover:text-foreground'
               )}
             >
               {t(chip.labelKey)}
@@ -1239,12 +1223,12 @@ export function IntegrationsGrid({ integrations = INTEGRATIONS }: IntegrationsGr
       </div>
 
       {filtered.length === 0 ? (
-        <div className="border-border bg-card/40 rounded-xl border border-dashed p-10 text-center">
+        <div className="border-border bg-card/40 rounded-lg border border-dashed p-10 text-center">
           <p className="text-foreground text-sm font-medium">{t('integrations.empty_title')}</p>
           <p className="text-muted-foreground mt-1 text-xs">{t('integrations.empty_desc')}</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="divide-border bg-card divide-y overflow-hidden rounded-lg border">
           {filtered.map((integration) => renderCard(integration))}
         </div>
       )}

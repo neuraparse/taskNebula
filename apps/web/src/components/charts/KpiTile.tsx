@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * KpiTile — reusable KPI card with value, delta and sparkline.
+ * KpiTile — reusable KPI reading with value, delta and sparkline.
  *
  * Layout: large metric value on the left, trend pill underneath, sparkline
  * on the right. Built on Recharts for the spark and Tailwind for chrome.
@@ -93,7 +93,7 @@ export function KpiTile({
       className={cn(
         'surface-card ease-snap group relative flex h-full min-h-[128px] w-full flex-col gap-2 p-4 text-left transition-all duration-150',
         onClick &&
-          'focus-visible:ring-ring hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2',
+          'focus-visible:ring-ring hover:bg-surface focus-visible:outline-none focus-visible:ring-2',
         className
       )}
       aria-label={onClick ? `${label}: ${value}` : undefined}

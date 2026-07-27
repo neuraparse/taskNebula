@@ -65,28 +65,22 @@ function NotificationRow({
     (notification.actor?.name || notification.actor?.email || '?')[0]?.toUpperCase() ?? '?';
 
   const isMention = notification.type === 'mention' || notification.type === 'comment';
+  const href = notification.issueId
+    ? `/issues/${notification.issueId}`
+    : (notification.type === 'ai_draft_failed' || notification.type === 'agent_run_failed') &&
+        notification.projectId
+      ? `/projects/${notification.projectId}/settings?tab=ai-agents`
+      : null;
 
-  const body = (
-    <div
-      className={cn(
-        'row-interactive ease-snap relative flex items-start gap-3 px-4 py-3 pr-3 transition-all duration-150',
-        !notification.isRead && 'bg-primary/[0.04]'
-      )}
-    >
-      {!notification.isRead && (
-        <span
-          aria-hidden="true"
-          className="from-primary to-primary/60 absolute bottom-0 left-0 top-0 w-[2px] bg-gradient-to-b"
-        />
-      )}
-
-      <div className={cn('relative shrink-0', !notification.isRead && 'realtime-ping')}>
+  const primaryContent = (
+    <>
+      <div className="relative shrink-0">
         {notification.type === 'ai_draft_failed' ? (
-          <span className="bg-destructive/10 text-destructive ring-destructive/30 flex h-8 w-8 items-center justify-center rounded-full ring-1">
+          <span className="bg-destructive/10 text-destructive ring-destructive/30 flex h-8 w-8 items-center justify-center rounded-md ring-1">
             <Sparkles className="h-3.5 w-3.5" />
           </span>
         ) : notification.type === 'agent_run_failed' ? (
-          <span className="bg-destructive/10 text-destructive ring-destructive/30 flex h-8 w-8 items-center justify-center rounded-full ring-1">
+          <span className="bg-destructive/10 text-destructive ring-destructive/30 flex h-8 w-8 items-center justify-center rounded-md ring-1">
             <Bot className="h-3.5 w-3.5" />
           </span>
         ) : (
@@ -113,6 +107,37 @@ function NotificationRow({
           </span>
         </p>
       </div>
+    </>
+  );
+
+  const handleClick = () => {
+    if (!notification.isRead) onMarkRead(notification.id);
+    onSelect();
+  };
+
+  const primaryClassName =
+    'flex min-w-0 flex-1 items-start gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset';
+
+  return (
+    <div
+      className={cn(
+        'row-interactive group/row ease-snap relative flex items-start gap-3 px-4 py-3 pr-3 transition-all duration-150',
+        !notification.isRead && 'bg-primary/[0.04]'
+      )}
+    >
+      {!notification.isRead && (
+        <span aria-hidden="true" className="bg-primary/70 absolute bottom-0 left-0 top-0 w-[2px]" />
+      )}
+
+      {href ? (
+        <Link href={href} onClick={handleClick} role="menuitem" className={primaryClassName}>
+          {primaryContent}
+        </Link>
+      ) : (
+        <button type="button" role="menuitem" onClick={handleClick} className={primaryClassName}>
+          {primaryContent}
+        </button>
+      )}
 
       <div className="flex shrink-0 flex-col items-end gap-1.5">
         <time
@@ -137,65 +162,6 @@ function NotificationRow({
           </button>
         )}
       </div>
-    </div>
-  );
-
-  const handleClick = () => {
-    if (!notification.isRead) onMarkRead(notification.id);
-    onSelect();
-  };
-
-  const interactiveClass =
-    'group/row block cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset';
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      handleClick();
-    }
-  };
-
-  if (notification.issueId) {
-    return (
-      <Link
-        href={`/issues/${notification.issueId}`}
-        onClick={handleClick}
-        role="menuitem"
-        className={interactiveClass}
-      >
-        {body}
-      </Link>
-    );
-  }
-
-  // AI/agent failure notifications deep-link to the project AI settings
-  // so the reader can inspect/fix the config that caused the failure.
-  if (
-    (notification.type === 'ai_draft_failed' || notification.type === 'agent_run_failed') &&
-    notification.projectId
-  ) {
-    return (
-      <Link
-        href={`/projects/${notification.projectId}/settings?tab=ai-agents`}
-        onClick={handleClick}
-        role="menuitem"
-        className={interactiveClass}
-      >
-        {body}
-      </Link>
-    );
-  }
-  // Use role=button on a div so the per-row "Mark read" button can nest
-  // inside without producing invalid <button> nesting.
-  return (
-    <div
-      role="menuitem"
-      tabIndex={0}
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
-      className={interactiveClass}
-    >
-      {body}
     </div>
   );
 }
@@ -240,9 +206,9 @@ function EmptyState({ tab }: { tab: TabKey }) {
     >
       <div
         aria-hidden="true"
-        className="from-primary/10 to-primary/[0.02] ring-border relative flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br ring-1"
+        className="bg-muted text-muted-foreground flex h-10 w-10 items-center justify-center rounded-md"
       >
-        <Icon className="text-muted-foreground h-5 w-5" />
+        <Icon className="h-4 w-4" />
       </div>
       <p className="text-foreground text-sm font-medium">{title}</p>
       <p className="text-muted-foreground max-w-[220px] text-xs">{hint}</p>
@@ -264,7 +230,7 @@ export function NotificationBell() {
   const markAsRead = useMarkNotificationAsRead();
   const markAllAsRead = useMarkAllNotificationsAsRead();
 
-  const notifications = data?.notifications || [];
+  const notifications = useMemo(() => data?.notifications ?? [], [data?.notifications]);
   const unreadCount = useMemo(
     () => notifications.filter((notification) => !notification.isRead).length,
     [notifications]
@@ -335,19 +301,13 @@ export function NotificationBell() {
               aria-hidden="true"
               key={unreadCount}
               className={cn(
-                'absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold tabular-nums',
-                'from-primary to-primary/80 text-primary-foreground ring-background bg-gradient-to-br shadow-sm ring-2',
+                'absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-sm px-1 text-[10px] font-semibold tabular-nums',
+                'bg-primary text-primary-foreground ring-background ring-2',
                 'animate-pop-in'
               )}
             >
               {displayCount}
             </span>
-          )}
-          {hasUnread && (
-            <span
-              aria-hidden="true"
-              className="bg-primary/60 absolute -right-1 -top-1 h-4 w-4 animate-ping rounded-full"
-            />
           )}
         </Button>
       </PopoverTrigger>
@@ -357,7 +317,7 @@ export function NotificationBell() {
         role="menu"
         aria-label={t('bell.title')}
         data-state={open ? 'open' : 'closed'}
-        className="surface-card animate-pop-in flex max-h-[520px] w-[380px] flex-col overflow-hidden rounded-lg p-0 shadow-lg"
+        className="surface-card animate-pop-in flex max-h-[520px] w-[calc(100vw-1rem)] max-w-[380px] flex-col overflow-hidden rounded-lg p-0 shadow-md"
       >
         {/* Header */}
         <div className="border-border/60 flex items-center justify-between gap-3 border-b px-4 py-2.5">

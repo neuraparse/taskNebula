@@ -6,10 +6,9 @@ import { MobileMenu } from './mobile-menu';
 import { GITHUB_URL, Shell, focusRingClass } from './primitives';
 
 const navItems = [
-  { labelKey: 'features', href: '#features' },
+  { labelKey: 'features', href: '#board' },
   { labelKey: 'compare', href: '#compare' },
   { labelKey: 'selfHost', href: '#self-host' },
-  { labelKey: 'faq', href: '#faq' },
 ] as const;
 
 export function MarketingNav() {
@@ -24,20 +23,20 @@ export function MarketingNav() {
       <Shell className="flex h-14 items-center justify-between gap-4">
         <Link
           href="/"
-          className={`group flex items-center gap-2.5 rounded-md ${focusRingClass}`}
+          className={`flex items-center gap-2.5 rounded-md ${focusRingClass}`}
           aria-label={t('homeAria')}
         >
           <TaskNebulaLogo
             compact
             variant="mono"
-            className="ease-snap shrink-0 text-[var(--landing-accent-blue)] transition-transform duration-200 group-hover:-translate-y-0.5"
+            className="shrink-0 text-[var(--landing-accent-blue)]"
           />
           <span className="landing-title text-[15px] text-[var(--landing-text-dark)]">
             TaskNebula
           </span>
         </Link>
 
-        <div className="hidden items-center gap-0.5 rounded-md border border-transparent px-1 lg:flex">
+        <div className="hidden items-center gap-1 lg:flex">
           {items.map((item) => (
             <a
               key={item.href}

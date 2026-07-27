@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 export default function SprintsPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = use(params);
   const t = useTranslations('pagesProjects');
+  const tActions = useTranslations('actions');
   const formatter = useFormatter();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const { data: sprints, isLoading } = useSprints(projectId);
@@ -85,9 +86,9 @@ export default function SprintsPage({ params }: { params: Promise<{ projectId: s
         <Lock className="text-muted-foreground h-12 w-12" />
         <div className="text-lg font-medium">{t('accessDenied')}</div>
         <div className="text-muted-foreground">{t('noProjectPermission')}</div>
-        <Link href="/projects">
-          <Button variant="outline">{t('backToProjects')}</Button>
-        </Link>
+        <Button asChild variant="outline">
+          <Link href="/projects">{t('backToProjects')}</Link>
+        </Button>
       </div>
     );
   }
@@ -215,17 +216,18 @@ export default function SprintsPage({ params }: { params: Promise<{ projectId: s
 
                       {/* Right actions */}
                       <div className="flex shrink-0 items-center gap-1.5">
-                        <Link href={`/projects/${projectId}/sprints/${sprint.id}`}>
-                          <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs">
+                        <Button asChild variant="ghost" size="sm" className="h-8 gap-1.5 text-xs">
+                          <Link href={`/projects/${projectId}/sprints/${sprint.id}`}>
                             {t('view')}
                             <ArrowRight className="h-3 w-3" />
-                          </Button>
-                        </Link>
+                          </Link>
+                        </Button>
                         {permissions.canDeleteSprint && (
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="text-muted-foreground hover:text-destructive h-8 w-8 opacity-0 transition-opacity group-hover:opacity-100"
+                            className="text-muted-foreground hover:text-destructive h-8 w-8 opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100"
+                            aria-label={tActions('delete')}
                             onClick={() => handleDeleteSprint(sprint.id)}
                             disabled={deleteSprint.isPending}
                           >

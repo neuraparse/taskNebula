@@ -60,9 +60,9 @@ export function TeamMembersList({ canInviteMembers, members }: TeamMembersListPr
         <Users className="text-muted-foreground mx-auto h-8 w-8" />
         <p className="text-muted-foreground text-sm">{t('team.members.emptyDescription')}</p>
         {canInviteMembers ? (
-          <Link href="/settings?tab=members">
-            <Button size="sm">{t('team.inviteMember')}</Button>
-          </Link>
+          <Button asChild size="sm">
+            <Link href="/settings?tab=members">{t('team.inviteMember')}</Link>
+          </Button>
         ) : null}
       </div>
     );

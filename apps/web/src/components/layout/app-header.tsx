@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Search, HelpCircle, Command } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
@@ -42,12 +43,14 @@ export function AppHeader({ hasWorkspaceAccess = true }: { hasWorkspaceAccess?: 
         {hasWorkspaceAccess ? <NotificationBell /> : null}
         <LanguageSwitcher />
         <Button
+          asChild
           variant="ghost"
           size="icon"
-          aria-label={tActions('help')}
           className="ease-snap h-8 w-8 text-white/70 transition-all duration-150 hover:bg-white/10 hover:text-white"
         >
-          <HelpCircle className="h-4 w-4" />
+          <Link href="/api-docs" aria-label={tActions('help')}>
+            <HelpCircle className="h-4 w-4" />
+          </Link>
         </Button>
       </div>
     </header>

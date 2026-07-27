@@ -104,9 +104,9 @@ export default function SprintDetailPage({
         <Lock className="text-muted-foreground h-12 w-12" />
         <div className="text-lg font-medium">{t('accessDenied')}</div>
         <div className="text-muted-foreground">{t('noSprintPermission')}</div>
-        <Link href="/projects">
-          <Button variant="outline">{t('backToProjects')}</Button>
-        </Link>
+        <Button asChild variant="outline">
+          <Link href="/projects">{t('backToProjects')}</Link>
+        </Button>
       </div>
     );
   }
@@ -129,12 +129,12 @@ export default function SprintDetailPage({
       <div className="animate-blur-in border-border bg-background shrink-0 border-b px-6 py-4">
         <div className="space-y-3">
           {/* Back Button */}
-          <Link href={`/projects/${projectId}/sprints`}>
-            <Button variant="ghost" size="sm">
+          <Button asChild variant="ghost" size="sm">
+            <Link href={`/projects/${projectId}/sprints`}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               {t('backToSprints')}
-            </Button>
-          </Link>
+            </Link>
+          </Button>
 
           {/* Sprint Info */}
           <div className="flex items-start justify-between">

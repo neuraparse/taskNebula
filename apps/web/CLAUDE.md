@@ -41,5 +41,7 @@ pnpm openapi:gen       # regenerate public/openapi.json (openapi:check verifies 
   reading or writing either side; don't filter labels with `LIKE` on the JSONB.
 - **OAuth is broken** (no DB adapter — sessions map to no `users` row); credentials auth works.
 - i18n is next-intl with `[locale]` routing — no hardcoded locale strings or `en-US` date calls.
-- **Design system**: `apps/web/DESIGN_SYSTEM.md` — `rounded-md` (4px) default, `rounded-sm` pills, `rounded-lg`
-  cards; semantic `accent-*` colors; dark mode first-class. See `.claude/rules/frontend.md` + `.claude/rules/api.md`.
+- **Product design**: `apps/web/DESIGN.md` defines page composition, archetypes, anti-slop acceptance criteria,
+  and browser evidence. `apps/web/DESIGN_SYSTEM.md` defines tokens/components — `rounded-md` (4px) default,
+  `rounded-sm` pills, `rounded-lg` cards; semantic `accent-*` colors; dark mode first-class. See
+  `.claude/rules/frontend.md` + `.claude/rules/api.md`.

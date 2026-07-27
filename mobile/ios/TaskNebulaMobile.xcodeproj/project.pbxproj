@@ -31,6 +31,7 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = TaskNebulaMobile/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = TaskNebulaMobile/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = TaskNebulaMobile/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		A30000000000000000000001 /* TaskNebulaMobile.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = TaskNebulaMobile.entitlements; path = TaskNebulaMobile/TaskNebulaMobile.entitlements; sourceTree = "<group>"; };
 		A20000000000000000000101 /* TaskNebulaPlusJakartaSans-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "TaskNebulaPlusJakartaSans-Regular.ttf"; sourceTree = "<group>"; };
 		A20000000000000000000102 /* TaskNebulaPlusJakartaSans-Medium.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "TaskNebulaPlusJakartaSans-Medium.ttf"; sourceTree = "<group>"; };
 		A20000000000000000000103 /* TaskNebulaPlusJakartaSans-SemiBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "TaskNebulaPlusJakartaSans-SemiBold.ttf"; sourceTree = "<group>"; };
@@ -102,6 +103,7 @@
 				A10000000000000000000002 /* InfoPlist.strings */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
+				A30000000000000000000001 /* TaskNebulaMobile.entitlements */,
 			);
 			name = TaskNebulaMobile;
 			sourceTree = "<group>";
@@ -413,8 +415,12 @@
 			baseConfigurationReference = 3B4392A12AC88292D35C810B /* Pods-TaskNebulaMobile.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = TaskNebulaMobile/TaskNebulaMobile.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				CLANG_ENABLE_MODULES = YES;
-				CURRENT_PROJECT_VERSION = 711;
+				CURRENT_PROJECT_VERSION = 1300;
+				DEVELOPMENT_TEAM = "$(TASKNEBULA_DEVELOPMENT_TEAM)";
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = TaskNebulaMobile/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
@@ -422,14 +428,14 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.7.11;
+				MARKETING_VERSION = 0.13.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
-					"-lc++",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "io.tasknebula.app";
 				PRODUCT_NAME = TaskNebulaMobile;
+				PROVISIONING_PROFILE_SPECIFIER = "$(TASKNEBULA_PROVISIONING_PROFILE_SPECIFIER)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -443,22 +449,26 @@
 			baseConfigurationReference = 5709B34CF0A7D63546082F79 /* Pods-TaskNebulaMobile.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = TaskNebulaMobile/TaskNebulaMobile.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Distribution";
+				CODE_SIGN_STYLE = Automatic;
 				CLANG_ENABLE_MODULES = YES;
-				CURRENT_PROJECT_VERSION = 711;
+				CURRENT_PROJECT_VERSION = 1300;
+				DEVELOPMENT_TEAM = "$(TASKNEBULA_DEVELOPMENT_TEAM)";
 				INFOPLIST_FILE = TaskNebulaMobile/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.7.11;
+				MARKETING_VERSION = 0.13.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
-					"-lc++",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "io.tasknebula.app";
 				PRODUCT_NAME = TaskNebulaMobile;
+				PROVISIONING_PROFILE_SPECIFIER = "$(TASKNEBULA_PROVISIONING_PROFILE_SPECIFIER)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";

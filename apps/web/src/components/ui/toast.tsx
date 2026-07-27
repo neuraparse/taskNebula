@@ -25,12 +25,10 @@ ToastViewport.displayName = ToastPrimitives.Viewport.displayName;
 
 const toastVariants = cva(
   [
-    // layout + base card
-    'group pointer-events-auto relative flex w-full max-w-[380px] items-start gap-3 overflow-hidden rounded-xl border border-border/60 p-4 pr-10 pl-5',
-    // surface: card bg with subtle translucency + backdrop blur (falls back gracefully)
-    'bg-card/85 text-foreground shadow-lg supports-[backdrop-filter]:bg-card/70 supports-[backdrop-filter]:backdrop-blur-md',
-    // gradient left stripe (variant tints override the gradient color vars below)
-    "before:pointer-events-none before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-gradient-to-b before:from-[var(--toast-stripe-from)] before:to-[var(--toast-stripe-to)] before:content-['']",
+    // Compact, opaque feedback surface with one semantic state marker.
+    'group pointer-events-auto relative flex w-full max-w-[380px] items-start gap-3 overflow-hidden rounded-lg border border-border/70 p-4 pr-10 pl-5',
+    'bg-popover text-popover-foreground shadow-md',
+    "before:pointer-events-none before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-[var(--toast-stripe)] before:content-['']",
     // motion
     'transition-all duration-200 ease-snap',
     'data-[swipe=cancel]:translate-x-0',
@@ -46,16 +44,12 @@ const toastVariants = cva(
   {
     variants: {
       variant: {
-        default:
-          '[--toast-stripe-from:hsl(var(--accent-indigo))] [--toast-stripe-to:hsl(var(--accent-violet))]',
-        info: '[--toast-stripe-from:hsl(var(--accent-blue))] [--toast-stripe-to:hsl(var(--accent-indigo))]',
-        destructive:
-          'destructive border-destructive/40 [--toast-stripe-from:hsl(var(--destructive))] [--toast-stripe-to:hsl(var(--accent-rose))]',
-        success:
-          '[--toast-stripe-from:hsl(var(--accent-emerald))] [--toast-stripe-to:hsl(var(--accent-cyan))]',
-        warning:
-          '[--toast-stripe-from:hsl(var(--accent-amber))] [--toast-stripe-to:hsl(var(--accent-rose))]',
-        pop: '[--toast-stripe-from:hsl(var(--accent-indigo))] [--toast-stripe-to:hsl(var(--accent-violet))] data-[state=open]:animate-pop-in',
+        default: '[--toast-stripe:hsl(var(--accent-indigo))]',
+        info: '[--toast-stripe:hsl(var(--accent-blue))]',
+        destructive: 'destructive border-destructive/40 [--toast-stripe:hsl(var(--destructive))]',
+        success: '[--toast-stripe:hsl(var(--accent-emerald))]',
+        warning: '[--toast-stripe:hsl(var(--accent-amber))]',
+        pop: '[--toast-stripe:hsl(var(--accent-violet))] data-[state=open]:animate-pop-in',
       },
     },
     defaultVariants: {

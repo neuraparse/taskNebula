@@ -12,7 +12,6 @@ import { useToast } from '@/hooks/use-toast';
 import {
   TEMPLATE_CATEGORIES,
   WORK_ITEM_TEMPLATES,
-  instantiateTemplate,
   type TemplateCategory,
   type WorkItemTemplate,
 } from '@/lib/templates/registry';
@@ -160,12 +159,13 @@ export function TemplatesGrid({
     [apiTemplates, t]
   );
 
-  const registryCards = React.useMemo(
-    () =>
+  const registryCards = React.useMemo(() => {
+    if (!onUse) return [];
+    return (
       registryOverride ??
-      WORK_ITEM_TEMPLATES.map((template) => localizeBuiltInTemplate(template, t)),
-    [registryOverride, t]
-  );
+      WORK_ITEM_TEMPLATES.map((template) => localizeBuiltInTemplate(template, t))
+    );
+  }, [onUse, registryOverride, t]);
   const allCards = React.useMemo(() => [...dbCards, ...registryCards], [dbCards, registryCards]);
 
   const filtered = React.useMemo(() => {
@@ -236,18 +236,6 @@ export function TemplatesGrid({
         }
         return;
       }
-
-      // Legacy static-registry template: keep the previous stub behaviour so
-      // the catalogue remains browsable even before any DB rows exist.
-      const draft = instantiateTemplate(template);
-      if (typeof window !== 'undefined') {
-        // eslint-disable-next-line no-console
-        console.debug('[templates] instantiated draft (stub)', draft);
-      }
-      toast({
-        title: t('toast_template_ready_title'),
-        description: t('toast_template_ready_desc', { name: template.name }),
-      });
     },
     [apiTemplates, instantiate, onUse, router, toast, t]
   );

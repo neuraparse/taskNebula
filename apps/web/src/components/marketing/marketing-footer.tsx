@@ -9,10 +9,9 @@ const columns: Array<{ titleKey: string; links: FooterLink[] }> = [
   {
     titleKey: 'product',
     links: [
-      { labelKey: 'features', href: '#features' },
+      { labelKey: 'features', href: '#board' },
       { labelKey: 'compare', href: '#compare' },
       { labelKey: 'selfHost', href: '#self-host' },
-      { labelKey: 'faq', href: '#faq' },
     ],
   },
   {
@@ -33,14 +32,6 @@ const columns: Array<{ titleKey: string; links: FooterLink[] }> = [
       { labelKey: 'contributing', href: `${GITHUB_URL}/blob/main/CONTRIBUTING.md`, ext: true },
     ],
   },
-  {
-    titleKey: 'legal',
-    links: [
-      { labelKey: 'mitLicense', href: `${GITHUB_URL}/blob/main/LICENSE`, ext: true },
-      { labelKey: 'signIn', href: '/auth/signin' },
-      { labelKey: 'createWorkspace', href: '/auth/signup' },
-    ],
-  },
 ];
 
 export function MarketingFooter() {
@@ -49,7 +40,7 @@ export function MarketingFooter() {
   return (
     <footer className="border-t border-[var(--landing-border)]">
       <Shell className="py-14">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_repeat(4,minmax(0,1fr))]">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))]">
           <div className="max-w-sm sm:col-span-2 lg:col-span-1">
             <div className="flex items-center gap-3">
               <TaskNebulaLogo variant="mono" className="text-[var(--landing-accent-blue)]" />

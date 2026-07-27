@@ -8,45 +8,37 @@ import type { ProjectModule, ModuleStatus } from '@/lib/modules/use-modules';
 
 interface ModuleCardProps {
   module: ProjectModule;
-  onClick?: () => void;
 }
 
 interface StatusPalette {
   labelKey: string;
-  dot: string;
   badge: string;
 }
 
 const STATUS_PALETTE: Record<ModuleStatus, StatusPalette> = {
   backlog: {
     labelKey: 'status_backlog',
-    dot: 'bg-muted-foreground/60',
     badge: 'bg-muted text-muted-foreground border-border',
   },
   planned: {
     labelKey: 'status_planned',
-    dot: 'bg-accent-blue',
     badge: 'bg-accent-blue/10 text-accent-blue border-accent-blue/20',
   },
   in_progress: {
     labelKey: 'status_in_progress',
-    dot: 'bg-accent-amber',
     badge: 'bg-accent-amber/10 text-accent-amber border-accent-amber/20',
   },
   paused: {
     labelKey: 'status_paused',
-    dot: 'bg-muted-foreground/60',
     badge: 'bg-muted text-muted-foreground border-border',
   },
   completed: {
     labelKey: 'status_completed',
-    dot: 'bg-accent-emerald',
     badge: 'bg-accent-emerald/10 text-accent-emerald border-accent-emerald/20',
   },
   cancelled: {
     labelKey: 'status_cancelled',
-    dot: 'bg-rose-500',
-    badge: 'bg-rose-500/10 text-rose-500 border-rose-500/20',
+    badge: 'bg-accent-rose/10 text-accent-rose border-accent-rose/20',
   },
 };
 
@@ -72,7 +64,7 @@ function initials(name?: string): string {
   return parts.map((p) => p.charAt(0).toUpperCase()).join('') || '?';
 }
 
-export function ModuleCard({ module, onClick }: ModuleCardProps) {
+export function ModuleCard({ module }: ModuleCardProps) {
   const t = useTranslations('planning');
   const formatter = useFormatter();
   const palette = STATUS_PALETTE[module.status];
@@ -81,32 +73,15 @@ export function ModuleCard({ module, onClick }: ModuleCardProps) {
   const progress = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0;
   const targetLabel = formatTargetDate(module.targetDate, formatter);
 
-  const handleClick = () => {
-    if (onClick) {
-      onClick();
-      return;
-    }
-    // eslint-disable-next-line no-console
-    console.info(`[modules] navigate → /projects/${module.projectId}/modules/${module.id}`);
-  };
-
   return (
-    <button
-      type="button"
-      onClick={handleClick}
+    <article
       className={cn(
-        'border-border bg-card group w-full rounded-xl border p-4 text-left',
-        'ease-snap transition-all duration-150',
-        'hover:border-border/80 hover:-translate-y-0.5 hover:shadow-md',
-        'focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2'
+        'border-border/60 bg-card w-full rounded-lg border p-4 text-left',
+        'ease-snap transition-colors duration-150'
       )}
     >
-      {/* Top row: status dot + name + lead avatar */}
+      {/* Top row: name + lead avatar */}
       <div className="flex items-center gap-2.5">
-        <span
-          className={cn('inline-block h-2 w-2 shrink-0 rounded-full', palette.dot)}
-          aria-hidden
-        />
         <span className="min-w-0 flex-1 truncate text-sm font-semibold">{module.name}</span>
         <span
           className={cn(
@@ -147,7 +122,7 @@ export function ModuleCard({ module, onClick }: ModuleCardProps) {
       <div className="mt-3 flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           {targetLabel && (
-            <span className="border-border bg-background text-muted-foreground inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px]">
+            <span className="bg-muted text-muted-foreground inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-[11px]">
               <CalendarClock className="h-3 w-3" />
               {targetLabel}
             </span>
@@ -157,10 +132,10 @@ export function ModuleCard({ module, onClick }: ModuleCardProps) {
             {module.memberIds.length}
           </span>
         </div>
-        <Badge variant="outline" className={cn('border', palette.badge)}>
+        <Badge variant="outline" className={palette.badge}>
           {t(palette.labelKey)}
         </Badge>
       </div>
-    </button>
+    </article>
   );
 }

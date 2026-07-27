@@ -275,7 +275,7 @@ export function IssueActivity({ issueId }: { issueId: string }) {
                         <span className="text-muted-foreground ml-2 text-[11px]">
                           {userName}
                           {actorIsAgent && (
-                            <span className="ml-1 rounded-full bg-violet-100 px-1.5 align-middle text-[9px] font-semibold tracking-wider text-violet-700">
+                            <span className="bg-muted text-muted-foreground ml-1 rounded-sm px-1.5 align-middle text-[9px] font-semibold tracking-wider">
                               {t('activity.agent_badge')}
                             </span>
                           )}
@@ -290,7 +290,7 @@ export function IssueActivity({ issueId }: { issueId: string }) {
                     <div key={activity.id}>
                       <div className="flex gap-2.5 text-sm">
                         {actorIsAgent || (isAssignment && assignmentTargetIsAgent) ? (
-                          <div className="bg-gradient-primary mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full text-white">
+                          <div className="bg-foreground text-background mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full">
                             <Bot className="h-2.5 w-2.5" />
                           </div>
                         ) : (

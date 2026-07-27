@@ -57,7 +57,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { PageSidebarContent } from '@/components/layout/page-sidebar-slot';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -1224,6 +1224,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-[92vw] max-w-md p-0">
+                <SheetTitle className="sr-only">{t('shell.pages')}</SheetTitle>
                 <div className="bg-surface flex h-full min-h-0 flex-col">{navigationPane}</div>
               </SheetContent>
             </Sheet>
@@ -1235,6 +1236,7 @@ export function DocsShell({ projectId }: DocsShellProps) {
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-[95vw] max-w-[32rem] p-0">
+                <SheetTitle className="sr-only">{t('shell.details.kicker')}</SheetTitle>
                 <div className="bg-background h-full min-h-0 overflow-y-auto overscroll-contain">
                   {detailsPane}
                 </div>

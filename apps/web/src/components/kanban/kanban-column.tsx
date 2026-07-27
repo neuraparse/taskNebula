@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, Inbox, Sparkles } from 'lucide-react';
+import { Plus, Inbox } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useDroppable } from '@dnd-kit/core';
@@ -73,10 +73,6 @@ export function KanbanColumn({
             <div className="space-y-2">{children}</div>
           </SortableContext>
           {issueCount === 0 && (
-            // FEAT-31 empty state — illustration placeholder + primary CTA +
-            // secondary "Generate with AI" CTA. The AI CTA is intentionally
-            // a TODO: wire to /api/ai/generate-issue once the endpoint
-            // accepts a column/status context (tracked separately).
             <div className="border-border/70 mx-1 mt-2 flex flex-col items-center gap-3 rounded-md border border-dashed px-3 py-6 text-center">
               <div className="bg-muted/60 flex h-9 w-9 items-center justify-center rounded-md">
                 <Inbox className="text-muted-foreground h-4 w-4" aria-hidden />
@@ -92,33 +88,15 @@ export function KanbanColumn({
                   })}
                 </p>
               </div>
-              <div className="flex w-full flex-col items-stretch gap-1.5">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 text-xs"
-                  onClick={() => setCreateModalOpen(true)}
-                >
-                  <Plus className="mr-1 h-3 w-3" />
-                  {t('column.newIssue')}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground hover:text-foreground h-7 text-xs"
-                  // TODO(ai): hook into /api/ai/issues/generate with column context
-                  onClick={() => {
-                    // eslint-disable-next-line no-console
-                    console.info('[ai-generate] kanban column empty state — TODO wire up', {
-                      projectId,
-                      statusId,
-                    });
-                  }}
-                >
-                  <Sparkles className="mr-1 h-3 w-3" />
-                  {t('column.generateWithAi')}
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 w-full text-xs"
+                onClick={() => setCreateModalOpen(true)}
+              >
+                <Plus className="mr-1 h-3 w-3" />
+                {t('column.newIssue')}
+              </Button>
             </div>
           )}
         </div>

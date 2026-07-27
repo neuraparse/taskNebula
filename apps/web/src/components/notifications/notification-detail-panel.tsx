@@ -32,7 +32,7 @@ export interface NotificationDetailPanelProps {
 }
 
 // ---------------------------------------------------------------------------
-// Type → human label + chip flavor (indigo / violet leaning by default)
+// Type → human label + restrained semantic chip flavor
 // ---------------------------------------------------------------------------
 
 type DetailTranslator = (key: string) => string;
@@ -58,22 +58,10 @@ function typeChipClass(type: NotificationType): string {
   switch (type) {
     case 'mention':
       return 'chip-violet';
-    case 'comment':
-      return 'chip-blue';
-    case 'assigned':
-    case 'issue_linked':
-      return 'chip-cyan';
-    case 'status_changed':
-    case 'issue_updated':
-    case 'issue_created':
-      return 'chip-violet';
     case 'sprint_started':
     case 'sprint_completed':
-      return 'chip-emerald';
     case 'project_created':
       return 'chip-emerald';
-    case 'project_archived':
-      return 'chip';
     case 'ai_draft_failed':
     case 'agent_run_failed':
       return 'chip-rose';
@@ -159,10 +147,10 @@ function EmptyState() {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-4 px-8 py-16 text-center">
       <div
-        className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500/10 to-violet-500/10 text-indigo-500 ring-1 ring-indigo-500/20"
+        className="bg-muted text-muted-foreground flex h-10 w-10 items-center justify-center rounded-md"
         aria-hidden="true"
       >
-        <Inbox className="h-6 w-6" />
+        <Inbox className="h-4 w-4" />
       </div>
       <div className="space-y-1.5">
         <p className="text-sm font-medium">{t('detail.empty_title')}</p>
@@ -224,10 +212,10 @@ export function NotificationDetailPanel({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className="text-foreground text-sm font-medium">{actor}</span>
-            <span className={cn(typeChip, 'shrink-0 rounded-full')}>{typeLabel}</span>
+            <span className={cn(typeChip, 'shrink-0')}>{typeLabel}</span>
           </div>
           <time
-            className="text-muted-foreground mt-0.5 block text-xs"
+            className="text-muted-foreground mt-0.5 block text-xs tabular-nums"
             dateTime={createdAt.toISOString()}
             title={absolute}
           >
@@ -251,9 +239,9 @@ export function NotificationDetailPanel({
                     {quote.rest}
                   </p>
                 )}
-                <blockquote className="bg-muted/40 text-foreground/85 relative rounded-sm border-l-2 border-indigo-500/60 py-3 pl-4 pr-3 text-sm italic">
+                <blockquote className="border-primary/50 bg-muted/40 text-foreground/85 relative rounded-sm border-l-2 py-3 pl-4 pr-3 text-sm italic">
                   <Quote
-                    className="absolute -top-1.5 left-2 h-3 w-3 text-indigo-500/70"
+                    className="text-primary/70 absolute -top-1.5 left-2 h-3 w-3"
                     aria-hidden="true"
                   />
                   <p className="whitespace-pre-wrap leading-relaxed">{quote.quote}</p>
@@ -270,13 +258,13 @@ export function NotificationDetailPanel({
           {meta.length > 0 && (
             <section className="space-y-2">
               <h3 className="kicker text-[11px]">{t('detail.context')}</h3>
-              <dl className="border-border/60 bg-muted/20 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 rounded-md border px-3 py-2.5">
+              <dl className="bg-muted/30 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 rounded-md px-3 py-2.5">
                 {meta.map((row) => (
                   <div key={row.label} className="contents">
                     <dt className="text-muted-foreground text-xs">{row.label}</dt>
                     <dd className="text-foreground min-w-0 truncate text-xs font-medium">
                       {row.href ? (
-                        <Link href={row.href} className="hover:text-indigo-500 hover:underline">
+                        <Link href={row.href} className="hover:text-primary hover:underline">
                           {row.value}
                         </Link>
                       ) : (
@@ -292,10 +280,7 @@ export function NotificationDetailPanel({
           {/* Primary action */}
           {href && (
             <section>
-              <Button
-                asChild
-                className="h-9 w-full gap-2 bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-sm hover:from-indigo-500/90 hover:to-violet-500/90 sm:w-auto"
-              >
+              <Button asChild className="h-9 w-full gap-2 sm:w-auto">
                 <Link href={href}>
                   {t('detail.open_in_context')}
                   <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
@@ -394,12 +379,9 @@ export function NotificationDetailPanel({
           {history.length > 1 && (
             <section className="space-y-2">
               <h3 className="kicker text-[11px]">{t('detail.activity_heading')}</h3>
-              <ul role="list" className="space-y-2">
+              <ul role="list" className="divide-border/60 border-border/60 divide-y border-y">
                 {history.map((entry) => (
-                  <li
-                    key={entry.id}
-                    className="border-border/60 bg-muted/20 rounded-sm border px-3 py-2"
-                  >
+                  <li key={entry.id} className="py-2.5">
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-foreground text-xs font-medium">
                         {getActorName(entry, t)}

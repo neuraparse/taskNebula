@@ -2,10 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronDown, ChevronRight, Layers3, Loader2, Plus, Target } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -50,28 +49,42 @@ interface RollUpResponse {
 }
 
 function StatusBadge({ status }: { status: string }) {
+  const t = useTranslations('planning');
+  const tProjects = useTranslations('pagesProjects');
   const variant: Record<string, string> = {
     planned: 'bg-muted text-muted-foreground',
-    active: 'bg-emerald-500/15 text-emerald-600',
-    paused: 'bg-amber-500/15 text-amber-600',
-    complete: 'bg-blue-500/15 text-blue-600',
-    cancelled: 'bg-rose-500/15 text-rose-600',
+    active: 'bg-accent-blue/10 text-accent-blue',
+    paused: 'bg-accent-amber/10 text-accent-amber',
+    complete: 'bg-accent-emerald/10 text-accent-emerald',
+    cancelled: 'bg-accent-rose/10 text-accent-rose',
+  };
+  const labelKey: Record<string, string> = {
+    planned: 'status_planned',
+    paused: 'status_paused',
+    complete: 'status_completed',
+    cancelled: 'status_cancelled',
   };
   return (
     <Badge
       variant="outline"
       className={cn('text-[10px] uppercase tracking-wider', variant[status] ?? variant.planned)}
     >
-      {status}
+      {status === 'active' ? tProjects('statusActive') : t(labelKey[status] ?? 'status_planned')}
     </Badge>
   );
 }
 
 function InitiativeRow({ node, depth }: { node: InitiativeNode; depth: number }) {
   const t = useTranslations('pagesHome');
+  const formatter = useFormatter();
   const errorT = useTranslations('componentErrors.initiatives');
   const [expanded, setExpanded] = useState(true);
   const hasChildren = node.children.length > 0;
+  const targetDate = node.targetDate ? new Date(node.targetDate) : null;
+  const formattedTarget =
+    targetDate && !Number.isNaN(targetDate.getTime())
+      ? formatter.dateTime(targetDate, { year: 'numeric', month: 'short', day: 'numeric' })
+      : '—';
 
   // Roll-up is fetched per-row but is cheap (small response) and cached.
   const { data: rollup } = useQuery<RollUpResponse>({
@@ -117,7 +130,7 @@ function InitiativeRow({ node, depth }: { node: InitiativeNode; depth: number })
           {rollup ? `${rollup.percent}%` : '—'}
         </div>
         <div className="text-muted-foreground w-24 shrink-0 text-right text-xs">
-          {node.targetDate ?? '—'}
+          {formattedTarget}
         </div>
       </div>
 
@@ -206,10 +219,7 @@ export function InitiativesClient() {
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">
             <span className="kicker">{t('initiatives_kicker')}</span>
-            <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
-              <Layers3 className="text-muted-foreground h-5 w-5" />
-              {t('initiatives_title')}
-            </h1>
+            <h1 className="text-2xl font-semibold tracking-tight">{t('initiatives_title')}</h1>
             <p className="text-muted-foreground text-sm">{t('initiatives_subtitle')}</p>
           </div>
           {canCreate ? (
@@ -223,44 +233,34 @@ export function InitiativesClient() {
 
       <div className="flex-1 overflow-auto px-6 py-6">
         {isLoading ? (
-          <Card>
-            <CardContent className="text-muted-foreground flex items-center justify-center py-12">
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {t('initiatives_loading')}
-            </CardContent>
-          </Card>
+          <div className="surface-card text-muted-foreground flex items-center justify-center py-12 shadow-none">
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            {t('initiatives_loading')}
+          </div>
         ) : isEmpty ? (
-          <Card>
-            <CardContent className="flex flex-col items-center gap-4 px-6 py-12 text-center">
-              <div className="bg-surface text-muted-foreground flex h-10 w-10 items-center justify-center rounded-md">
-                <Layers3 className="h-5 w-5" />
-              </div>
-              <div className="space-y-1">
-                <p className="text-foreground text-sm font-medium">
-                  {t('initiatives_empty_title')}
-                </p>
-                <p className="text-muted-foreground mx-auto max-w-sm text-sm">
-                  {t('initiatives_empty_description')}
-                </p>
-              </div>
-              {canCreate ? (
-                <Button size="sm" onClick={() => setIsCreateOpen(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  {t('initiatives_new')}
-                </Button>
-              ) : (
-                <p className="text-muted-foreground text-xs">
-                  {t('initiatives_empty_no_workspace')}
-                </p>
-              )}
-            </CardContent>
-          </Card>
+          <div className="surface-card flex flex-col items-center gap-4 px-6 py-12 text-center shadow-none">
+            <Layers3 className="text-muted-foreground h-6 w-6" />
+            <div className="space-y-1">
+              <p className="text-foreground text-sm font-medium">{t('initiatives_empty_title')}</p>
+              <p className="text-muted-foreground mx-auto max-w-sm text-sm">
+                {t('initiatives_empty_description')}
+              </p>
+            </div>
+            {canCreate ? (
+              <Button size="sm" onClick={() => setIsCreateOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                {t('initiatives_new')}
+              </Button>
+            ) : (
+              <p className="text-muted-foreground text-xs">{t('initiatives_empty_no_workspace')}</p>
+            )}
+          </div>
         ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">{t('initiatives_tree')}</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
+          <section className="surface-card overflow-x-auto shadow-none">
+            <h2 className="border-border border-b px-4 py-3 text-sm font-medium">
+              {t('initiatives_tree')}
+            </h2>
+            <div className="min-w-[720px]">
               <div className="border-border bg-surface text-muted-foreground flex items-center gap-3 border-b px-3 py-2 text-[10px] font-medium uppercase tracking-wider">
                 <div className="h-4 w-4 shrink-0" />
                 <div className="h-4 w-4 shrink-0" />
@@ -273,8 +273,8 @@ export function InitiativesClient() {
               {data!.initiatives.map((node) => (
                 <InitiativeRow key={node.id} node={node} depth={0} />
               ))}
-            </CardContent>
-          </Card>
+            </div>
+          </section>
         )}
       </div>
 

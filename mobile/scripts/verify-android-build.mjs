@@ -100,12 +100,24 @@ function readAndroidSdkDir() {
   return match?.[1]?.trim() || null;
 }
 
+function assertValidLocalAndroidSdk() {
+  const sdkDir = readAndroidSdkDir();
+  if (sdkDir && !fs.existsSync(sdkDir)) {
+    fail(
+      `android/local.properties points to missing SDK directory ${sdkDir}. ` +
+        "Remove the machine-local file or set sdk.dir to this computer's Android SDK.",
+    );
+  }
+}
+
 function findApksigner() {
   const executable = process.platform === 'win32' ? 'apksigner.bat' : 'apksigner';
   const sdkRoots = [
     process.env.ANDROID_HOME,
     process.env.ANDROID_SDK_ROOT,
     readAndroidSdkDir(),
+    path.join(os.homedir(), 'Library/Android/sdk'),
+    path.join(os.homedir(), 'Android/Sdk'),
     '/opt/android-sdk',
   ].filter(Boolean);
 
@@ -160,6 +172,7 @@ function createTemporaryKeystore() {
 }
 
 try {
+  assertValidLocalAndroidSdk();
   console.log(`[android-build] verification architectures: ${verificationArchitectures}`);
   run('assemble debug APK', gradlew, [':app:assembleDebug', ...architectureArgs]);
   assertFile('debug APK', debugApk, 1024 * 1024);
@@ -183,7 +196,7 @@ try {
   );
 
   const keystore = createTemporaryKeystore();
-  run('assemble signed release APK', gradlew, [
+  run('assemble verification-only signed release APK', gradlew, [
     ':app:assembleRelease',
     ...architectureArgs,
     `-PtasknebulaUploadStoreFile=${keystore}`,
@@ -191,7 +204,7 @@ try {
     '-PtasknebulaUploadKeyAlias=tasknebula-test',
     `-PtasknebulaUploadKeyPassword=${signingPassword}`,
   ]);
-  assertFile('signed release APK', releaseApk, 1024 * 1024);
+  assertFile('verification-only signed release APK', releaseApk, 1024 * 1024);
 
   const apksigner = findApksigner();
   if (!apksigner) fail('Android SDK apksigner was not found.');
@@ -219,7 +232,10 @@ try {
     }
   }
 
-  console.log('\nAndroid build verification passed.');
+  console.log(
+    '\nAndroid build verification passed; the test-signed release APK is not distributable.',
+  );
 } finally {
   if (tempDir) fs.rmSync(tempDir, { recursive: true, force: true });
+  if (fs.existsSync(releaseApk)) fs.rmSync(releaseApk, { force: true });
 }

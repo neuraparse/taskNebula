@@ -1,1 +1,2 @@
+pnpm hygiene:check
 pnpm exec lint-staged

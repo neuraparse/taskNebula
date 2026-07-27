@@ -3,17 +3,13 @@ import { getTranslations } from 'next-intl/server';
 import { HeroShowcase } from '@/components/landing/product-showcase';
 import { AiMcpSection } from '@/components/marketing/ai-mcp-section';
 import { Comparison } from '@/components/marketing/comparison';
-import { Faq } from '@/components/marketing/faq';
-import { FeatureGrid } from '@/components/marketing/feature-grid';
 import { FinalCta } from '@/components/marketing/final-cta';
 import { Hero } from '@/components/marketing/hero';
 import { MarketingFooter } from '@/components/marketing/marketing-footer';
 import { MarketingNav } from '@/components/marketing/marketing-nav';
-import { MigrateSection } from '@/components/marketing/migrate-section';
 import { DOCKER_HUB_URL, GITHUB_URL } from '@/components/marketing/primitives';
 import { ProofStrip } from '@/components/marketing/proof-strip';
 import { SelfHost } from '@/components/marketing/self-host';
-import { WorkflowNarrative } from '@/components/marketing/workflow-narrative';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
 
@@ -88,13 +84,9 @@ export default async function HomePage() {
         <Hero />
         <HeroShowcase />
         <ProofStrip />
-        <FeatureGrid />
-        <WorkflowNarrative />
-        <AiMcpSection />
         <Comparison />
-        <MigrateSection />
+        <AiMcpSection />
         <SelfHost />
-        <Faq />
         <FinalCta />
       </main>
 

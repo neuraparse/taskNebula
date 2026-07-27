@@ -1,23 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogTrigger,
-} from '../dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../select';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '../popover';
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '../dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../select';
+import { Popover, PopoverContent, PopoverTrigger } from '../popover';
 
 // Radix uses ResizeObserver / pointer APIs not in jsdom by default.
 beforeAll(() => {
@@ -29,10 +14,12 @@ beforeAll(() => {
   (window as unknown as { ResizeObserver: typeof RO }).ResizeObserver = RO;
 
   if (!(Element.prototype as unknown as { hasPointerCapture?: unknown }).hasPointerCapture) {
-    (Element.prototype as unknown as { hasPointerCapture: () => boolean }).hasPointerCapture =
-      () => false;
+    (Element.prototype as unknown as { hasPointerCapture: () => boolean }).hasPointerCapture = () =>
+      false;
   }
-  if (!(Element.prototype as unknown as { releasePointerCapture?: unknown }).releasePointerCapture) {
+  if (
+    !(Element.prototype as unknown as { releasePointerCapture?: unknown }).releasePointerCapture
+  ) {
     (Element.prototype as unknown as { releasePointerCapture: () => void }).releasePointerCapture =
       () => {};
   }
@@ -90,9 +77,7 @@ describe('Dialog / Popover / Select portal positioning', () => {
           <DialogTitle>Task form</DialogTitle>
           <Popover>
             <PopoverTrigger data-testid="popover-trigger">Open popover</PopoverTrigger>
-            <PopoverContent data-testid="popover-content">
-              Popover body
-            </PopoverContent>
+            <PopoverContent data-testid="popover-content">Popover body</PopoverContent>
           </Popover>
         </DialogContent>
       </Dialog>
@@ -146,7 +131,7 @@ describe('Dialog / Popover / Select portal positioning', () => {
     expect(hasFocusRingClass).toBe(true);
   });
 
-  it('Dialog overlay has a backdrop-blur (or tailwind-equivalent) class', () => {
+  it('Dialog overlay uses an opaque semantic dimmer without glass blur', () => {
     render(
       <Dialog open onOpenChange={() => {}}>
         <DialogContent>
@@ -158,8 +143,8 @@ describe('Dialog / Popover / Select portal positioning', () => {
     // Radix Dialog overlay exposes data-state on the overlay element.
     const overlay = document.querySelector('[data-state="open"].fixed.inset-0');
     expect(overlay).not.toBeNull();
-    // Must have a backdrop-blur utility applied (backdrop-blur-sm / -md / -lg).
-    expect(overlay?.className ?? '').toMatch(/backdrop-blur/);
+    expect(overlay).toHaveClass('bg-foreground/25', 'dark:bg-background/75');
+    expect(overlay?.className ?? '').not.toMatch(/backdrop-blur/);
   });
 
   it('Dialog content does NOT apply animate-scale-in (would indicate transform containing block)', () => {

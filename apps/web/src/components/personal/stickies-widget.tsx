@@ -28,7 +28,7 @@ export function StickiesWidget({ className, columns }: StickiesWidgetProps): Rea
         aria-busy="true"
         aria-label={t('stickies')}
         className={cn(
-          'border-border/60 bg-card/40 flex flex-col gap-3 rounded-xl border p-4',
+          'border-border/60 bg-card flex flex-col gap-3 rounded-lg border p-4',
           className
         )}
       >
@@ -59,7 +59,7 @@ export function StickiesWidget({ className, columns }: StickiesWidgetProps): Rea
     <section
       aria-label={t('stickies')}
       className={cn(
-        'border-border/60 bg-card/40 flex flex-col gap-3 rounded-xl border p-4',
+        'border-border/60 bg-card flex flex-col gap-3 rounded-lg border p-4',
         className
       )}
     >
@@ -68,7 +68,7 @@ export function StickiesWidget({ className, columns }: StickiesWidgetProps): Rea
           <StickyNoteIcon className="text-foreground/60 h-4 w-4" />
           <h3 className="text-foreground text-sm font-semibold">{t('stickies')}</h3>
           {!isEmpty ? (
-            <span className="bg-muted/60 text-foreground/60 rounded-full px-1.5 py-0.5 text-[10px] font-medium">
+            <span className="bg-muted/60 text-foreground/60 rounded-sm px-1.5 py-0.5 text-[10px] font-medium tabular-nums">
               {stickies.length}
             </span>
           ) : null}
@@ -80,7 +80,8 @@ export function StickiesWidget({ className, columns }: StickiesWidgetProps): Rea
           title={t('addSticky')}
           className={cn(
             'inline-flex h-6 w-6 items-center justify-center rounded-md',
-            'text-foreground/60 hover:bg-muted hover:text-foreground transition-colors'
+            'text-foreground/60 hover:bg-muted hover:text-foreground transition-colors duration-150',
+            'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2'
           )}
         >
           <Plus className="h-4 w-4" />
@@ -88,7 +89,7 @@ export function StickiesWidget({ className, columns }: StickiesWidgetProps): Rea
       </header>
 
       {isEmpty ? (
-        <div className="border-border/60 bg-muted/20 flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-8 text-center">
+        <div className="bg-muted/20 flex flex-col items-center justify-center gap-2 rounded-md px-4 py-8 text-center">
           <StickyNoteIcon className="text-foreground/40 h-6 w-6" />
           <p className="text-foreground/60 text-sm">{t('noStickiesYet')}</p>
           <button
@@ -96,7 +97,8 @@ export function StickiesWidget({ className, columns }: StickiesWidgetProps): Rea
             onClick={handleAdd}
             className={cn(
               'inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium',
-              'text-foreground/80 hover:bg-muted hover:text-foreground transition-colors'
+              'text-foreground/80 hover:bg-muted hover:text-foreground transition-colors duration-150',
+              'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2'
             )}
           >
             <Plus className="h-3.5 w-3.5" />

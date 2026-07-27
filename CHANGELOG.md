@@ -6,11 +6,55 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-07-27
+
+### Added
+
+- **Native mobile application workspace.** The repository now includes the
+  React Native iOS and Android clients, 30 locale catalogs, native navigation,
+  authenticated API coverage, realtime synchronization, deep links, project
+  and issue workflows, administration surfaces, and deterministic native
+  verification tooling.
+- **Mobile OAuth and integration handoff.** Server routes now support
+  permission-scoped mobile authorization completion, provider callback
+  handoff, verified email links, and mobile-safe integration redirects.
+- **Product-quality and repository-hygiene gates.** A canonical product design
+  contract, automated UI checks, open-source content scanning, CI coverage,
+  and pre-commit enforcement now keep visual conventions and private operator
+  artifacts out of published source and images.
+
+### Changed
+
+- **Core web surfaces received a cohesive responsive refresh.** Marketing,
+  trust, AI transparency, authentication, dashboard, projects, initiatives,
+  roadmaps, sprints, team, modules, notifications, settings, templates, and
+  shared overlays now use tighter hierarchy, spacing, responsive behavior, and
+  dark-mode treatment.
+- **AI workflow wiring is consolidated.** Command-palette search, sidecar
+  context/provider behavior, issue creation, and scheduled embedding work now
+  use the production API paths instead of disconnected last-mile states.
+- **Container builds have a smaller public surface.** Tests, mobile sources,
+  documentation, screenshots, audit evidence, temporary files, and private
+  local notes are excluded from the web production context.
+
 ### Fixed
 
 - Fixed the issue-detail breadcrumb pointing at the non-existent `/issues` route.
 - Configured a request-scoped `now` value for next-intl relative-time formatting to prevent runtime fallback errors across activity surfaces.
 - Wired the optional Hocuspocus public build variables through Docker build args and the collaboration compose overlay.
+- **Native release readiness.** iOS signing accepts operator-provided team and
+  provisioning settings, Android follows current edge-to-edge behavior, build
+  verification fails closed around signing, and absent first-launch keychain
+  entries no longer produce error-level reads.
+- **Overlay consistency.** Dialog, popover, sheet, command, card, and toast
+  surfaces share the same positioning and visual contract, with regression
+  coverage for the unified dialog surface.
+
+### Security
+
+- Git and Docker registry publication now require explicit user authorization
+  per destination, while ignored local operator context remains available to
+  assistants without entering public source control.
 
 ## [0.7.11] - 2026-06-24
 
@@ -679,7 +723,8 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 - Internal alpha release. [See git log] for details.
 
-[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.7.11...HEAD
+[Unreleased]: https://github.com/neuraparse/tasknebula/compare/v0.13.0...HEAD
+[0.13.0]: https://github.com/neuraparse/tasknebula/compare/v0.7.11...v0.13.0
 [0.7.11]: https://github.com/neuraparse/tasknebula/compare/v0.7.10...v0.7.11
 [0.7.10]: https://github.com/neuraparse/tasknebula/compare/v0.7.9...v0.7.10
 [0.7.9]: https://github.com/neuraparse/tasknebula/compare/v0.7.8...v0.7.9

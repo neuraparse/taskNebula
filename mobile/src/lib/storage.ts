@@ -47,6 +47,15 @@ function legacySecureKey(raw: string): string {
   return raw.replace(/[^A-Za-z0-9._-]/g, '_');
 }
 
+async function readSecureService(service: string): Promise<string | null> {
+  // Keychain's existence check treats a missing item as the normal false case.
+  // Calling getGenericPassword for every missing service makes RNKeychainManager
+  // emit an error-level log during first launch, even though nothing is broken.
+  if (!(await Keychain.hasGenericPassword({ service }))) return null;
+  const credentials = await Keychain.getGenericPassword({ service });
+  return credentials ? credentials.password : null;
+}
+
 export async function setSecure(key: string, value: string): Promise<void> {
   const service = secureKey(key);
   await Keychain.setGenericPassword(service, value, {
@@ -57,18 +66,18 @@ export async function setSecure(key: string, value: string): Promise<void> {
 
 export async function getSecure(key: string): Promise<string | null> {
   const service = secureKey(key);
-  const credentials = await Keychain.getGenericPassword({ service });
-  if (credentials) return credentials.password;
+  const value = await readSecureService(service);
+  if (value !== null) return value;
 
   const legacyService = legacySecureKey(key);
   if (legacyService === service) return null;
 
-  const legacyCredentials = await Keychain.getGenericPassword({ service: legacyService });
-  if (!legacyCredentials) return null;
+  const legacyValue = await readSecureService(legacyService);
+  if (!legacyValue) return null;
 
-  await setSecure(key, legacyCredentials.password);
+  await setSecure(key, legacyValue);
   await Keychain.resetGenericPassword({ service: legacyService });
-  return legacyCredentials.password;
+  return legacyValue;
 }
 
 export async function deleteSecure(key: string): Promise<void> {

@@ -41,12 +41,20 @@ coverage
 **/coverage
 .nyc_output
 **/.nyc_output
+**/__tests__
+**/*.test.*
+**/*.spec.*
+apps/web/e2e
 test-results
 **/test-results
 playwright-report
 **/playwright-report
 playwright/.cache
 **/playwright/.cache
+.ui-audit
+**/screenshots
+**/screen-captures
+artifacts
 
 # IDE
 .vscode
@@ -77,12 +85,24 @@ docker-compose.*.override.yml
 *.md
 docs
 
+# Workspaces and local evidence not required by the web production image
+mobile
+forensic
+images
+tmp
+temp
+.tmp
+.temp
+scratch
+*.scratch.md
+*.handoff.md
+*.private.md
+*.local.md
+
 # Misc
 .turbo
 .vercel
 uploads
-forensic
-forensic/**
 *.bak
 *.backup
 *.backup.*

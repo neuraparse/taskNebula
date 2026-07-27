@@ -84,16 +84,16 @@ export function DoraPanel({ organizationId }: DoraPanelProps) {
           </h3>
           <p className="text-muted-foreground mt-1 text-sm">{t('doraDerivedDescription')}</p>
         </div>
-        <Link href="/settings/integrations">
-          <Button size="sm">{t('connectGithub')}</Button>
-        </Link>
+        <Button asChild size="sm">
+          <Link href="/settings/integrations">{t('connectGithub')}</Link>
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="surface-card p-4">
-      <div className="mb-4 flex items-end justify-between">
+    <div className="surface-card overflow-hidden shadow-none">
+      <div className="flex items-end justify-between p-4">
         <div>
           <p className="kicker">{t('engineeringDora')}</p>
           <h3 className="text-foreground mt-1 text-base font-semibold tracking-tight">
@@ -102,8 +102,9 @@ export function DoraPanel({ organizationId }: DoraPanelProps) {
         </div>
         <p className="text-muted-foreground text-xs">{t('last30Days')}</p>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="bg-border grid gap-px border-t sm:grid-cols-2 lg:grid-cols-5">
         <KpiTile
+          className="bg-card min-h-[112px] rounded-none border-0 shadow-none"
           label={t('deployFreq')}
           value={`${data.deployFrequencyPerDay.toFixed(2)}/d`}
           delta={data.deployFrequencyDelta}
@@ -112,6 +113,7 @@ export function DoraPanel({ organizationId }: DoraPanelProps) {
           icon={<GitBranch className="h-4 w-4" />}
         />
         <KpiTile
+          className="bg-card min-h-[112px] rounded-none border-0 shadow-none"
           label={t('leadTime')}
           value={`${data.leadTimeHours.toFixed(1)}h`}
           delta={data.leadTimeDelta}
@@ -121,6 +123,7 @@ export function DoraPanel({ organizationId }: DoraPanelProps) {
           icon={<Timer className="h-4 w-4" />}
         />
         <KpiTile
+          className="bg-card min-h-[112px] rounded-none border-0 shadow-none"
           label={t('changeFailureRate')}
           value={`${(data.changeFailureRate * 100).toFixed(1)}%`}
           delta={data.changeFailureRateDelta}
@@ -130,6 +133,7 @@ export function DoraPanel({ organizationId }: DoraPanelProps) {
           icon={<ShieldAlert className="h-4 w-4" />}
         />
         <KpiTile
+          className="bg-card min-h-[112px] rounded-none border-0 shadow-none"
           label={t('reworkRate')}
           value={`${(data.reworkRate * 100).toFixed(1)}%`}
           delta={data.reworkRateDelta}
@@ -139,6 +143,7 @@ export function DoraPanel({ organizationId }: DoraPanelProps) {
           icon={<Repeat className="h-4 w-4" />}
         />
         <KpiTile
+          className="bg-card min-h-[112px] rounded-none border-0 shadow-none"
           label={t('recoveryTime')}
           value={`${data.recoveryHours.toFixed(1)}h`}
           delta={data.recoveryHoursDelta}

@@ -1,31 +1,8 @@
-import type { LucideIcon } from 'lucide-react';
-import { Bot, MessagesSquare, Plug, Sparkles } from 'lucide-react';
+import { Bot } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { SectionHeader, Shell } from './primitives';
 
-type Tone = 'violet' | 'cyan' | 'emerald';
-
-const capabilities: Array<{
-  icon: LucideIcon;
-  tone: Tone;
-  key: string;
-}> = [
-  {
-    icon: MessagesSquare,
-    tone: 'cyan',
-    key: 'ask',
-  },
-  {
-    icon: Sparkles,
-    tone: 'violet',
-    key: 'triage',
-  },
-  {
-    icon: Plug,
-    tone: 'emerald',
-    key: 'mcp',
-  },
-];
+const capabilities = ['ask', 'triage', 'mcp'] as const;
 
 export function AiMcpSection() {
   const t = useTranslations('publicPages.landing.aiMcp');
@@ -43,15 +20,18 @@ export function AiMcpSection() {
               compact
             />
 
-            <div className="stagger mt-9 space-y-3">
-              {capabilities.map(({ icon: Icon, tone, key }) => (
-                <div
+            <ol className="mt-9 border-t border-[var(--landing-border)]">
+              {capabilities.map((key, index) => (
+                <li
                   key={key}
-                  className="ease-smooth flex gap-4 rounded-lg border border-[var(--landing-border)] bg-[var(--landing-bg-card)] p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                  className="grid gap-3 border-b border-[var(--landing-border)] py-5 sm:grid-cols-[2.5rem_1fr]"
                 >
-                  <div className={`icon-tile icon-tile-accent-${tone} h-10 w-10 shrink-0`}>
-                    <Icon className="h-5 w-5" aria-hidden="true" />
-                  </div>
+                  <span
+                    className="font-mono text-[11px] text-[var(--landing-text-muted)]"
+                    aria-hidden="true"
+                  >
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
                   <div>
                     <h3 className="text-[15px] font-[500] text-[var(--landing-text-dark)]">
                       {t(`capabilities.${key}.title`)}
@@ -60,9 +40,9 @@ export function AiMcpSection() {
                       {t(`capabilities.${key}.body`)}
                     </p>
                   </div>
-                </div>
+                </li>
               ))}
-            </div>
+            </ol>
           </div>
 
           <ToolCallMock />
@@ -105,7 +85,7 @@ function ToolCallMock() {
           {t('planning')}
         </p>
 
-        <div className="rounded-md border border-[var(--landing-border)] bg-[var(--landing-bg-surface)] p-3">
+        <div className="border-l-2 border-[var(--landing-accent-cyan)] bg-[var(--landing-bg-surface)] py-2 pl-3 pr-2">
           <p className="text-[var(--landing-text-muted)]">
             <span className="text-[var(--landing-accent-cyan)]">→ {t('call')}</span> search_issues
           </p>
@@ -114,7 +94,7 @@ function ToolCallMock() {
           </pre>
         </div>
 
-        <div className="rounded-md border border-[var(--landing-border)] bg-[var(--landing-bg-surface)] p-3">
+        <div className="border-l-2 border-[var(--landing-accent-emerald)] bg-[var(--landing-bg-surface)] py-2 pl-3 pr-2">
           <p className="text-[var(--landing-text-muted)]">
             <span className="text-[var(--landing-accent-emerald)]">← {t('result')}</span>{' '}
             {t('issueCount')}
@@ -131,7 +111,7 @@ function ToolCallMock() {
           </div>
         </div>
 
-        <div className="rounded-md border border-[var(--landing-border)] bg-[var(--landing-bg-surface)] p-3">
+        <div className="border-l-2 border-[var(--landing-accent-cyan)] bg-[var(--landing-bg-surface)] py-2 pl-3 pr-2">
           <p className="text-[var(--landing-text-muted)]">
             <span className="text-[var(--landing-accent-cyan)]">→ {t('call')}</span> update_issue
           </p>

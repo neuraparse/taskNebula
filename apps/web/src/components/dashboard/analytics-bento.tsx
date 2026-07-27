@@ -22,7 +22,7 @@ import {
   ThroughputChart,
   VelocityChart,
 } from '@/components/charts';
-import { Gauge, Hash, Sparkles, Target, TrendingUp } from 'lucide-react';
+import { Gauge, Hash, Target, TrendingUp } from 'lucide-react';
 
 interface ForecastResponse {
   backlog: number;
@@ -96,9 +96,9 @@ export function AnalyticsBento({
 
   return (
     <div className="space-y-4">
-      {/* KPI strip — bento-style 4-up */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="surface-card bg-border grid grid-cols-1 gap-px overflow-hidden shadow-none sm:grid-cols-2 lg:grid-cols-4">
         <KpiTile
+          className="bg-card min-h-[112px] rounded-none border-0 shadow-none"
           label={t('analytics.kpi_last_sprint_points')}
           value={lastSprint?.completedPoints ?? '—'}
           delta={
@@ -112,6 +112,7 @@ export function AnalyticsBento({
           icon={<Gauge className="h-4 w-4" />}
         />
         <KpiTile
+          className="bg-card min-h-[112px] rounded-none border-0 shadow-none"
           label={t('analytics.kpi_avg_velocity')}
           value={velocity?.averageVelocity?.points?.toFixed(1) ?? '—'}
           deltaSuffix={t('analytics.suffix_pts')}
@@ -121,6 +122,7 @@ export function AnalyticsBento({
           icon={<TrendingUp className="h-4 w-4" />}
         />
         <KpiTile
+          className="bg-card min-h-[112px] rounded-none border-0 shadow-none"
           label={t('analytics.kpi_throughput_week')}
           value={tpSpark[tpSpark.length - 1] ?? '—'}
           delta={
@@ -134,6 +136,7 @@ export function AnalyticsBento({
           icon={<Hash className="h-4 w-4" />}
         />
         <KpiTile
+          className="bg-card min-h-[112px] rounded-none border-0 shadow-none"
           label={t('analytics.kpi_backlog')}
           value={forecast?.backlog ?? '—'}
           delta={null}
@@ -145,17 +148,13 @@ export function AnalyticsBento({
       {/* DORA panel */}
       <DoraPanel organizationId={organizationId} />
 
-      {/* Main charts — 2-up */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
         <section className="surface-card space-y-3 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="kicker">{t('analytics.kicker_delivery')}</p>
-              <h3 className="text-foreground mt-1 text-base font-semibold tracking-tight">
-                {t('analytics.heading_velocity')}
-              </h3>
-            </div>
-            <Sparkles className="text-muted-foreground h-4 w-4" />
+          <div>
+            <p className="kicker">{t('analytics.kicker_delivery')}</p>
+            <h3 className="text-foreground mt-1 text-base font-semibold tracking-tight">
+              {t('analytics.heading_velocity')}
+            </h3>
           </div>
           <AiInsightCard metric="velocity" period="6-sprints" scopeId={projectId} />
           {velocity && velocity.sprints.length > 0 ? (
@@ -171,14 +170,11 @@ export function AnalyticsBento({
         </section>
 
         <section className="surface-card space-y-3 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="kicker">{t('analytics.kicker_flow')}</p>
-              <h3 className="text-foreground mt-1 text-base font-semibold tracking-tight">
-                {t('analytics.heading_throughput')}
-              </h3>
-            </div>
-            <Sparkles className="text-muted-foreground h-4 w-4" />
+          <div>
+            <p className="kicker">{t('analytics.kicker_flow')}</p>
+            <h3 className="text-foreground mt-1 text-base font-semibold tracking-tight">
+              {t('analytics.heading_throughput')}
+            </h3>
           </div>
           <AiInsightCard metric="throughput" period="30d" scopeId={projectId} />
           {throughput && throughput.data.length > 0 ? (
