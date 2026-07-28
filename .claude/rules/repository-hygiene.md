@@ -20,6 +20,11 @@ paths:
   `DESIGN.md`, or an indexed `docs/` guide when durable guidance is required.
   Local notes use an ignored `.local.md`, `.scratch.md`, or `.handoff.md`
   suffix.
+- The root `mobile/` directory is an intentionally untracked, local-only
+  workspace. Never add or force-add it, stage/commit/push its contents, copy its
+  source into tracked artifacts, or list it in public workspace manifests,
+  lockfiles, CI, or release steps. Only work inside it when the user explicitly
+  requests local mobile work.
 - The production Docker context contains only runtime/build inputs. Exclude
   mobile sources, tests, audit captures, documentation, dumps, and local
   artifacts unless the image demonstrably requires them.

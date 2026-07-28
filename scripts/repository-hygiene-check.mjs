@@ -19,6 +19,11 @@ const repositoryFiles = execFileSync(
 
 const blockedPathRules = [
   {
+    id: 'local-mobile-workspace',
+    pattern: /^mobile(?:\/|$)/,
+    message: 'The root mobile workspace is local-only and must never be tracked or published.',
+  },
+  {
     id: 'temporary-directory',
     pattern:
       /(^|\/)(?:tmp|temp|screenshots?|screen-captures|artifacts?|playwright-report|test-results)(?:\/|$)/i,

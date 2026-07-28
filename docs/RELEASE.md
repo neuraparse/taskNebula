@@ -23,15 +23,11 @@ Update the version in every pinned location:
 
 - `package.json` → `"version"`
 - `apps/web/package.json` → `"version"`
-- `mobile/package.json` → `"version"`
-- `mobile/ios/TaskNebulaMobile.xcodeproj/project.pbxproj` →
-  `MARKETING_VERSION` and monotonically increasing `CURRENT_PROJECT_VERSION`
 - `docker-compose.desktop.yml` → `neuraparse/tasknebula:<v>`
 - `README.md` → the `0.3.x` references (recommended-tag table, pin examples)
-- Regenerate the web API spec and sync the mobile copy so their versions match:
+- Regenerate the web API spec:
   ```bash
   pnpm --filter @tasknebula/web openapi:gen   # writes apps/web/public/openapi.json
-  pnpm --filter @tasknebula/mobile openapi:sync
   ```
   (Plain `pnpm openapi:gen` at the repo root fails with `ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL` —
   the script only exists in the `@tasknebula/web` workspace.)

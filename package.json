@@ -27,7 +27,6 @@
   ],
   "workspaces": [
     "apps/*",
-    "mobile",
     "packages/*",
     "services/*"
   ],

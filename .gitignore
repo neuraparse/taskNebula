@@ -121,7 +121,6 @@ authorized_keys.backup
 *.pem
 *.key
 *.keystore
-!mobile/android/app/debug.keystore
 *.jks
 *.p12
 *.pfx
@@ -622,5 +621,6 @@ artifacts/
 # Local scratch/diagnostic scripts — never commit
 apps/web/_*.mjs
 
-# TaskNebula Mobile is a first-class bare React Native workspace. Source files
-# are tracked; local native build artifacts are ignored by mobile/.gitignore.
+# TaskNebula Mobile is an intentionally local-only workspace. Keep the root
+# directory on operator machines, but never track or publish any of its files.
+/mobile/

@@ -15,7 +15,7 @@
 | API routes (`apps/web/src/app/api`)            | 280 route handlers                                                                                                |
 | Database tables (Drizzle, Postgres + pgvector) | 115 across 55 schema files                                                                                        |
 | Migrations                                     | 54 (`packages/db/drizzle/`)                                                                                       |
-| Jest                                           | Web: 273 suites / 1,673 passed + 1 skipped; mobile: 75 suites / 372 passed; MCP: 45 passed                        |
+| Jest                                           | Web: 273 suites / 1,673 passed + 1 skipped; MCP: 45 passed                                                        |
 | Playwright e2e                                 | 8 specs; authenticated Chromium flow plus a 42-case public desktop/mobile light/dark matrix are covered           |
 | CI                                             | Minimal workflow in `.github/workflows/ci.yml`; still verify locally: `pnpm type-check && pnpm lint && pnpm test` |
 
